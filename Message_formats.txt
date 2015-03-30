@@ -6,7 +6,7 @@ When new client is requesting ID:
 What sequencer is expecting: Request#IP#Port
 What sequencer will return :
 1. Client ID/"Max Limit Reached"
-2. Seq#Ip#Port#ClientID#Ip#Port#Client#.......................		[MULTICAST]
+2. Seq#ClientInfo#Ip#Port#ClientID#Ip#Port#Client#.......................		[MULTICAST]
 
 
 When client sends message:
