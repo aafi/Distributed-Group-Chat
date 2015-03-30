@@ -14,4 +14,4 @@ When client sends message:
 What sequencer is expecting: Message#ClientID#MsgID#Message
 
 What sequencer will return:
-1. Seq#GlobalSeqID#ClientID#MsgID#Message 				[MULTICAST]						
+1. SEQ#GlobalSeqID#ClientID#MsgID#Message 				[MULTICAST]						
