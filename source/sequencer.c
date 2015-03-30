@@ -10,7 +10,7 @@
 #define MAX 15
 
 int id[MAX] = {0};
-int msg_seq_id = 1;
+int msg_seq_id = 0;
 
 struct client{
    char ip[BUFLEN];
@@ -21,10 +21,22 @@ struct client{
 }client_list[MAX];
 
 struct message{
+   int seq_id;
    int client_id;
    int msg_id;
    char msg[BUFLEN];
+
+   /*
+         * This holds the pointers to the next and previous entries in
+         * the tail queue.
+    */
+
+   TAILQ_ENTRY(message) entries;  
 }
+
+//This is the head of the TAILQ
+
+TAILQ_HEAD(,message) message_head;
 
 
 int requestid(char * ip, int port)
@@ -71,6 +83,9 @@ int main(int argc, char *argv[]){
       perror("Bind error");
       exit(-1);
    }
+
+   /* Initialize the tail queue */
+   TAILQ_INIT(&message_head);
 
    while(1)
    {
@@ -140,14 +155,34 @@ int main(int argc, char *argv[]){
             i++;
          }
 
-         int client_id,msg_id;
-         char msg[BUFLEN];
+         struct message *item;
+         item = malloc(sizeof(*item));
+         item->client_id = atoi(tok[0]);
+         item->msg_id = atoi(tok[1]);
+         strcpy(item->msg,tok[2]);
+         item->seq_id = msg_seq_id++;
 
-         client_id = atoi(tok[0]);
-         msg_id = atoi(tok[1]);
-         strcpy(msg,tok[2]);
+         int idx = 0;
+         for(idx;idx<MAX;idx++)
+         {
+            if(id[idx]!=0)
+            {
+               if(client_list[idx].client_id == atoi(tok[0]))
+                  client_list[idx].last_msg_id = atoi(tok[1]);
+            }
+         }
 
-         
+         /*
+                 * Add our item to the end of tail queue. The first
+                 * argument is a pointer to the head of our tail
+                 * queue, the second is the item we want to add, and
+                 * the third argument is the name of the struct
+                 * variable that points to the next and previous items
+                 * in the tail queue.
+         */
+
+         TAILQ_INSERT_TAIL(&message_head,item,entries);
+            
       }
 
 
