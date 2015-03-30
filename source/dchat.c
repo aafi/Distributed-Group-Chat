@@ -15,6 +15,11 @@
 #define MAXSIZE 1024
 #define DELIMITER "#"
 
+struct Leader{
+	char ip_addr[MAXSIZE];
+	char port[MAXSIZE];
+}leader;
+
 /*
 method: detokenize
 @buf: char[] - string that needs to be detokenized
@@ -36,10 +41,42 @@ void detokenize(char buf[], char* token_result[], char* token){
 	}
 }
 
+// BELOW CODE IS TO FIND THE IP-ADDRESS SO THAT IT CAN BE PRINTED WHEN CLIENT STARTS NEW CHAT
+/*
+method: get_ip_address
+returns: const char* - IP address of the local machine
+
+Description: This function is used to get the IP Address of the machine it is running on.
+	It makes a system call, strips out all the other data from the result, and saves the IP address in a string
+*/
+const char* get_ip_address(){
+	FILE *fp;
+	int status;
+	char shell_output[MAXSIZE];
+
+	fp = popen("/sbin/ifconfig | grep inet | head -n 1", "r");
+	if (fp == NULL)
+	    perror("Could not get IP address");
+
+	fgets(shell_output, MAXSIZE, fp);
+
+    status = pclose(fp);
+	if (status == -1) {
+	    perror("Error closing fp");
+	}
+
+	char* shell_result[MAXSIZE];
+    detokenize(shell_output, shell_result, " ");
+
+	char* addr_info[MAXSIZE];
+	detokenize(shell_result[1], addr_info, ":");
+
+	return addr_info[1];
+}
+
 int main(int argc, char* argv[]){
-	int soc = 0, serv_addr_size, other_addr_size;
-	struct sockaddr_in my_addr, serv_addr;
-	struct sockaddr_un other_user_addr;
+	int soc = 0, serv_addr_size;
+	struct sockaddr_in my_addr;
 	char* mode;
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 
@@ -49,7 +86,7 @@ int main(int argc, char* argv[]){
 	} else {		//RESPONSIBLE FOR CHECKING WHETHER THE CLIENT IS STARTING A NEW CHAT OR JOINING AN EXISTING ONE
 
 		// CLIENT HAS TO BIND TO A LOCAL SOCKET IN ORDER TO COMMUNICATE - ALMOST ACTS LIKE A SERVER
-		if ((soc = socket(PF_INET, SOCK_DGRAM, 0)) < 0){
+		if ((soc = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 			perror("ERROR: Could not create socket");
 			exit(-1);
 		}
@@ -64,29 +101,7 @@ int main(int argc, char* argv[]){
 			exit(-1);
 		}
 
-		// BELOW CODE IS TO FIND THE IP-ADDRESS SO THAT IT CAN BE PRINTED WHEN CLIENT STARTS NEW CHAT
-		FILE *fp;
-		int status;
-		char shell_output[MAXSIZE];
-
-		fp = popen("/sbin/ifconfig | grep inet | head -n 1", "r");
-		if (fp == NULL)
-		    perror("Could not get IP address");
-
-		fgets(shell_output, MAXSIZE, fp);
-
-	    status = pclose(fp);
-		if (status == -1) {
-		    perror("Error closing fp");
-		}
-
-	    char* shell_result[MAXSIZE];
-	    detokenize(shell_output, shell_result, " ");
-
-		char* addr_info[MAXSIZE];
-		detokenize(shell_result[1], addr_info, ":");
-
-		char* ip_addr = addr_info[1];
+		const char* my_ip_addr = get_ip_address();
 
 		if(argc == 2){	
 			/*
@@ -96,8 +111,15 @@ int main(int argc, char* argv[]){
 			Responsible for starting the leader (sequencer) program
 			Also needs to start Election Algorithm program
 			*/
+
+			// SET LEADER INFO TO ITS OWN IP_ADDRESS AND PORT NUMBER
+			strcpy(leader.ip_addr, my_ip_addr);
+			char temp[MAXSIZE];
+		    sprintf(temp, "%d", PORT);
+			strcpy(leader.port, temp);
+
 			mode = "WAITING";
-			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], ip_addr, PORT);
+			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], my_ip_addr, PORT);
 			printf("Waiting for others to join:\n");
 		} else if(argc == 4){	
 			/*
@@ -111,6 +133,8 @@ int main(int argc, char* argv[]){
 			Needs to contact the leader (sequencer) to actually join the damn chat!
 			*/
 			mode = "JOINING";
+
+			struct sockaddr_in serv_addr;
 
 			serv_addr.sin_family = AF_INET;
 			serv_addr.sin_port = htons(atoi(argv[3]));
@@ -135,12 +159,46 @@ int main(int argc, char* argv[]){
 
 			char* leader_details[MAXSIZE];
 			detokenize(recvBuff, leader_details, DELIMITER);
+
+			// SET THE LEADER INFO TO WHAT IS RECEIVED FROM THE EXISTING CHAT CLIENT
+			strcpy(leader.ip_addr, leader_details[1]);
+			strcpy(leader.port, leader_details[2]);
+
+			// INITIATE COMMUNICATION WITH THE LEADER
+			serv_addr.sin_family = AF_INET;
+			serv_addr.sin_port = htons(atoi(leader.port));
+			if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
+		    {
+		        perror("ERROR: inet_pton error occured \n");
+		        exit(-1);
+		    }
+
+		    strcpy(sendBuff, "REQUEST#");
+		    strcat(sendBuff, my_ip_addr);
+		    strcat(sendBuff, DELIMITER);
+		    char temp[MAXSIZE];
+		    sprintf(temp, "%d", PORT);
+		    strcat(sendBuff, temp);
+
+		    if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+				perror("Could not send message to Sequencer\n");
+				exit(-1);
+			}
+			/*
+			TODO:
+			- Receive appropriate reply from sequencer
+			- Update own client id
+			- Update client list structure
+			*/
 		}
 	}
 
 	while(1){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
 		// char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 
+		// other_addr_size = 0;
+		struct sockaddr_in other_user_addr;
+		int other_addr_size;
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
@@ -154,8 +212,12 @@ int main(int argc, char* argv[]){
 		strcpy(messageType, message[0]);
 
 		if(strcmp(messageType, "JOIN") == 0){
-			strcpy(sendBuff, "JOINLEADER#127.0.0.1#1705");
-			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, other_addr_size) < 0){
+			strcpy(sendBuff, "JOINLEADER#");
+			strcat(sendBuff, leader.ip_addr);
+			strcat(sendBuff, DELIMITER);
+			strcat(sendBuff, leader.port);
+
+			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 				perror("ERROR: Sending message failed \n");
 			}
 		}
