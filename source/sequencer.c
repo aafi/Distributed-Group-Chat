@@ -122,7 +122,7 @@ int main(int argc, char *argv[]){
             exit(-1);
          }
 
-         char multi[BUFLEN] = "Seq";
+         char multi[BUFLEN] = "Seq#ClientInfo";
          char temp[BUFLEN];
 
          int i = 0;
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]){
          */
 
          TAILQ_INSERT_TAIL(&message_head,item,entries);
-            
+
       }
 
 
