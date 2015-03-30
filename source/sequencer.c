@@ -3,6 +3,11 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <sys/queue.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+
 
 #define PORT 5678
 #define NPACK 10
@@ -32,7 +37,7 @@ struct message{
     */
 
    TAILQ_ENTRY(message) entries;  
-}
+};
 
 //This is the head of the TAILQ
 
@@ -84,11 +89,24 @@ int main(int argc, char *argv[]){
       exit(-1);
    }
 
+
+   /*
+
+
+         BROADCAST TO ALL CLIENTS MY IP AND PORT
+         SEQ#EA#IP#PORT
+
+
+   */
+
+
    /* Initialize the tail queue */
    TAILQ_INIT(&message_head);
 
    while(1)
    {
+
+
       if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client, &len)) < 0)
       {
          perror("Receive Error");
@@ -98,10 +116,10 @@ int main(int argc, char *argv[]){
       char * token;
       token = strtok(buf,"#");
 
-      if (strcmp("Request",token)==0)
+      if (strcmp("REQUEST",token)==0)
       {
          int seq;
-         int i=0;
+         int i = 0;
          while(token !=NULL)
          {
             token = strtok(NULL,"#");
@@ -122,21 +140,21 @@ int main(int argc, char *argv[]){
             exit(-1);
          }
 
-         char multi[BUFLEN] = "Seq#ClientInfo";
+         char multi[BUFLEN] = "SEQ#CLIENTINFO";
          char temp[BUFLEN];
 
-         int i = 0;
-         for(i;i<MAX;i++)
+         int d = 0;
+         for(d;d<MAX;d++)
          {
-            if(id[i]!=0)
+            if(id[d]!=0)
             {
                strcat(multi,"#");
-               strcat(multi,client_list[i].ip);
+               strcat(multi,client_list[d].ip);
                strcat(multi,"#");
-               sprintf(temp,"%d",client_list[i].port);
+               sprintf(temp,"%d",client_list[d].port);
                strcat(multi,temp);
                strcat(multi,"#");
-               sprintf(temp,"%d",client_list[i].client_id);
+               sprintf(temp,"%d",client_list[d].client_id);
                strcat(multi,temp);
 
             }
@@ -145,7 +163,7 @@ int main(int argc, char *argv[]){
 
       }
 
-      else if (strcmp("Message",token)==0)
+      else if (strcmp("MESSAGE",token)==0)
       {
          while(token!=NULL)
          {  
@@ -183,23 +201,31 @@ int main(int argc, char *argv[]){
 
          TAILQ_INSERT_TAIL(&message_head,item,entries);
 
+
+
+
       }
+
+
+   /* Traverse the tail queue forward. */
+        printf("Forward traversal: ");
+
+        struct message *item;
+
+        TAILQ_FOREACH(item, &message_head, entries) {
+                printf("%d %s \n",item->seq_id,item->msg);
+        }
 
 
    //MULTICAST PART ----- DO IT
-      int k = 0;
-      for (k;k<MAX;k++)
-      {
+      // int k = 0;
+      // for (k;k<MAX;k++)
+      // {
 
-      }
+      // }
 
    }
 
 
 
 }
-
-
-
-
-
