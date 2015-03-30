@@ -13,7 +13,16 @@
 
 #define PORT 1705
 #define MAXSIZE 1024
+#define DELIMITER "#"
 
+/*
+method: detokenize
+@buf: char[] - string that needs to be detokenized
+@token_result: char* [] - list of strings that the detokenize function will fill up
+@token: char* - delimiter string
+
+Description: This function takes a string (buf) and a token (token) and splits the string and places individual strings in token_result
+*/
 void detokenize(char buf[], char* token_result[], char* token){
 	char* result;
 	int i = 0;
@@ -32,6 +41,7 @@ int main(int argc, char* argv[]){
 	struct sockaddr_in my_addr, serv_addr;
 	struct sockaddr_un other_user_addr;
 	char* mode;
+	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 
 	if(argc < 2){	//INVALID ARGUMENTS TO THE PROGRAM
 		fprintf(stderr, "Invalid arguments. \nFormat: dchat USERNAME [IP-ADDR:PORT]\n");
@@ -88,6 +98,7 @@ int main(int argc, char* argv[]){
 			*/
 			mode = "WAITING";
 			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], ip_addr, PORT);
+			printf("Waiting for others to join:\n");
 		} else if(argc == 4){	
 			/*
 			JOIN an existing chat conversation
@@ -100,7 +111,6 @@ int main(int argc, char* argv[]){
 			Needs to contact the leader (sequencer) to actually join the damn chat!
 			*/
 			mode = "JOINING";
-			// string username = argv[1], ip_addr = argv[2], port_no = argv[3];
 
 			serv_addr.sin_family = AF_INET;
 			serv_addr.sin_port = htons(atoi(argv[3]));
@@ -111,8 +121,7 @@ int main(int argc, char* argv[]){
 		        exit(-1);
 		    }
 
-		    char sendBuff[] = "JOIN";
-		    char recvBuff[MAXSIZE];
+		    strcpy(sendBuff, "JOIN");
 
 		    if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
 				fprintf(stderr, "ERROR: Sorry no chat is active on %s, try again later. \n", argv[2]);
@@ -123,12 +132,14 @@ int main(int argc, char* argv[]){
 			} else {
 				fprintf(stderr, "%s \n", recvBuff);
 			}
+
+			char* leader_details[MAXSIZE];
+			detokenize(recvBuff, leader_details, DELIMITER);
 		}
 	}
-	printf("Waiting for others to join:\n");
+
 	while(1){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
-		char sendBuff[] = "JOIN THE LEADER";
-	    char recvBuff[MAXSIZE];
+		// char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
@@ -136,9 +147,18 @@ int main(int argc, char* argv[]){
 			fprintf(stderr, "%s\n", recvBuff);
 		}
 
-		if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, other_addr_size) < 0){
-			perror("ERROR: Sending message failed \n");
+		char* message[MAXSIZE];
+		detokenize(recvBuff, message, DELIMITER);
+
+		char messageType[MAXSIZE];
+		strcpy(messageType, message[0]);
+
+		if(strcmp(messageType, "JOIN") == 0){
+			strcpy(sendBuff, "JOINLEADER#127.0.0.1#1705");
+			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, other_addr_size) < 0){
+				perror("ERROR: Sending message failed \n");
+			}
 		}
-	}
+	} // end of while(1)
 	return 0;
 }
