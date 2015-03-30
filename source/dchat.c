@@ -2,21 +2,30 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <netdb.h>
 #include <stdio.h>
-// #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h> 
-// #include <ifaddrs.h>
-// #include <string.h>
-// #include <iostream>
-
-// using namespace std;
+#include <sys/ioctl.h>
 
 #define PORT 1705
 #define MAXSIZE 1024
+
+void detokenize(char buf[], char* token_result[], char* token){
+	char* result;
+	int i = 0;
+	result = strtok(buf, token);
+	token_result[i++] = result;
+	while(result != NULL){
+		result = strtok(NULL, token);
+		if (result != NULL){
+			token_result[i++] = result;
+		}
+	}
+}
 
 int main(int argc, char* argv[]){
 	int soc = 0, serv_addr_size, other_addr_size;
@@ -45,53 +54,50 @@ int main(int argc, char* argv[]){
 			exit(-1);
 		}
 
-		// BELOW CODE IS TO TRY AND FIND THE IP-ADDRESS SO THAT IT CAN BE PRINTED WHEN CLIENT STARTS NEW CHAT
-		// char szBuffer[MAXSIZE];
-		// gethostname(szBuffer, sizeof(szBuffer));
-		// struct hostent *host = gethostbyname(szBuffer);
-		// struct ifaddrs * ifAddrStruct = NULL;
-		// struct ifaddrs * ifa = NULL;
-		// void * tmpAddrPtr = NULL;
+		// BELOW CODE IS TO FIND THE IP-ADDRESS SO THAT IT CAN BE PRINTED WHEN CLIENT STARTS NEW CHAT
+		FILE *fp;
+		int status;
+		char shell_output[MAXSIZE];
 
-		// getifaddrs(&ifAddrStruct);
-		// ifa = ifAddrStruct;
-		// ifa = ifa->ifa_next;
-		// tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-  //       char addressBuffer[MAXSIZE];
-  //       inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, MAXSIZE);
+		fp = popen("/sbin/ifconfig | grep inet | head -n 1", "r");
+		if (fp == NULL)
+		    perror("Could not get IP address");
+
+		fgets(shell_output, MAXSIZE, fp);
+
+	    status = pclose(fp);
+		if (status == -1) {
+		    perror("Error closing fp");
+		}
+
+	    char* shell_result[MAXSIZE];
+	    detokenize(shell_output, shell_result, " ");
+
+		char* addr_info[MAXSIZE];
+		detokenize(shell_result[1], addr_info, ":");
+
+		char* ip_addr = addr_info[1];
 
 		if(argc == 2){	
 			/*
 			START a new chat
 			argv[1] = client name
 
-			THIS FUNCTION AS OF NOW ALSO WAITS FOR ONE OTHER CLIENT TO JOIN, AND REPLIES TO THE CLIENT TO "JOIN THE LEADER"
-			mode: WAITING (PROBABLY NEEDS RENAMING)
-			other_user_addr: ADDRESS OF CLIENT TRYING TO JOIN THE CHAT
+			Responsible for starting the leader (sequencer) program
+			Also needs to start Election Algorithm program
 			*/
 			mode = "WAITING";
-			// string username = argv[1];
-			// cout << username +" started a new chat on " << /*addressBuffer << ":" <<*/ PORT << endl;
-			fprintf(stderr, "%s started a new chat on %d\n", argv[1], PORT);
-
-			char sendBuff[] = "JOIN THE LEADER";
-		    char recvBuff[MAXSIZE];
-
-			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
-				perror("Error: Receiving message failed \n");
-			} else {
-				fprintf(stderr, "%s\n", recvBuff);
-			}
-
-			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, other_addr_size) < 0){
-				perror("ERROR: Sending message failed \n");
-			}
+			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], ip_addr, PORT);
 		} else if(argc == 4){	
 			/*
 			JOIN an existing chat conversation
 			argv[1] = client name
 			argv[2] = IP-ADDRESS of the client already in the chat
 			argv[3] = port number of the client already in the chat
+
+			Must also start Election Algorithm program
+
+			Needs to contact the leader (sequencer) to actually join the damn chat!
 			*/
 			mode = "JOINING";
 			// string username = argv[1], ip_addr = argv[2], port_no = argv[3];
@@ -117,6 +123,21 @@ int main(int argc, char* argv[]){
 			} else {
 				fprintf(stderr, "%s \n", recvBuff);
 			}
+		}
+	}
+	printf("Waiting for others to join:\n");
+	while(1){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
+		char sendBuff[] = "JOIN THE LEADER";
+	    char recvBuff[MAXSIZE];
+
+		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
+			perror("Error: Receiving message failed \n");
+		} else {
+			fprintf(stderr, "%s\n", recvBuff);
+		}
+
+		if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, other_addr_size) < 0){
+			perror("ERROR: Sending message failed \n");
 		}
 	}
 	return 0;
