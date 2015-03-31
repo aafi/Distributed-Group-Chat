@@ -97,28 +97,40 @@ int requestid(char * ip, int port)
 
 }
 
+void detokenize(char buf[], char* token_result[], char* token){
+   char* result;
+   int i = 0;
+   result = strtok(buf, token);
+   token_result[i++] = result;
+   while(result != NULL){
+      result = strtok(NULL, token);
+      if (result != NULL){
+         token_result[i++] = result;
+      }
+   }
+}
 
 
 const char* get_ip_address(){
    FILE *fp;
    int status;
-   char shell_output[MAXSIZE];
+   char shell_output[BUFLEN];
 
    fp = popen("/sbin/ifconfig | grep inet | head -n 1", "r");
    if (fp == NULL)
        perror("Could not get IP address");
 
-   fgets(shell_output, MAXSIZE, fp);
+   fgets(shell_output, BUFLEN, fp);
 
     status = pclose(fp);
    if (status == -1) {
        perror("Error closing fp");
    }
 
-   char* shell_result[MAXSIZE];
+   char* shell_result[BUFLEN];
     detokenize(shell_output, shell_result, " ");
 
-   char* addr_info[MAXSIZE];
+   char* addr_info[BUFLEN];
    detokenize(shell_result[1], addr_info, ":");
 
    return addr_info[1];
@@ -155,12 +167,13 @@ int main(int argc, char *argv[]){
 
    */
 
-   char win_broadcast[BUFLEN]="SEQ#EA#",temp[BUFLEN];
+   char win_broadcast[BUFLEN]="SEQ#EA#";
+   char tmp[BUFLEN];
    const char* my_ip_addr = get_ip_address();
    strcat(win_broadcast,my_ip_addr);
    strcat(win_broadcast,"#");
-   sprintf(temp,"%d",PORT);
-   strcat(win_broadcast,temp);
+   sprintf(tmp,"%d",PORT);
+   strcat(win_broadcast,tmp);
 
    multicast(s,win_broadcast);
 
@@ -195,9 +208,16 @@ int main(int argc, char *argv[]){
          seq = requestid(tok[0],atoi(tok[1]));   // Gets back a sequence number for the new client
 
          if(seq == -1)
-            strcpy(reply,"Max Limit reached");
+         {
+            strcpy(reply,"FAILURE");
+         }
          else
-            sprintf(reply, "%d", seq);
+         {
+            char tmp[BUFLEN];
+            sprintf(tmp, "%d", seq);
+            strcpy(reply,"SUCCESS#");
+            strcat(reply,tmp);
+         }
 
          if((sendto(s,reply,sizeof(reply),0,(struct sockaddr*)&client, sizeof(client))) < 0)    //send reply back
          {
