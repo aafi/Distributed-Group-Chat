@@ -110,6 +110,7 @@ void request_to_join(int soc, const char* my_ip_addr){
 
 	if (strcmp(join_details[0], "SUCCESS") == 0){
 		client_id = atoi(join_details[1]);
+		printf("Entered success loop");
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {

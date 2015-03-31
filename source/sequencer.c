@@ -63,11 +63,14 @@ void multicast(int socket,char * msg)
          clnt.sin_port = client_list[idx].port;
          clnt.sin_addr.s_addr = inet_addr(client_list[idx].ip);
 
+         printf("%s %d %s \n",msg,client_list[idx].port,client_list[idx].ip);
          if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&clnt, sizeof(clnt))) < 0)
          {
-            perror("Win Broadcast Error");
+            perror("Broadcast Error");
             exit(-1);
          }
+         
+         // printf("DONE \n");
 
       }
    }
@@ -245,7 +248,7 @@ int main(int argc, char *argv[]){
             }
 
          }
-
+         // printf("%s \n",multi);
          multicast(s,multi);
 
       }
