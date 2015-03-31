@@ -44,6 +44,37 @@ struct message{
 TAILQ_HEAD(,message) message_head;
 
 
+/*
+  
+   Function to multicast a message to all clients available
+      
+*/
+
+
+void multicast(int socket,char * msg)
+{
+   int idx = 0;
+   for(idx;idx<MAX;idx++)
+   {
+      if(id[idx]!=0)
+      {
+         struct sockaddr_in clnt;
+         clnt.sin_family = AF_INET;
+         clnt.sin_port = client_list[idx].port;
+         clnt.sin_addr.s_addr = inet_addr(client_list[idx].ip);
+
+         if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&clnt, sizeof(clnt))) < 0)
+         {
+            perror("Win Broadcast Error");
+            exit(-1);
+         }
+
+      }
+   }
+}
+
+
+
 int requestid(char * ip, int port)
 {
    int i;
@@ -64,6 +95,33 @@ int requestid(char * ip, int port)
    }
    return -1;                    //MAX limit reached; New participant cannot be added
 
+}
+
+
+
+const char* get_ip_address(){
+   FILE *fp;
+   int status;
+   char shell_output[MAXSIZE];
+
+   fp = popen("/sbin/ifconfig | grep inet | head -n 1", "r");
+   if (fp == NULL)
+       perror("Could not get IP address");
+
+   fgets(shell_output, MAXSIZE, fp);
+
+    status = pclose(fp);
+   if (status == -1) {
+       perror("Error closing fp");
+   }
+
+   char* shell_result[MAXSIZE];
+    detokenize(shell_output, shell_result, " ");
+
+   char* addr_info[MAXSIZE];
+   detokenize(shell_result[1], addr_info, ":");
+
+   return addr_info[1];
 }
 
 
@@ -91,13 +149,20 @@ int main(int argc, char *argv[]){
 
 
    /*
-
-
-         BROADCAST TO ALL CLIENTS MY IP AND PORT
+  
+         BROADCAST IP and PORT to all clients after winning election and declare leader
          SEQ#EA#IP#PORT
 
-
    */
+
+   char win_broadcast[BUFLEN]="SEQ#EA#",temp[BUFLEN];
+   const char* my_ip_addr = get_ip_address();
+   strcat(win_broadcast,my_ip_addr);
+   strcat(win_broadcast,"#");
+   sprintf(temp,"%d",PORT);
+   strcat(win_broadcast,temp);
+
+   multicast(s,win_broadcast);
 
 
    /* Initialize the tail queue */
