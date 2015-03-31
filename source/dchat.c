@@ -20,6 +20,8 @@ struct Leader{
 	char port[MAXSIZE];
 }leader;
 
+int client_id = 0;
+
 /*
 method: detokenize
 @buf: char[] - string that needs to be detokenized
@@ -74,11 +76,59 @@ const char* get_ip_address(){
 	return addr_info[1];
 }
 
+void request_to_join(int soc, const char* my_ip_addr){
+	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
+	// INITIATE COMMUNICATION WITH THE LEADER
+	struct sockaddr_in serv_addr;
+	int serv_addr_size;
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(atoi(leader.port));
+	if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
+    {
+        perror("ERROR: inet_pton error occured \n");
+        exit(-1);
+    }
+
+    strcpy(sendBuff, "REQUEST#");
+    strcat(sendBuff, my_ip_addr);
+    strcat(sendBuff, DELIMITER);
+    char temp[MAXSIZE];
+    sprintf(temp, "%d", PORT);
+    strcat(sendBuff, temp);
+
+    if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+		perror("Could not send message to Sequencer\n");
+		exit(-1);
+	}
+
+	if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
+		perror("Error: Receiving message failed \n");
+	} 
+
+	char* join_details[MAXSIZE];
+	detokenize(recvBuff, join_details, DELIMITER);
+
+	if (strcmp(join_details[0], "SUCCESS") == 0){
+		client_id = atoi(join_details[1]);
+		// if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
+		// 	perror("Error: Receiving message failed \n");
+		// } else {
+		// 	printf("%s\n", recvBuff);
+		// }
+	} else {
+		printf("Failed to join chat\n");
+		exit(-1);
+	}
+}
+
 int main(int argc, char* argv[]){
 	int soc = 0, serv_addr_size;
 	struct sockaddr_in my_addr;
 	char* mode;
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
+
+	void* housekeeping(int);
+	void* messenger(int);
 
 	if(argc < 2){	//INVALID ARGUMENTS TO THE PROGRAM
 		fprintf(stderr, "Invalid arguments. \nFormat: dchat USERNAME [IP-ADDR:PORT]\n");
@@ -115,12 +165,15 @@ int main(int argc, char* argv[]){
 			// SET LEADER INFO TO ITS OWN IP_ADDRESS AND PORT NUMBER
 			strcpy(leader.ip_addr, my_ip_addr);
 			char temp[MAXSIZE];
-		    sprintf(temp, "%d", PORT);
+		    // sprintf(temp, "%d", PORT);
+		    sprintf(temp, "%d", 5678);
 			strcpy(leader.port, temp);
 
 			mode = "WAITING";
 			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], my_ip_addr, PORT);
 			printf("Waiting for others to join:\n");
+
+			request_to_join(soc, my_ip_addr);
 		} else if(argc == 4){	
 			/*
 			JOIN an existing chat conversation
@@ -154,7 +207,7 @@ int main(int argc, char* argv[]){
 			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 				perror("ERROR: Receiving message failed \n");
 			} else {
-				fprintf(stderr, "%s \n", recvBuff);
+				// fprintf(stderr, "%s \n", recvBuff);		// JOINLEADER
 			}
 
 			char* leader_details[MAXSIZE];
@@ -164,26 +217,7 @@ int main(int argc, char* argv[]){
 			strcpy(leader.ip_addr, leader_details[1]);
 			strcpy(leader.port, leader_details[2]);
 
-			// INITIATE COMMUNICATION WITH THE LEADER
-			serv_addr.sin_family = AF_INET;
-			serv_addr.sin_port = htons(atoi(leader.port));
-			if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
-		    {
-		        perror("ERROR: inet_pton error occured \n");
-		        exit(-1);
-		    }
-
-		    strcpy(sendBuff, "REQUEST#");
-		    strcat(sendBuff, my_ip_addr);
-		    strcat(sendBuff, DELIMITER);
-		    char temp[MAXSIZE];
-		    sprintf(temp, "%d", PORT);
-		    strcat(sendBuff, temp);
-
-		    if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
-				perror("Could not send message to Sequencer\n");
-				exit(-1);
-			}
+			request_to_join(soc, my_ip_addr);
 			/*
 			TODO:
 			- Receive appropriate reply from sequencer
@@ -193,12 +227,25 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	while(1){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
-		// char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
+	pthread_t threads[2];
+	int rc0, rc1;
+	rc0 = pthread_create(&threads[0], NULL, messenger, soc);
+	rc1 = pthread_create(&threads[1], NULL, housekeeping, soc);
+	pthread_join(threads[0], NULL);
+	pthread_join(threads[1], NULL);
+	pthread_exit(NULL);
 
-		// other_addr_size = 0;
-		struct sockaddr_in other_user_addr;
-		int other_addr_size;
+	return 0;
+}
+
+void* housekeeping(int soc){
+	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
+
+	struct sockaddr_in other_user_addr;
+	int other_addr_size;
+
+	while(1){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
+		
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
@@ -222,5 +269,41 @@ int main(int argc, char* argv[]){
 			}
 		}
 	} // end of while(1)
-	return 0;
+}
+
+void* messenger(int soc){
+	int msg_id = 0;
+	char message[MAXSIZE];
+	char user_input[MAXSIZE];
+	while(1){
+		printf("ME: ");
+		memset(user_input, 0, MAXSIZE);
+		fgets(user_input, MAXSIZE, stdin);
+
+		strcpy(message, "MESSAGE#");
+		char clientId[MAXSIZE];
+		sprintf(clientId, "%d", client_id);
+		strcat(message, clientId);
+		strcat(message, DELIMITER);
+		char messageId[MAXSIZE];
+		sprintf(messageId, "%d", msg_id++);
+		strcat(message, messageId);
+		strcat(message, DELIMITER);
+		strcat(message, user_input);
+
+		// INITIATE COMMUNICATION WITH THE LEADER
+		struct sockaddr_in serv_addr;
+
+		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_port = htons(atoi(leader.port));
+		if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
+	    {
+	        perror("ERROR: inet_pton error occured \n");
+	        // exit(-1);
+	    }
+	    if (sendto(soc, message, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+			perror("Could not send message to Sequencer\n");
+			// exit(-1);
+		}
+	} // end of while(1)
 }
