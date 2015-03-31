@@ -140,55 +140,21 @@ const char* get_ip_address(){
 }
 
 
-int main(int argc, char *argv[]){
-   struct sockaddr_in server, client;
-   int s,n, len = sizeof(client);
-   char buf[BUFLEN],reply[BUFLEN];
-   char * tok[BUFLEN];
+void* message_receiving(void *s)
+{
+  char * tok[BUFLEN];
+  struct sockaddr_in client;
+  int n, len = sizeof(client);
+  char buf[BUFLEN],reply[BUFLEN];
+  char * tok[BUFLEN];
+  const char * temp;
+  int socket = (int)s; 
 
-   const char * temp;
-
-   if((s = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
-      perror("Socket error");
-      exit(-1);
-   }
-
-   server.sin_family = AF_INET;
-   server.sin_port = htons(PORT);
-   server.sin_addr.s_addr = htonl(INADDR_ANY);
-
-   if(bind(s, (struct sockaddr*)&server, sizeof(server)) < 0){
-      perror("Bind error");
-      exit(-1);
-   }
-
-
-   /*
-  
-         BROADCAST IP and PORT to all clients after winning election and declare leader
-         SEQ#EA#IP#PORT
-
-   */
-
-   char win_broadcast[BUFLEN]="SEQ#EA#";
-   char tmp[BUFLEN];
-   const char* my_ip_addr = get_ip_address();
-   strcat(win_broadcast,my_ip_addr);
-   strcat(win_broadcast,"#");
-   sprintf(tmp,"%d",PORT);
-   strcat(win_broadcast,tmp);
-
-   multicast(s,win_broadcast);
-
-
-   /* Initialize the tail queue */
-   TAILQ_INIT(&message_head);
-
-   while(1)
+  while(1)
    {
 
 
-      if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client, &len)) < 0)
+      if((n = recvfrom(socket, buf, BUFLEN, 0,(struct sockaddr*)&client, &len)) < 0)
       {
          perror("Receive Error");
          exit(-1);
@@ -222,7 +188,7 @@ int main(int argc, char *argv[]){
             strcat(reply,tmp);
          }
 
-         if((sendto(s,reply,sizeof(reply),0,(struct sockaddr*)&client, sizeof(client))) < 0)    //send reply back
+         if((sendto(socket,reply,sizeof(reply),0,(struct sockaddr*)&client, sizeof(client))) < 0)    //send reply back
          {
             perror("Send Error");
             exit(-1);
@@ -249,7 +215,7 @@ int main(int argc, char *argv[]){
 
          }
          
-         multicast(s,multi);
+         multicast(socket,multi);
 
          
       }
@@ -296,10 +262,23 @@ int main(int argc, char *argv[]){
 
          TAILQ_INSERT_TAIL(&message_head,item,entries);
 
+         /*
+            Send acknowledgement back to the client that message has been received and put in the queue
+          
+         */
+
+        char ack[BUFLEN] = "SEQ#MSG#ACK";
+
+        if((sendto(s,ack,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
+       {
+          perror("Acknowledgement Error");
+          exit(-1);
+       }
+         
+          
 
 
-
-      }
+     }
 
 
    /* Traverse the tail queue forward. */
@@ -310,11 +289,84 @@ int main(int argc, char *argv[]){
         // TAILQ_FOREACH(item, &message_head, entries) {
         //         printf("%d %s \n",item->seq_id,item->msg);
         // }
+ 
+   }
+
+}
 
 
-   
+void* message_multicasting()
+{
+  while(1)
+  {
+    if(!TAILQ_EMPTY(&message_head))
+    {
+
+    }
+  }
+}
+
+int main(int argc, char *argv[]){
+   struct sockaddr_in server;
+   int s;
+    
+   if((s = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
+      perror("Socket error");
+      exit(-1);
+   }
+
+   server.sin_family = AF_INET;
+   server.sin_port = htons(PORT);
+   server.sin_addr.s_addr = htonl(INADDR_ANY);
+
+   if(bind(s, (struct sockaddr*)&server, sizeof(server)) < 0){
+      perror("Bind error");
+      exit(-1);
    }
 
 
+   /*
+  
+         BROADCAST IP and PORT to all clients after winning election and declare leader
+         SEQ#EA#IP#PORT
+
+   */
+
+   char win_broadcast[BUFLEN]="SEQ#EA#";
+   char tmp[BUFLEN];
+   const char* my_ip_addr = get_ip_address();
+   strcat(win_broadcast,my_ip_addr);
+   strcat(win_broadcast,"#");
+   sprintf(tmp,"%d",PORT);
+   strcat(win_broadcast,tmp);
+
+   multicast(s,win_broadcast);
+
+
+   /* Initialize the tail queue */
+   TAILQ_INIT(&message_head);
+
+
+   /*
+
+    Creating two threads to handle message receiving and multicasting simultaneously
+
+   */
+
+   pthread_t p1,p2;
+
+  if(pthread_create(&p1, NULL, message_receiving, (void *)s))
+    {
+    printf("message_receiving thread failed \n");
+    exit(-1);
+    }
+    
+
+  if(pthread_create(&p2, NULL, message_multicasting, NULL))
+    {
+    printf("message_multicasting thread failed \n");
+    exit(-1);
+    }
+  
 
 }
