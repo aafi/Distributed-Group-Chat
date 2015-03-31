@@ -13,5 +13,8 @@ When client sends message:
 
 What sequencer is expecting: Message#ClientID#MsgID#Message
 
+Sequencer Acknowledgement (Message has been received and put on a queue):
+SEQ#MSG#ACK
+
 What sequencer will return:
 1. SEQ#GlobalSeqID#ClientID#MsgID#Message 				[MULTICAST]						
