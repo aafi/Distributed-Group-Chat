@@ -110,11 +110,11 @@ void request_to_join(int soc, const char* my_ip_addr){
 
 	if (strcmp(join_details[0], "SUCCESS") == 0){
 		client_id = atoi(join_details[1]);
-		// if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
-		// 	perror("Error: Receiving message failed \n");
-		// } else {
-		// 	printf("%s\n", recvBuff);
-		// }
+		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
+			perror("Error: Receiving message failed \n");
+		} else {
+			printf("%s\n", recvBuff);
+		}
 	} else {
 		printf("Failed to join chat\n");
 		exit(-1);
@@ -206,8 +206,6 @@ int main(int argc, char* argv[]){
 			}
 			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 				perror("ERROR: Receiving message failed \n");
-			} else {
-				// fprintf(stderr, "%s \n", recvBuff);		// JOINLEADER
 			}
 
 			char* leader_details[MAXSIZE];
@@ -220,8 +218,6 @@ int main(int argc, char* argv[]){
 			request_to_join(soc, my_ip_addr);
 			/*
 			TODO:
-			- Receive appropriate reply from sequencer
-			- Update own client id
 			- Update client list structure
 			*/
 		}
