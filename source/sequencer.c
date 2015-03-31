@@ -60,10 +60,10 @@ void multicast(int socket,char * msg)
       {
          struct sockaddr_in clnt;
          clnt.sin_family = AF_INET;
-         clnt.sin_port = client_list[idx].port;
+         clnt.sin_port = htons(client_list[idx].port);
          clnt.sin_addr.s_addr = inet_addr(client_list[idx].ip);
 
-         printf("%s %d %s \n",msg,client_list[idx].port,client_list[idx].ip);
+         //printf("%s %d %s \n",msg,client_list[idx].port,client_list[idx].ip);
          if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&clnt, sizeof(clnt))) < 0)
          {
             perror("Broadcast Error");
@@ -248,9 +248,10 @@ int main(int argc, char *argv[]){
             }
 
          }
-         // printf("%s \n",multi);
+         
          multicast(s,multi);
 
+         
       }
 
       else if (strcmp("MESSAGE",token)==0)
