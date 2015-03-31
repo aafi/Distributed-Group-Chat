@@ -256,17 +256,21 @@ int main(int argc, char *argv[]){
 
       else if (strcmp("MESSAGE",token)==0)
       {
+         int i = 0;
          while(token!=NULL)
          {  
-            int i = 0;
+            
             token = strtok(NULL,"#");
             tok[i] = token;
             i++;
          }
 
          struct message *item;
+        //printf("before malloc \n");
          item = malloc(sizeof(*item));
+       // printf("after malloc \n");
          item->client_id = atoi(tok[0]);
+        // printf("%d\n", item->client_id);
          item->msg_id = atoi(tok[1]);
          strcpy(item->msg,tok[2]);
          item->seq_id = msg_seq_id++;
@@ -299,22 +303,16 @@ int main(int argc, char *argv[]){
 
 
    /* Traverse the tail queue forward. */
-        printf("Forward traversal: ");
+        // printf("Forward traversal: \n");
 
-        struct message *item;
+        // struct message *item;
 
-        TAILQ_FOREACH(item, &message_head, entries) {
-                printf("%d %s \n",item->seq_id,item->msg);
-        }
+        // TAILQ_FOREACH(item, &message_head, entries) {
+        //         printf("%d %s \n",item->seq_id,item->msg);
+        // }
 
 
-   //MULTICAST PART ----- DO IT
-      // int k = 0;
-      // for (k;k<MAX;k++)
-      // {
-
-      // }
-
+   
    }
 
 
