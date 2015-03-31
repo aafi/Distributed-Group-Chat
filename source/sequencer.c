@@ -246,6 +246,8 @@ int main(int argc, char *argv[]){
 
          }
 
+         multicast(s,multi);
+
       }
 
       else if (strcmp("MESSAGE",token)==0)
