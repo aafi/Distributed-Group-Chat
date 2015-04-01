@@ -124,7 +124,7 @@ On FAILURE, the client exits
 The SUCCESS message is formatted as: SUCCESS#client_id where the client_id is assigned to the new client by the leader
 The client now waits for a multicast message from the leader, this message is used to update the list of existing clients in the system.
 */
-void request_to_join(int soc, const char* my_ip_addr){
+void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 	// INITIATE COMMUNICATION WITH THE LEADER
 	struct sockaddr_in serv_addr;
@@ -143,6 +143,8 @@ void request_to_join(int soc, const char* my_ip_addr){
     char temp[MAXSIZE];
     sprintf(temp, "%d", PORT);
     strcat(sendBuff, temp);
+    strcat(sendBuff, DELIMITER);
+    strcat(sendBuff, client_name);
 
     if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
 		perror("Could not send message to Sequencer\n");
@@ -226,7 +228,7 @@ int main(int argc, char* argv[]){
 			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], my_ip_addr, PORT);
 			printf("Waiting for others to join:\n");
 
-			request_to_join(soc, my_ip_addr);
+			request_to_join(soc, my_ip_addr, argv[1]);
 		} else if(argc == 4){	
 			/*
 			JOIN an existing chat conversation
@@ -268,7 +270,7 @@ int main(int argc, char* argv[]){
 			strcpy(leader.ip_addr, leader_details[1]);
 			strcpy(leader.port, leader_details[2]);
 
-			request_to_join(soc, my_ip_addr);
+			request_to_join(soc, my_ip_addr, argv[1]);
 		}
 	}
 
@@ -294,7 +296,7 @@ void* housekeeping(int soc){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
-			fprintf(stderr, "%s\n", recvBuff);
+			// fprintf(stderr, "%s\n", recvBuff);
 		}
 
 		char* message[MAXSIZE];
@@ -315,8 +317,15 @@ void* housekeeping(int soc){
 		} else if(strcmp(messageType, "MESSAGE") == 0){
 			//Handle displaying of message
 		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
-			if (strcmp(message[1], "CLIENTINFO") == 0){
+			char seq_message_type[MAXSIZE];
+			strcpy(seq_message_type, message[1]);
+			if (strcmp(seq_message_type, "CLIENTINFO") == 0){
 				update_client_list(message);
+			} else if (strcmp(seq_message_type, "ACK") == 0){
+				// Acknowledgement received 
+				// IF ACKNOWLEDGEMENTS ARE NOT RECEIVED, AFTER A TIMEOUT, RESEND THE MESSAGE
+
+				//THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
 			}
 		}
 	} // end of while(1)
