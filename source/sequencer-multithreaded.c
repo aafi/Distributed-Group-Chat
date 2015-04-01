@@ -76,6 +76,19 @@ void multicast(int socket,char * msg)
    }
 }
 
+int count_clients()
+{
+  int num_client = 0;
+  int idx = 0;
+  for(idx;idx<MAX;idx++)
+  {
+    if(id[idx]==1)
+      num_client++;
+  }
+
+  return num_client;
+
+}
 
 
 int requestid(char * ip, int port)
@@ -140,15 +153,14 @@ const char* get_ip_address(){
 }
 
 
-void* message_receiving(void *s)
+void* message_receiving(int s)
 {
   char * tok[BUFLEN];
   struct sockaddr_in client;
   int n, len = sizeof(client);
   char buf[BUFLEN],reply[BUFLEN];
-  char * tok[BUFLEN];
   const char * temp;
-  int socket = (int)s; 
+  int socket = s; 
 
   while(1)
    {
@@ -194,8 +206,12 @@ void* message_receiving(void *s)
             exit(-1);
          }
 
-         char multi[BUFLEN] = "SEQ#CLIENTINFO";
+         char multi[BUFLEN] = "SEQ#CLIENTINFO#";
          char temp[BUFLEN];
+         int num_client = count_clients();
+         sprintf(temp,"%d",num_client);
+         strcat(multi,temp);
+
 
          int d = 0;
          for(d;d<MAX;d++)
@@ -269,42 +285,127 @@ void* message_receiving(void *s)
 
         char ack[BUFLEN] = "SEQ#MSG#ACK";
 
-        if((sendto(s,ack,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
+        if((sendto(socket,ack,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
        {
           perror("Acknowledgement Error");
           exit(-1);
        }
-         
-          
-
-
+   
      }
 
-
-   /* Traverse the tail queue forward. */
-        // printf("Forward traversal: \n");
-
-        // struct message *item;
-
-        // TAILQ_FOREACH(item, &message_head, entries) {
-        //         printf("%d %s \n",item->seq_id,item->msg);
-        // }
- 
    }
 
 }
 
 
-void* message_multicasting()
+void* message_multicasting(int s)
 {
+  int socket = s;
   while(1)
   {
     if(!TAILQ_EMPTY(&message_head))
     {
+      struct message *item;
+      TAILQ_FOREACH(item, &message_head, entries)
+      {
+          int idx = 0, flag = 0;
+          for(idx;idx<MAX;idx++)
+          {
+            if(id[idx]!=0)
+            {
+              /*
+              Finding the right client structure
+              */
 
+              if(item->client_id == client_list[idx].client_id)
+              {
+                  char msg[BUFLEN] = "MSG#";
+                  char temp[BUFLEN];
+                  sprintf(temp,"%d",item->seq_id);
+                  strcat(msg,temp);
+                  strcat(msg,"#");
+                  sprintf(temp,"%d",item->client_id);
+                  strcat(msg,temp);
+                  strcat(msg,"#");
+                  sprintf(temp,"%d",item->msg_id);
+                  strcat(msg,temp);
+                  strcat(msg,"#");
+                  strcat(msg,item->msg);
+
+              /*
+              CHECK IF THE MESSAGE AT THE TOP IS THE ONE TO BE SENT NEXT
+              */
+
+                int next_msg = client_list[idx].last_msg_id+1;
+                if(item->msg_id == next_msg)
+                {
+                  
+                  multicast(socket,msg);
+                  TAILQ_REMOVE(&message_head,item,entries);
+                  free(item);
+                  flag = 1;
+                }
+
+                /*
+                TRAVERSE THROUGH THE LIST TO FIND IF THE NEXT MESSAGE TO BE SENT EXISTS
+                */
+
+                else
+                { 
+                  struct message *next;
+                  TAILQ_FOREACH(next, &message_head, entries)
+                  {
+                    if(next->msg_id == next_msg)
+                    {
+                      char msg_next[BUFLEN] = "MSG#";
+                      char temp[BUFLEN];
+                      sprintf(temp,"%d",next->seq_id);
+                      strcat(msg_next,temp);
+                      strcat(msg_next,"#");
+                      sprintf(temp,"%d",next->client_id);
+                      strcat(msg_next,temp);
+                      strcat(msg_next,"#");
+                      sprintf(temp,"%d",next->msg_id);
+                      strcat(msg_next,temp);
+                      strcat(msg_next,"#");
+                      strcat(msg_next,next->msg);
+                      multicast(socket,msg_next);
+                      TAILQ_REMOVE(&message_head,next,entries);
+                      free(next);
+                      multicast(socket,msg);
+                      TAILQ_REMOVE(&message_head,item,entries);
+                      free(item);
+                      flag = 1;
+                      break;          //IS THIS NECESSARY?
+
+                    }
+                  }
+                }
+
+                /*
+                IF NEXT MESSAGE TO BE SENT IS NOT FOUND IN QUEUE, PUSH TOP MESSAGE TO END OF QUEUE
+                */
+
+                if(flag == 0)
+                { 
+                  struct message *last;
+                  last->seq_id = item->seq_id;
+                  last->client_id = item->client_id;
+                  last->msg_id = item->msg_id;
+                  strcpy(last->msg,item->msg);
+                  TAILQ_INSERT_TAIL(&message_head,last,entries);
+                  TAILQ_REMOVE(&message_head,item,entries);
+                  free(item);
+                }
+              } // end of if (finding the right client structure)
+            }
+          }   // end of for (looping through id array to find the existing clients)
+
+      } // end of foreach (traversing through the message queue)
     }
-  }
+  } // end of while
 }
+
 
 int main(int argc, char *argv[]){
    struct sockaddr_in server;
@@ -355,14 +456,14 @@ int main(int argc, char *argv[]){
 
    pthread_t p1,p2;
 
-  if(pthread_create(&p1, NULL, message_receiving, (void *)s))
+  if(pthread_create(&p1, NULL, message_receiving, s))
     {
     printf("message_receiving thread failed \n");
     exit(-1);
     }
     
 
-  if(pthread_create(&p2, NULL, message_multicasting, NULL))
+  if(pthread_create(&p2, NULL, message_multicasting, s))
     {
     printf("message_multicasting thread failed \n");
     exit(-1);
