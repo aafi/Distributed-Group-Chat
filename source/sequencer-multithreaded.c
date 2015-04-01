@@ -32,6 +32,7 @@ struct message{
    int client_id;
    int msg_id;
    char msg[BUFLEN];
+   int ack_vector[MAX] = {0};
 
    /*
          * This holds the pointers to the next and previous entries in
@@ -155,6 +156,33 @@ const char* get_ip_address(){
    return addr_info[1];
 }
 
+// void msg_removal(int s)
+// {
+//   int idx;
+//   struct message *item;
+//   TAILQ_FOREACH(item, &message_head, entries)
+//   {
+//     int flag = 0;
+//     for(idx=0;idx<MAX;idx++)
+//     {
+//       if(id[idx]!=0)
+//       {
+//         if(item->ack_vector[idx] != 1)
+//           flag = 1; 
+//       }
+//     }
+
+//     /* This means all the clients have received the message */
+//     if(flag == 0)
+//     { 
+
+
+//       TAILQ_REMOVE(&message_head,item,entries);
+//       free(item);
+//     }
+//   }
+// }
+
 
 void* message_receiving(int s)
 {
@@ -200,6 +228,9 @@ void* message_receiving(int s)
             char tmp[BUFLEN];
             sprintf(tmp, "%d", seq);
             strcpy(reply,"SUCCESS#");
+            strcat(reply,tmp);
+            strcat(reply,"#");
+            sprintf(tmp, "%d", msg_seq_id);
             strcat(reply,tmp);
          }
 
@@ -318,10 +349,14 @@ void* message_multicasting(int s)
   while(1)
   {
     if(!TAILQ_EMPTY(&message_head))
-    {
+    {         
       struct message *item;
       TAILQ_FOREACH(item, &message_head, entries)
       {
+
+          /* Removes the messages from the queue that have been received by all the clients */
+         // msg_removal(socket);  
+                
           int idx = 0, flag = 0;
           for(idx;idx<MAX;idx++)
           {
@@ -357,8 +392,6 @@ void* message_multicasting(int s)
                   //printf("Message to be sent found at the top of the queue \n");
                   multicast(socket,msg);
                   client_list[idx].last_msg_id = item->msg_id;
-                  TAILQ_REMOVE(&message_head,item,entries);
-                  free(item);
                   flag = 1;
                 }
 
@@ -387,12 +420,8 @@ void* message_multicasting(int s)
                       strcat(msg_next,next->msg);
                       multicast(socket,msg_next);
                       client_list[idx].last_msg_id = next->msg_id;
-                      TAILQ_REMOVE(&message_head,next,entries);
-                      free(next);
                       multicast(socket,msg);
                       client_list[idx].last_msg_id = item->msg_id;
-                      TAILQ_REMOVE(&message_head,item,entries);
-                      free(item);
                       flag = 1;
                       //break;          //IS THIS NECESSARY?
 
