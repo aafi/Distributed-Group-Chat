@@ -14,13 +14,27 @@
 #define PORT 1705
 #define MAXSIZE 1024
 #define DELIMITER "#"
+#define MAX 15
 
 struct Leader{
 	char ip_addr[MAXSIZE];
 	char port[MAXSIZE];
 }leader;
 
+struct client{
+   char ip[MAXSIZE];
+   int port;
+   int client_id;
+   int last_msg_id;     	//id of the last message sent by the client
+  // int leader;          	//by default is 0. The client which is the leader will have 1
+}client_list[MAX];
+
+int total_clients = 0;
 int client_id = 0;
+
+int last_global_seq_id = 0;		// The sequence id of the last message received from the sequencer/leader
+
+// int my_seq_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 
 /*
 method: detokenize
@@ -76,6 +90,40 @@ const char* get_ip_address(){
 	return addr_info[1];
 }
 
+/*
+method: update_client_list
+@all_client_details: char* [] - takes the detokenized message received from the leader containing the list of client info
+
+This method is responsible for updating the client_list array with the new information received from the sequencer.
+*/
+void update_client_list(char* all_client_details[]){
+	int i = 0;
+	int j = 0;
+	total_clients = atoi(all_client_details[2]);
+	for (i = 0; i < total_clients; ++i){
+		j = (i + 1) * 3;
+		struct client clnt;
+
+		strcpy(clnt.ip, all_client_details[j]);
+		clnt.port = atoi(all_client_details[j + 1]);
+		clnt.client_id = atoi(all_client_details[j + 2]);
+		client_list[i] = clnt;
+	}
+}
+
+/*
+method: request_to_join
+@soc: int - the socket that the current client is listening to
+@my_ip_addr: const char* - string containing the ip_address of the current client
+
+This method is responsible for handling the initial joining of a new client to the chat.
+The client first sends the following information to the leader: REQUEST#my_ip_address#my_port_no
+The leader replies with either a SUCCESS or FAILURE message
+
+On FAILURE, the client exits
+The SUCCESS message is formatted as: SUCCESS#client_id where the client_id is assigned to the new client by the leader
+The client now waits for a multicast message from the leader, this message is used to update the list of existing clients in the system.
+*/
 void request_to_join(int soc, const char* my_ip_addr){
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 	// INITIATE COMMUNICATION WITH THE LEADER
@@ -113,7 +161,12 @@ void request_to_join(int soc, const char* my_ip_addr){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
-			printf("%s\n", recvBuff); 	//TODO put it in a god damn structure
+			// printf("%s\n", recvBuff); 	//TODO put it in a god damn structure
+
+			char* all_client_details[MAXSIZE];
+			detokenize(recvBuff, all_client_details, DELIMITER);
+
+			update_client_list(all_client_details);
 		}
 	} else {
 		printf("Failed to join chat\n");
@@ -216,10 +269,6 @@ int main(int argc, char* argv[]){
 			strcpy(leader.port, leader_details[2]);
 
 			request_to_join(soc, my_ip_addr);
-			/*
-			TODO:
-			- Update client list structure
-			*/
 		}
 	}
 
@@ -263,12 +312,18 @@ void* housekeeping(int soc){
 			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 				perror("ERROR: Sending message failed \n");
 			}
+		} else if(strcmp(messageType, "MESSAGE") == 0){
+			//Handle displaying of message
+		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
+			if (strcmp(message[1], "CLIENTINFO") == 0){
+				update_client_list(message);
+			}
 		}
 	} // end of while(1)
 }
 
 void* messenger(int soc){
-	int msg_id = 0;
+	int msg_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 	char message[MAXSIZE];
 	char user_input[MAXSIZE];
 	while(1){
