@@ -20,6 +20,7 @@ int msg_seq_id = 0;
 
 struct client{
    char ip[BUFLEN];
+   char name[BUFLEN];
    int port;
    int client_id;
    int last_msg_id;     //id of the last message sent by the client
@@ -92,7 +93,7 @@ int count_clients()
 }
 
 
-int requestid(char * ip, int port)
+int requestid(char * ip, int port, char * name)
 {
    int i;
    for(i=0;i<MAX;i++)
@@ -102,6 +103,7 @@ int requestid(char * ip, int port)
          struct client c;
          strcpy(c.ip,ip);
          c.port = port;
+         strcpy(c.name,name);
          c.last_msg_id = -1;
          c.client_id = i;
         // c.leader = 0;
@@ -187,7 +189,7 @@ void* message_receiving(int s)
             i++;
          }
 
-         seq = requestid(tok[0],atoi(tok[1]));   // Gets back a sequence number for the new client
+         seq = requestid(tok[0],atoi(tok[1]),tok[2]);   // Gets back a sequence number for the new client
 
          if(seq == -1)
          {
@@ -207,7 +209,7 @@ void* message_receiving(int s)
             exit(-1);
          }
 
-         char multi[BUFLEN] = "SEQ#CLIENTINFO#";
+         char multi[BUFLEN] = "SEQ#CLIENT#INFO#";
          char temp[BUFLEN];
          int num_client = count_clients();
          sprintf(temp,"%d",num_client);
@@ -227,6 +229,8 @@ void* message_receiving(int s)
                strcat(multi,"#");
                sprintf(temp,"%d",client_list[d].client_id);
                strcat(multi,temp);
+               strcat(multi,"#");
+               strcat(multi,client_list[d].name);
 
             }
 
