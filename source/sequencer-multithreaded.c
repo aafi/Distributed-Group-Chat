@@ -102,7 +102,7 @@ int requestid(char * ip, int port)
          struct client c;
          strcpy(c.ip,ip);
          c.port = port;
-         c.last_msg_id = 0;
+         c.last_msg_id = -1;
          c.client_id = i;
         // c.leader = 0;
          client_list[i] = c;
@@ -288,7 +288,9 @@ void* message_receiving(int s)
           
          */
 
-        char ack[BUFLEN] = "SEQ#MSG#ACK";
+        char ack[BUFLEN] = "SEQ#ACK#";
+        strcat(ack,tok[1]);
+
 
         if((sendto(socket,ack,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
        {
@@ -308,6 +310,7 @@ void* message_receiving(int s)
 void* message_multicasting(int s)
 {
   int socket = s;
+  //printf("in multicasting thread \n");
   while(1)
   {
     if(!TAILQ_EMPTY(&message_head))
@@ -338,6 +341,7 @@ void* message_multicasting(int s)
                   strcat(msg,temp);
                   strcat(msg,"#");
                   strcat(msg,item->msg);
+                  //printf("Message to be sent : %s \n",msg);
 
               /*
               CHECK IF THE MESSAGE AT THE TOP IS THE ONE TO BE SENT NEXT
@@ -346,7 +350,7 @@ void* message_multicasting(int s)
                 int next_msg = client_list[idx].last_msg_id+1;
                 if(item->msg_id == next_msg)
                 {
-                  
+                  //printf("Message to be sent found at the top of the queue \n");
                   multicast(socket,msg);
                   client_list[idx].last_msg_id = item->msg_id;
                   TAILQ_REMOVE(&message_head,item,entries);
