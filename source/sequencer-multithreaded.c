@@ -511,7 +511,7 @@ int main(int argc, char *argv[]){
 
    */
 
-   pthread_t p1,p2,p3;
+  pthread_t p1,p2,p3;
 
   if(pthread_create(&p1, NULL, message_receiving, s))
     {
@@ -531,5 +531,9 @@ int main(int argc, char *argv[]){
     printf("PINGING thread failed \n");
     exit(-1);
     }
+
+  pthread_join(p1,NULL);
+  pthread_join(p2,NULL);
+  pthread_join(p3,NULL);
 
 }
