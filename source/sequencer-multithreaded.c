@@ -10,6 +10,7 @@
 
 
 #define PORT 5678
+#define PORT_PING 5679
 #define NPACK 10
 #define BUFLEN 1024
 #define MAX 15
@@ -257,15 +258,19 @@ void* message_receiving(int s)
          strcpy(item->msg,tok[2]);
          item->seq_id = msg_seq_id++;
 
-         int idx = 0;
-         for(idx;idx<MAX;idx++)
-         {
-            if(id[idx]!=0)
-            {
-               if(client_list[idx].client_id == atoi(tok[0]))
-                  client_list[idx].last_msg_id = atoi(tok[1]);
-            }
-         }
+         /*
+            UPDATING LAST MESSAGE ID AS THE LAST MESSAGE ID RECEIVED FROM A CLIENT
+         */
+
+         // int idx = 0;
+         // for(idx;idx<MAX;idx++)
+         // {
+         //    if(id[idx]!=0)
+         //    {
+         //       if(client_list[idx].client_id == atoi(tok[0]))
+         //          client_list[idx].last_msg_id = atoi(tok[1]);
+         //    }
+         // }
 
          /*
                  * Add our item to the end of tail queue. The first
@@ -296,6 +301,8 @@ void* message_receiving(int s)
    }
 
 }
+
+
 
 
 void* message_multicasting(int s)
@@ -341,6 +348,7 @@ void* message_multicasting(int s)
                 {
                   
                   multicast(socket,msg);
+                  client_list[idx].last_msg_id = item->msg_id;
                   TAILQ_REMOVE(&message_head,item,entries);
                   free(item);
                   flag = 1;
@@ -370,13 +378,15 @@ void* message_multicasting(int s)
                       strcat(msg_next,"#");
                       strcat(msg_next,next->msg);
                       multicast(socket,msg_next);
+                      client_list[idx].last_msg_id = next->msg_id;
                       TAILQ_REMOVE(&message_head,next,entries);
                       free(next);
                       multicast(socket,msg);
+                      client_list[idx].last_msg_id = item->msg_id;
                       TAILQ_REMOVE(&message_head,item,entries);
                       free(item);
                       flag = 1;
-                      break;          //IS THIS NECESSARY?
+                      //break;          //IS THIS NECESSARY?
 
                     }
                   }
@@ -404,6 +414,53 @@ void* message_multicasting(int s)
       } // end of foreach (traversing through the message queue)
     }
   } // end of while
+}
+
+
+void* message_pinging()
+{
+
+    /*
+        RESPOND TO THE ELECTION ALGORITHM PINGING IT
+     */
+
+  struct sockaddr_in seq,client;
+  int s, n, len = sizeof(client);
+  char buf[BUFLEN], ping_back[BUFLEN] = "I AM ALIVE";;
+    
+  if((s = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
+      perror("Socket error");
+      exit(-1);
+   }
+
+   seq.sin_family = AF_INET;
+   seq.sin_port = htons(PORT_PING);
+   seq.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  if(bind(s, (struct sockaddr*)&seq, sizeof(seq)) < 0){
+      perror("Bind error");
+      exit(-1);
+   }
+
+  while(1)
+  {
+    if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client, &len)) < 0)
+      {
+         perror("Receive Error");
+         exit(-1);
+      }
+
+    if(strcmp("PING",buf)==0)
+     {
+       
+       if((sendto(s,ping_back,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
+       {
+          perror("Ping Back Error");
+          exit(-1);
+       }
+
+     }
+   }
 }
 
 
@@ -454,7 +511,7 @@ int main(int argc, char *argv[]){
 
    */
 
-   pthread_t p1,p2;
+   pthread_t p1,p2,p3;
 
   if(pthread_create(&p1, NULL, message_receiving, s))
     {
@@ -469,5 +526,10 @@ int main(int argc, char *argv[]){
     exit(-1);
     }
   
+  if(pthread_create(&p3, NULL, message_pinging, NULL))
+    {
+    printf("PINGING thread failed \n");
+    exit(-1);
+    }
 
 }

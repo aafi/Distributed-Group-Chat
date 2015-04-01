@@ -29,3 +29,8 @@ Election Algorithm Messages:
 
 1. "ELECTION" - To tell clients to block and wait for new leader, and to tell elections to stop pinging and participate in election.
 2. "CLIENT_ID#client_id" - ID of the client trying to be the leader.
+
+
+
+NOTE!!!!!!!
+Sequencer is listening on port 5679 for pings from election algorithm.
