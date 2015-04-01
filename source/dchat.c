@@ -25,6 +25,7 @@ struct client{
    char ip[MAXSIZE];
    int port;
    int client_id;
+   char name[MAXSIZE];
    int last_msg_id;     	//id of the last message sent by the client
   // int leader;          	//by default is 0. The client which is the leader will have 1
 }client_list[MAX];
@@ -32,7 +33,7 @@ struct client{
 int total_clients = 0;
 int client_id = 0;
 
-int last_global_seq_id = 0;		// The sequence id of the last message received from the sequencer/leader
+int last_global_seq_id = -1;	// The sequence id of the last message received from the sequencer/leader
 
 // int my_seq_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 
@@ -99,14 +100,15 @@ This method is responsible for updating the client_list array with the new infor
 void update_client_list(char* all_client_details[]){
 	int i = 0;
 	int j = 0;
-	total_clients = atoi(all_client_details[2]);
+	total_clients = atoi(all_client_details[3]);
 	for (i = 0; i < total_clients; ++i){
-		j = (i + 1) * 3;
+		j = (i + 1) * 4;
 		struct client clnt;
 
 		strcpy(clnt.ip, all_client_details[j]);
 		clnt.port = atoi(all_client_details[j + 1]);
 		clnt.client_id = atoi(all_client_details[j + 2]);
+		strcpy(clnt.name, all_client_details[j + 3]);
 		client_list[i] = clnt;
 	}
 }
@@ -271,6 +273,7 @@ int main(int argc, char* argv[]){
 			strcpy(leader.port, leader_details[2]);
 
 			request_to_join(soc, my_ip_addr, argv[1]);
+			printf("%s joined the chat\n", argv[1]);
 		}
 	}
 
@@ -314,18 +317,35 @@ void* housekeeping(int soc){
 			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 				perror("ERROR: Sending message failed \n");
 			}
-		} else if(strcmp(messageType, "MESSAGE") == 0){
+		} else if(strcmp(messageType, "MSG") == 0){
 			//Handle displaying of message
+			// printf("WTF:%s", message[4]);
+			char client_name[MAXSIZE];
+			int clientId = atoi(message[2]);
+			//find the client name:
+			int i = 0;
+			for(i = 0; i < total_clients; ++i){
+				if (clientId == client_list[i].client_id){
+					strcpy(client_name, client_list[i].name);
+					break;
+				}
+			}
+			int globalSeqNo = atoi(message[1]);
+			if (globalSeqNo == last_global_seq_id + 1){
+				printf("%s: %s", client_name, message[4]);
+				last_global_seq_id = globalSeqNo;
+			}
 		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
 			char seq_message_type[MAXSIZE];
 			strcpy(seq_message_type, message[1]);
-			if (strcmp(seq_message_type, "CLIENTINFO") == 0){
+			if (strcmp(seq_message_type, "CLIENT") == 0){
 				update_client_list(message);
 			} else if (strcmp(seq_message_type, "ACK") == 0){
+				memset(recvBuff, 0, MAXSIZE);
 				// Acknowledgement received 
 				// IF ACKNOWLEDGEMENTS ARE NOT RECEIVED, AFTER A TIMEOUT, RESEND THE MESSAGE
 
-				//THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
+				// THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
 			}
 		}
 	} // end of while(1)
@@ -336,7 +356,7 @@ void* messenger(int soc){
 	char message[MAXSIZE];
 	char user_input[MAXSIZE];
 	while(1){
-		printf("ME: ");
+		// printf("ME: ");
 		memset(user_input, 0, MAXSIZE);
 		fgets(user_input, MAXSIZE, stdin);
 
