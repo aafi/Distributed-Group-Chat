@@ -329,7 +329,7 @@ void* housekeeping(int soc){
 				}
 			}
 			int globalSeqNo = atoi(message[1]);
-			if (globalSeqNo == last_global_seq_id + 1){
+			if (globalSeqNo == last_global_seq_id){
 				printf("%s: %s", client_name, message[4]);
 				last_global_seq_id = globalSeqNo;
 			}
