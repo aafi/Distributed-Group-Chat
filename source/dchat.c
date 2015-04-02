@@ -331,7 +331,7 @@ void* housekeeping(int soc){
 			int globalSeqNo = atoi(message[1]);
 			if (globalSeqNo == last_global_seq_id){
 				printf("%s: %s", client_name, message[4]);
-				last_global_seq_id = globalSeqNo;
+				last_global_seq_id = globalSeqNo + 1;
 			}
 
 			// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
