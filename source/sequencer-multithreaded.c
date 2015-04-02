@@ -31,7 +31,7 @@ struct message{
    int client_id;
    int msg_id;
    char msg[BUFLEN];
-  // int ack_vector[MAX] = {0};
+   int ack_vector[MAX] = {0};
 
    /*
          * This holds the pointers to the next and previous entries in
