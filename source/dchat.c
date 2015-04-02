@@ -166,8 +166,6 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
-			// printf("%s\n", recvBuff); 	//TODO put it in a god damn structure
-
 			char* all_client_details[MAXSIZE];
 			detokenize(recvBuff, all_client_details, DELIMITER);
 
@@ -316,11 +314,10 @@ void* housekeeping(int soc){
 			strcat(sendBuff, leader.port);
 
 			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-				perror("ERROR: Sending message failed \n");
+				perror("ERROR: Sending message failed for JOINLEADER \n");
 			}
 		} else if(strcmp(messageType, "MSG") == 0){
 			//Handle displaying of message
-			// printf("WTF:%s", message[4]);
 			char client_name[MAXSIZE];
 			int clientId = atoi(message[2]);
 			//find the client name:
@@ -336,9 +333,21 @@ void* housekeeping(int soc){
 				printf("%s: %s", client_name, message[4]);
 				last_global_seq_id = globalSeqNo;
 			}
+
+			// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
+			strcpy(sendBuff, "ACK");
+			strcat(sendBuff, DELIMITER);
+			strcat(sendBuff, message[2]);
+			strcat(sendBuff, DELIMITER);
+			strcat(sendBuff, message[1]);
+
+			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+				perror("ERROR: Sending message failed \n");
+			}
 		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
 			char seq_message_type[MAXSIZE];
 			strcpy(seq_message_type, message[1]);
+
 			if (strcmp(seq_message_type, "CLIENT") == 0){
 				update_client_list(message);
 			} else if (strcmp(seq_message_type, "ACK") == 0){
