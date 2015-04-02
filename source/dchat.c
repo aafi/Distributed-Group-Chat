@@ -291,7 +291,7 @@ void* housekeeping(int soc){
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 
 	struct sockaddr_in other_user_addr;
-	int other_addr_size;
+	int other_addr_size = sizeof(other_user_addr);
 
 	while(1){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
 		
@@ -342,7 +342,7 @@ void* housekeeping(int soc){
 			strcat(sendBuff, message[1]);
 
 			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-				perror("ERROR: Sending message failed \n");
+				perror("ERROR: Sending message failed in ACK \n");
 			}
 		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
 			char seq_message_type[MAXSIZE];
