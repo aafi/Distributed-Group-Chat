@@ -66,7 +66,7 @@ void multicast(int socket,char * msg)
          clnt.sin_family = AF_INET;
          clnt.sin_port = htons(client_list[idx].port);
          clnt.sin_addr.s_addr = inet_addr(client_list[idx].ip);
-        printf("Inside multicast \n ");
+        //printf("Inside multicast \n ");
 
          //printf("%s %d %s \n",msg,client_list[idx].port,client_list[idx].ip);
          if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&clnt, sizeof(clnt))) < 0)
@@ -78,7 +78,7 @@ void multicast(int socket,char * msg)
 
       }
    }
-   printf("Done\n");
+  // printf("Done\n");
 }
 
 int count_clients()
@@ -353,7 +353,7 @@ void* message_receiving(int s)
 
      else if(strcmp("ACK",token) == 0)
      {
-         printf("inside acknowledgement: %s \n", buf );
+        // printf("inside acknowledgement: %s \n", buf );
          int i = 0;
          while(token!=NULL)
          {  
