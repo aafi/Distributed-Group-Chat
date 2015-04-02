@@ -199,6 +199,10 @@ void* message_receiving(int s)
             sprintf(tmp, "%d", seq);
             strcpy(reply,"SUCCESS#");
             strcat(reply,tmp);
+            strcat(reply,"#");
+            sprintf(tmp, "%d", msg_seq_id);
+            strcat(reply,tmp);
+
          }
 
          if((sendto(socket,reply,sizeof(reply),0,(struct sockaddr*)&client, sizeof(client))) < 0)    //send reply back
