@@ -56,7 +56,6 @@ TAILQ_HEAD(,message) message_head;
 void multicast(int socket,char * msg)
 {
    int idx = 0;
-   printf("Inside");
    for(idx;idx<MAX;idx++)
    {
       if(id[idx]!=0)
@@ -65,17 +64,12 @@ void multicast(int socket,char * msg)
          clnt.sin_family = AF_INET;
          clnt.sin_port = htons(client_list[idx].port);
          clnt.sin_addr.s_addr = inet_addr(client_list[idx].ip);
-         printf("Inside multicast");
 
          //printf("%s %d %s \n",msg,client_list[idx].port,client_list[idx].ip);
          if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&clnt, sizeof(clnt))) < 0)
          {
             perror("Broadcast Error");
             exit(-1);
-         }
-         else
-         {
-          printf("Message sent");
          }
          
          // printf("DONE \n");
@@ -234,9 +228,8 @@ void* message_receiving(int s)
             strcpy(reply,"SUCCESS#");
             strcat(reply,tmp);
             strcat(reply,"#");
-            char whatever[BUFLEN];
-            sprintf(whatever, "%d", msg_seq_id);
-            strcat(reply,whatever);
+            sprintf(tmp, "%d", msg_seq_id);
+            strcat(reply,tmp);
          }
 
          if((sendto(socket,reply,sizeof(reply),0,(struct sockaddr*)&client, sizeof(client))) < 0)    //send reply back
@@ -392,9 +385,8 @@ void* message_multicasting(int s)
                 int next_msg = client_list[idx].last_msg_id+1;
                 if(item->msg_id == next_msg)
                 {
-                  printf("Message to be sent found at the top of the queue \n");
+                  //printf("Message to be sent found at the top of the queue \n");
                   multicast(socket,msg);
-
                   client_list[idx].last_msg_id = item->msg_id;
                   flag = 1;
                 }
