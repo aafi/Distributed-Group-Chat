@@ -5,13 +5,12 @@ When new client is requesting ID:
 
 What sequencer is expecting: Request#IP#Port#client_name
 What sequencer will return :
-<<<<<<< HEAD
+
 1. SUCCESS#Client_Id#Global_Seq_No/FAILURE
 2. SEQ#CLIENT#INFO#Number_of_clients#Ip#Port#ClientID#ClientName#Ip#Port#ClientID#ClientName#.......................		[MULTICAST]
 =======
 1. Client ID/"Max Limit Reached"
 2. Seq#ClientInfo#Number_of_clients#Ip#Port#ClientID#Ip#Port#Client#.......................		[MULTICAST]
->>>>>>> origin/dev
 
 
 When client sends message:
@@ -19,15 +18,13 @@ When client sends message:
 What sequencer is expecting: Message#ClientID#MsgID#Message
 
 What sequencer will return:
-<<<<<<< HEAD
+
 1. SEQ#ACK#Msg_id										[Acknowledgement on receipt of message]
 2. MSG#GlobalSeqID#ClientID#MsgID#Message 				[MULTICAST]		
 3. SEQ#REM#Msg_id										[Removal of message from local queue]
 =======
 1. MSG#GlobalSeqID#ClientID#MsgID#Message 				[MULTICAST]		
 
-
->>>>>>> origin/dev
 
 
 Client Messages:
