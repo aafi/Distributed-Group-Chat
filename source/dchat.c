@@ -15,6 +15,7 @@
 #define MAXSIZE 1024
 #define DELIMITER "#"
 #define MAX 15
+#define SEQUENCER_PORT 5678
 
 struct Leader{
 	char ip_addr[MAXSIZE];
@@ -221,8 +222,7 @@ int main(int argc, char* argv[]){
 			// SET LEADER INFO TO ITS OWN IP_ADDRESS AND PORT NUMBER
 			strcpy(leader.ip_addr, my_ip_addr);
 			char temp[MAXSIZE];
-		    // sprintf(temp, "%d", PORT);
-		    sprintf(temp, "%d", 5678);
+		    sprintf(temp, "%d", SEQUENCER_PORT);
 			strcpy(leader.port, temp);
 
 			mode = "WAITING";
