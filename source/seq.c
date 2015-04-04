@@ -298,6 +298,13 @@ void* message_receiving(int s)
          }
          
          multicast(socket,multi);
+
+         char status[BUFLEN] = "SEQ#STATUS#";
+         char status_msg[BUFLEN];
+         sprintf(status_msg,"NOTICE %s joined on %s:%s",tok[2],tok[0],tok[1]);
+         strcat(status,status_msg);
+         multicast(socket,status);
+
        
       }
 
