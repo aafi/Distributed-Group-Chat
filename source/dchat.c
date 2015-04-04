@@ -233,10 +233,19 @@ int main(int argc, char* argv[]){
 			*/
 
 			// SET LEADER INFO TO ITS OWN IP_ADDRESS AND PORT NUMBER
-			strcpy(leader.ip_addr, my_ip_addr);
-			char temp[MAXSIZE];
-		    sprintf(temp, "%d", SEQUENCER_PORT);
-			strcpy(leader.port, temp);
+			struct sockaddr_in serv_addr;
+			int serv_addr_size = sizeof(serv_addr);
+			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
+				perror("ERROR: Receiving message failed \n");
+			} else
+				printf("%s\n", recvBuff);
+
+			char* seq_info[MAXSIZE];
+			detokenize(recvBuff, seq_info, DELIMITER);
+			strcpy(leader.ip_addr, seq_info[2]);
+			// char temp[MAXSIZE];
+		 //    sprintf(temp, "%d", SEQUENCER_PORT);
+			strcpy(leader.port, seq_info[3]);
 
 			mode = "WAITING";
 			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], my_ip_addr, PORT);
@@ -364,7 +373,7 @@ void* housekeeping(int soc){
 			if (strcmp(seq_message_type, "CLIENT") == 0){
 				update_client_list(message);
 			} else if (strcmp(seq_message_type, "ACK") == 0){
-				memset(recvBuff, 0, MAXSIZE);
+				// memset(recvBuff, 0, MAXSIZE);
 				// Acknowledgement received 
 				// IF ACKNOWLEDGEMENTS ARE NOT RECEIVED, AFTER A TIMEOUT, RESEND THE MESSAGE
 
@@ -390,6 +399,8 @@ void* housekeeping(int soc){
 						break;
 					}
 				}
+			} else if (strcmp(seq_message_type, "STATUS") == 0){
+				printf("%s\n", message[2]);
 			}
 		}
 	} // end of while(1)
