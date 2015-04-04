@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <sys/queue.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include <netdb.h>
@@ -27,9 +28,19 @@ struct client{
    int port;
    int client_id;
    char name[MAXSIZE];
-   int last_msg_id;     	//id of the last message sent by the client
-  // int leader;          	//by default is 0. The client which is the leader will have 1
 }client_list[MAX];
+
+/*
+Node structure for TAIL QUEUE
+*/
+struct node{
+	int msg_id;
+	char message[MAXSIZE];
+	int acknowledged;
+	TAILQ_ENTRY(node) entries;
+};
+
+TAILQ_HEAD(, node) queue_head;		// head of the queue
 
 int total_clients = 0;
 int client_id = 0;
@@ -184,11 +195,13 @@ int main(int argc, char* argv[]){
 	char* mode;
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 
+	TAILQ_INIT(&queue_head);		// Initialize TAILQ
+
 	void* housekeeping(int);
 	void* messenger(int);
 
 	if(argc < 2){	//INVALID ARGUMENTS TO THE PROGRAM
-		fprintf(stderr, "Invalid arguments. \nFormat: dchat USERNAME [IP-ADDR:PORT]\n");
+		fprintf(stderr, "Invalid arguments. \nFormat: dchat USERNAME [IP-ADDR PORT]\n");
 		exit(-1);
 	} else {		//RESPONSIBLE FOR CHECKING WHETHER THE CLIENT IS STARTING A NEW CHAT OR JOINING AN EXISTING ONE
 
@@ -343,7 +356,7 @@ void* housekeeping(int soc){
 
 			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 				perror("ERROR: Sending message failed in ACK \n");
-			}
+			} 
 		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
 			char seq_message_type[MAXSIZE];
 			strcpy(seq_message_type, message[1]);
@@ -356,6 +369,27 @@ void* housekeeping(int soc){
 				// IF ACKNOWLEDGEMENTS ARE NOT RECEIVED, AFTER A TIMEOUT, RESEND THE MESSAGE
 
 				// THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
+				int message_id = atoi(message[2]);
+				struct node *item;
+				TAILQ_FOREACH(item, &queue_head, entries){
+					if (item->msg_id == message_id){
+						item->acknowledged = 1;
+					}
+				}
+			} else if (strcmp(seq_message_type, "REM") == 0){
+				// Remove message from queue because sequencer has acknowledged receipt from all clients
+				// printf("Inside REMOVE\n");
+				struct node *item, *temp_item;
+				int message_id = atoi(message[2]);
+				for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
+					temp_item = TAILQ_NEXT(item, entries);
+
+					if(item->msg_id == message_id){
+						TAILQ_REMOVE(&queue_head, item, entries);
+						free(item);
+						break;
+					}
+				}
 			}
 		}
 	} // end of while(1)
@@ -395,5 +429,12 @@ void* messenger(int soc){
 			perror("Could not send message to Sequencer\n");
 			// exit(-1);
 		}
+
+		struct node *item;
+		item = malloc(sizeof(*item));
+		item->msg_id = msg_id - 1;
+		item->acknowledged = 0;
+		strcpy(item->message, user_input);
+		TAILQ_INSERT_TAIL(&queue_head, item, entries);
 	} // end of while(1)
 }
