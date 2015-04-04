@@ -158,19 +158,21 @@ const char* get_ip_address(){
    return addr_info[1];
 }
 
-int msg_removal(int s)
+void msg_removal(int s)
 {
+  
   int idx;
-  struct message *item;
-  TAILQ_FOREACH(item, &message_head, entries)
+  struct message *item, *tmp_item;
+  for(item = TAILQ_FIRST(&message_head);item!=NULL;item=tmp_item)
   {
+    tmp_item = TAILQ_NEXT(item,entries);
     int flag = 0;
     for(idx=0;idx<MAX;idx++)
     {
       if(item->ack_vector[idx] == 1)
           {
             flag = 1; 
-            return -1;
+            //return -1;
           }
     }
     
@@ -191,9 +193,10 @@ int msg_removal(int s)
             clnt.sin_port = htons(client_list[idx].port);
             clnt.sin_addr.s_addr = inet_addr(client_list[idx].ip);
             char msg[BUFLEN] = "SEQ#REM#",temp[BUFLEN];
-            sprintf(temp,"%s",item->msg_id);
+            sprintf(temp,"%d",item->msg_id);
             strcat(msg,temp);
         
+            //printf("Telling client to remove: %s\n", item->msg);
             if((sendto(s,msg,BUFLEN,0,(struct sockaddr *)&clnt, sizeof(clnt))) < 0)
             {
               perror("Send Error");
@@ -203,7 +206,10 @@ int msg_removal(int s)
         }
       }
 
-      return -2;
+     // printf("Message to be removed: %s \n",item->msg);
+      TAILQ_REMOVE(&message_head,item,entries);
+      free(item);
+      
     }
   }
 }
@@ -225,7 +231,7 @@ void* message_receiving(int s)
       {
          perror("Receive Error");
          exit(-1);
-      }
+      }       
 
       char * token;
       token = strtok(buf,"#");
@@ -370,6 +376,7 @@ void* message_receiving(int s)
           {
             int client_id = atoi(tok[0]);
             item->ack_vector[client_id] = 2;
+          //  printf("Ack Vector updated : %s\n", item->msg);
             break;
           }
          }
@@ -385,18 +392,24 @@ void* message_receiving(int s)
 void* message_multicasting(int s)
 {
   int socket = s;
+  int count = 0;
   //printf("in multicasting thread \n");
   while(1)
   {
+    //printf("called msg removal \n");
+    msg_removal(socket); 
+    //printf("done with msg removal\n"); 
     if(!TAILQ_EMPTY(&message_head))
     {         
-      struct message *item;
-      TAILQ_FOREACH(item, &message_head, entries)
-      {
-
-           // Removes the messages from the queue that have been received by all the clients 
-           // msg_removal(socket);  
-                
+      
+      struct message *item,*tmp_item;
+      // TAILQ_FOREACH(item, &message_head, entries)
+      //    printf("Message queue %d %s\n",count++,item->msg);
+      //{
+          item = TAILQ_FIRST(&message_head);
+        
+        
+                    
           int idx = 0, flag = 0;
           for(idx;idx<MAX;idx++)
           {
@@ -408,6 +421,7 @@ void* message_multicasting(int s)
 
               if(item->client_id == client_list[idx].client_id)
               {
+                 // printf("Found client structure \n");
                   char msg[BUFLEN] = "MSG#";
                   char temp[BUFLEN];
                   sprintf(temp,"%d",item->seq_id);
@@ -427,19 +441,20 @@ void* message_multicasting(int s)
               */
 
                 int next_msg = client_list[idx].last_msg_id+1;
+
                 if(item->msg_id == next_msg)
                 {
-                  // printf("Message to be sent found at the top of the queue \n");
-                  // printf("Message to be sent : %s \n",msg);
+                  //printf("Message to be sent found at the top of the queue \n");
+                  //printf("Message to be sent : %s \n",msg);
                   multicast(socket,msg);
 
-                  // printf("done with multicast\n");
+                 // printf("done with multicast\n");
 
                   client_list[idx].last_msg_id = item->msg_id;
                   // printf("updated last msg id\n");
                   
-                    TAILQ_REMOVE(&message_head,item,entries);
-                    free(item);
+                    // TAILQ_REMOVE(&message_head,item,entries);
+                    // free(item);
                  
                   flag = 1;
                 }
@@ -450,11 +465,13 @@ void* message_multicasting(int s)
 
                 else
                 { 
+                  //printf("Inside else\n");
                   struct message *next;
                   TAILQ_FOREACH(next, &message_head, entries)
                   {
                     if(next->msg_id == next_msg)
                     {
+                      //printf("Found Next Message\n");
                       char msg_next[BUFLEN] = "MSG#";
                       char temp[BUFLEN];
                       sprintf(temp,"%d",next->seq_id);
@@ -469,19 +486,15 @@ void* message_multicasting(int s)
                       strcat(msg_next,next->msg);
                       multicast(socket,msg_next);
                       client_list[idx].last_msg_id = next->msg_id;
-                      // int rem = msg_removal(socket);
-                      // if(rem == -2)
-                      // {
-                        TAILQ_REMOVE(&message_head,next,entries);
-                        free(next);
+                      // TAILQ_REMOVE(&message_head,next,entries);
+                      // free(next);
                       
-                      multicast(socket,msg);
-                      client_list[idx].last_msg_id = item->msg_id;
+                      //multicast(socket,msg);
+                      //client_list[idx].last_msg_id = item->msg_id;
+                      // TAILQ_REMOVE(&message_head,item,entries);
+                      // free(item);
                       
-                        TAILQ_REMOVE(&message_head,item,entries);
-                        free(item);
-                      
-                      flag = 1;
+                      //flag = 1;
                       //break;          //IS THIS NECESSARY?
 
                     }
@@ -494,12 +507,16 @@ void* message_multicasting(int s)
 
                 if(flag == 0)
                 { 
+                 // printf("Flag is 0\n");
                   struct message *last;
+                  last = malloc(sizeof(*last));
                   last->seq_id = item->seq_id;
+                  //printf("%d\n", last->seq_id );
                   last->client_id = item->client_id;
                   last->msg_id = item->msg_id;
                   strcpy(last->msg,item->msg);
                   TAILQ_INSERT_TAIL(&message_head,last,entries);
+                  //printf("Message is inserted at the tail\n");
                   TAILQ_REMOVE(&message_head,item,entries);
                   free(item);
                 }
@@ -507,7 +524,7 @@ void* message_multicasting(int s)
             }
           }   // end of for (looping through id array to find the existing clients)
 
-      } // end of foreach (traversing through the message queue)
+      //} // end of foreach (traversing through the message queue)
     }
   } // end of while
 }
