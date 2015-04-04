@@ -11,6 +11,9 @@ What sequencer will return :
 =======
 1. Client ID/"Max Limit Reached"
 2. Seq#ClientInfo#Number_of_clients#Ip#Port#ClientID#Ip#Port#Client#.......................		[MULTICAST]
+=======
+Any status updates including clients entering and leaving the chat
+1. SEQ#STATUS#status_message
 
 
 When client sends message:
