@@ -8,26 +8,20 @@ What sequencer will return :
 
 1. SUCCESS#Client_Id#Global_Seq_No/FAILURE
 2. SEQ#CLIENT#INFO#Number_of_clients#Ip#Port#ClientID#ClientName#Ip#Port#ClientID#ClientName#.......................		[MULTICAST]
-=======
-1. Client ID/"Max Limit Reached"
-2. Seq#ClientInfo#Number_of_clients#Ip#Port#ClientID#Ip#Port#Client#.......................		[MULTICAST]
-=======
+
 Any status updates including clients entering and leaving the chat
 1. SEQ#STATUS#status_message
 
 
 When client sends message:
 
-What sequencer is expecting: Message#ClientID#MsgID#Message
+What sequencer is expecting: MESSAGE#ClientID#MsgID#user_message
 
 What sequencer will return:
 
 1. SEQ#ACK#Msg_id										[Acknowledgement on receipt of message]
 2. MSG#GlobalSeqID#ClientID#MsgID#Message 				[MULTICAST]		
 3. SEQ#REM#Msg_id										[Removal of message from local queue]
-=======
-1. MSG#GlobalSeqID#ClientID#MsgID#Message 				[MULTICAST]		
-
 
 
 Client Messages:
