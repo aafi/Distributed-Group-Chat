@@ -260,7 +260,10 @@ int main(int argc, char* argv[]){
 			// pthread_t sequencer_thread;
 			// int thread_status = pthread_create(&sequencer_thread, NULL, sequencer);
 			// pthread_join(sequencer_thread, NULL);
+
 			start_sequencer(soc);
+
+			my_ip_addr = get_ip_address();
 
 			char msg[] = "NEWCHAT";
 			struct sockaddr_in seq_addr;
