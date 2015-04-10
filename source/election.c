@@ -31,7 +31,7 @@ struct client{
   // int leader;          //by default is 0. The client which is the leader will have 1
 }client_list[MAX];
 
-int total_clients = 2;
+int total_clients = 3;
 int curr_ele_id;
  
 void err(char *s)
@@ -83,6 +83,12 @@ void populate_clients()
 	c.client_id = 2;
 
 	client_list[1] = c;
+
+    strcpy(c.ip, "158.130.24.208");
+    c.port = 3456;
+    c.client_id = 3;
+
+    client_list[2] = c;
 
 }
 
@@ -163,6 +169,7 @@ int main(int argc, char** argv)
             if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0) //DOUBLE CHECKING SEQ CRASH
             {
 
+                begin_election:
                 printf("2nd timeout: starting election\n");
                 for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS AND ELECTIONS THAT ELECTION IS BEING HELD
                 {
@@ -306,6 +313,7 @@ int main(int argc, char** argv)
 
                 printf("here??\n");
             	send_msg(sockfd, "OK", serv_addr, slen);
+                goto begin_election;
             }
             	//send_msg(sockfd, "OK", serv_addr, slen);
 
