@@ -46,6 +46,10 @@ int total_clients = 0;
 int client_id = 0;
 
 int last_global_seq_id = -1;	// The sequence id of the last message received from the sequencer/leader
+int message_id = -1;	// The message id of the last message removed from the client_queue
+
+int election = 0;	// Flag for if election is being held
+int isLeader = 01;
 
 // int my_seq_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 
@@ -189,6 +193,27 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 	}
 }
 
+void start_sequencer(soc){
+	int childId;
+	if ((childId = fork()) == 0){	// INSIDE SEQUENCER CHILD
+		execv("sequencer", NULL);
+	}
+	// SET LEADER INFO TO ITS OWN IP_ADDRESS AND PORT NUMBER
+	isLeader = 1;
+
+	char recvBuff[MAXSIZE];
+	struct sockaddr_in serv_addr;
+	int serv_addr_size = sizeof(serv_addr);
+	if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
+		perror("ERROR: Receiving message failed \n");
+	}
+
+	char* seq_info[MAXSIZE];
+	detokenize(recvBuff, seq_info, DELIMITER);
+	strcpy(leader.ip_addr, seq_info[2]);
+	strcpy(leader.port, seq_info[3]);
+}
+
 int main(int argc, char* argv[]){
 	int soc = 0, serv_addr_size;
 	struct sockaddr_in my_addr;
@@ -232,20 +257,25 @@ int main(int argc, char* argv[]){
 			Also needs to start Election Algorithm program
 			*/
 
-			// SET LEADER INFO TO ITS OWN IP_ADDRESS AND PORT NUMBER
-			struct sockaddr_in serv_addr;
-			int serv_addr_size = sizeof(serv_addr);
-			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
-				perror("ERROR: Receiving message failed \n");
-			} else
-				printf("%s\n", recvBuff);
+			// pthread_t sequencer_thread;
+			// int thread_status = pthread_create(&sequencer_thread, NULL, sequencer);
+			// pthread_join(sequencer_thread, NULL);
+			start_sequencer(soc);
 
-			char* seq_info[MAXSIZE];
-			detokenize(recvBuff, seq_info, DELIMITER);
-			strcpy(leader.ip_addr, seq_info[2]);
-			// char temp[MAXSIZE];
-		 //    sprintf(temp, "%d", SEQUENCER_PORT);
-			strcpy(leader.port, seq_info[3]);
+			char msg[] = "NEWCHAT";
+			struct sockaddr_in seq_addr;
+			int seq_addr_size;
+			seq_addr.sin_family = AF_INET;
+			seq_addr.sin_port = htons(atoi(leader.port));
+			if(inet_pton(AF_INET, leader.ip_addr, &seq_addr.sin_addr)<=0)
+		    {
+		        perror("ERROR: inet_pton error occured \n");
+		        exit(-1);
+		    }
+		    if (sendto(soc, msg, MAXSIZE, 0, (struct sockaddr*)&seq_addr, sizeof(seq_addr)) < 0){
+				fprintf(stderr, "ERROR: Sorry no chat is active on %s, try again later. \n", argv[2]);
+				exit(-1);
+			}
 
 			mode = "WAITING";
 			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], my_ip_addr, PORT);
@@ -366,6 +396,47 @@ void* housekeeping(int soc){
 			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 				perror("ERROR: Sending message failed in ACK \n");
 			} 
+		} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
+			if (isLeader){
+				strcpy(sendBuff, "CANCEL");
+				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+					perror("ERROR: Sending message failed in ACK \n");
+				} 
+			} else{
+				election = 1;
+			}
+		} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
+			election = 0;
+		} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
+			isLeader = 1;
+			// TODO: Handle starting sequencer
+			char old_leader_ip[MAXSIZE];
+			strcpy(old_leader_ip, leader.ip_addr);
+			start_sequencer(soc);
+
+			strcpy(sendBuff, "NEWLEADER#");
+			char temp[MAXSIZE];
+			sprintf(temp, "%d", total_clients - 1);
+			strcat(sendBuff, temp);
+			strcat(sendBuff, DELIMITER);
+
+			int count = 0;
+			for (count = 0; count < total_clients; ++count){
+				if (strcmp(old_leader_ip, client_list[count].ip) != 0){
+					strcat(sendBuff, client_list[count].ip);
+					strcat(sendBuff, DELIMITER);
+					char temp[MAXSIZE];
+					sprintf(temp, "%d", client_list[count].port);
+					strcat(sendBuff, temp);
+					strcat(sendBuff, DELIMITER);
+					sprintf(temp, "%d", client_list[count].client_id);
+					strcat(sendBuff, temp);
+					strcat(sendBuff, DELIMITER);
+					strcat(sendBuff, client_list[count].name);
+					strcat(sendBuff, DELIMITER);
+				}
+			}
+			election = 0;
 		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
 			char seq_message_type[MAXSIZE];
 			strcpy(seq_message_type, message[1]);
@@ -389,7 +460,7 @@ void* housekeeping(int soc){
 				// Remove message from queue because sequencer has acknowledged receipt from all clients
 				// printf("Inside REMOVE\n");
 				struct node *item, *temp_item;
-				int message_id = atoi(message[2]);
+				message_id = atoi(message[2]);
 				for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
 					temp_item = TAILQ_NEXT(item, entries);
 
@@ -411,7 +482,6 @@ void* messenger(int soc){
 	char message[MAXSIZE];
 	char user_input[MAXSIZE];
 	while(1){
-		// printf("ME: ");
 		memset(user_input, 0, MAXSIZE);
 		fgets(user_input, MAXSIZE, stdin);
 
@@ -426,26 +496,29 @@ void* messenger(int soc){
 		strcat(message, DELIMITER);
 		strcat(message, user_input);
 
-		// INITIATE COMMUNICATION WITH THE LEADER
-		struct sockaddr_in serv_addr;
-
-		serv_addr.sin_family = AF_INET;
-		serv_addr.sin_port = htons(atoi(leader.port));
-		if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
-	    {
-	        perror("ERROR: inet_pton error occured \n");
-	        // exit(-1);
-	    }
-	    if (sendto(soc, message, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
-			perror("Could not send message to Sequencer\n");
-			// exit(-1);
-		}
-
+		// ADD MESSAGE TO CLIENT_QUEUE
 		struct node *item;
 		item = malloc(sizeof(*item));
 		item->msg_id = msg_id - 1;
 		item->acknowledged = 0;
 		strcpy(item->message, user_input);
 		TAILQ_INSERT_TAIL(&queue_head, item, entries);
+
+		// INITIATE COMMUNICATION WITH THE LEADER
+		if(!election){
+			struct sockaddr_in serv_addr;
+
+			serv_addr.sin_family = AF_INET;
+			serv_addr.sin_port = htons(atoi(leader.port));
+			if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
+		    {
+		        perror("ERROR: inet_pton error occured \n");
+		        // exit(-1);
+		    }
+		    if (sendto(soc, message, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+				perror("Could not send message to Sequencer\n");
+				// exit(-1);
+			}
+		}	// end of election check loop
 	} // end of while(1)
 }
