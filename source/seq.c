@@ -11,6 +11,7 @@
 
 #define PORT 5678
 #define PORT_PING 5679
+#define PORT_PARENT 1705
 #define NPACK 10
 #define BUFLEN 1024
 #define MAX 15
@@ -24,8 +25,16 @@ struct client{
    int port;
    int client_id;
    int last_msg_id;     //id of the last message sent by the client
-  
-}client_list[MAX];
+   int leader;
+   int counter;
+
+   TAILQ_ENTRY(client) entries;
+
+};//client_list[MAX];
+
+//This is the head of the TAILQ for messages
+
+TAILQ_HEAD(,client) client_head;
 
 struct message{
    int seq_id;
@@ -42,7 +51,7 @@ struct message{
    TAILQ_ENTRY(message) entries;  
 };
 
-//This is the head of the TAILQ
+//This is the head of the TAILQ for messages
 
 TAILQ_HEAD(,message) message_head;
 
@@ -58,66 +67,139 @@ void multicast(int socket,char * msg)
 {
    int idx = 0;
    //printf("Inside");
-   for(idx;idx<MAX;idx++)
+
+   struct client *item;
+   TAILQ_FOREACH(item, &client_head, entries)
    {
-      if(id[idx]!=0)
-      {
          struct sockaddr_in clnt;
          clnt.sin_family = AF_INET;
-         clnt.sin_port = htons(client_list[idx].port);
-         clnt.sin_addr.s_addr = inet_addr(client_list[idx].ip);
-        //printf("Inside multicast \n ");
-
-         //printf("%s %d %s \n",msg,client_list[idx].port,client_list[idx].ip);
+         clnt.sin_port = htons(item->port);
+         clnt.sin_addr.s_addr = inet_addr(item->ip);
+        
          if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&clnt, sizeof(clnt))) < 0)
          {
             perror("Broadcast Error");
             exit(-1);
          }
          
-
-      }
-   }
-  // printf("Done\n");
+    }
+     
 }
 
 int count_clients()
 {
   int num_client = 0;
-  int idx = 0;
-  for(idx;idx<MAX;idx++)
-  {
-    if(id[idx]==1)
+  struct client *item_client;
+  if(!TAILQ_EMPTY(&client_head))
+   {
+    TAILQ_FOREACH(item_client, &client_head, entries)
       num_client++;
-  }
-
+   } 
   return num_client;
-
 }
 
 
 int requestid(char * ip, int port, char * name)
 {
-   int i;
-   for(i=0;i<MAX;i++)
-   {
-      if(id[i]==0)
-      {  
-         struct client c;
-         strcpy(c.ip,ip);
-         c.port = port;
-         strcpy(c.name,name);
-         c.last_msg_id = -1;
-         c.client_id = i;
-        // c.leader = 0;
-         client_list[i] = c;
-         id[i] = 1;
-         return i;
-      }
-   }
-   return -1;                    //MAX limit reached; New participant cannot be added
+   int client_id = 0;
+   struct client *c,*item;
+   c = malloc(sizeof(*c));
 
+   if(!TAILQ_EMPTY(&client_head))
+   { 
+    TAILQ_FOREACH(item,&client_head,entries)
+     {
+        if(item->client_id == client_id)
+        {
+          client_id++;
+        }
+        else
+          break;
+     }
+   }
+   else
+   {
+    client_id = 0;
+   }
+
+    strcpy(c->ip,ip);
+    c->port = port;
+    strcpy(c->name,name);
+    c->last_msg_id = -1;
+    c->client_id = client_id;
+    int num = count_clients();
+    if(num == 1)
+      c->leader = 1;
+    else
+      c->leader = 0;
+
+    c->counter = 0;
+   
+    TAILQ_INSERT_TAIL(&client_head,c,entries);
+    
+    return client_id;
 }
+
+
+/*
+UPDATES CLIENT LIST ONCE NEW SEQUENCER IS ELECTED
+
+client_copy[] is the client's copy of the current CLIENTLIST
+*/
+
+// void update_clientlist(char *ip, int port, int client_id, char* name)
+// {
+//   int i;
+//   for(i=0;i<MAX;i++)
+//   {
+//     if(client_copy[i].leader != 1)
+//     {
+//       idx = client_copy[i].client_id;
+//       id[idx] = 1;
+//       strcpy(client_list[idx].ip,client_copy[i].ip);
+//       strcpy(client_list[idx].name,client_copy[i].name);
+//       client_list[idx].port = client_copy[i].port;
+//       client_list[idx].client_id = idx;
+//       client_list[idx].last_msg_id = client_copy[i].last_msg_id;
+//       if(strcmp(client_list[idx].ip,ip) == 0)
+//         client_list[idx].leader = 1;
+//       else
+//         client_list[idx].leader = 0;
+
+//     }
+//   }
+
+//   char multi[BUFLEN] = "SEQ#CLIENT#INFO#";
+//          char temp[BUFLEN];
+//          int num_client = count_clients();
+//          sprintf(temp,"%d",num_client);
+//          strcat(multi,temp);
+//          int d = 0;
+//          for(d;d<MAX;d++)
+//          {
+//             if(id[d]!=0)
+//             {
+//                strcat(multi,"#");
+//                strcat(multi,client_list[d].ip);
+//                strcat(multi,"#");
+//                sprintf(temp,"%d",client_list[d].port);
+//                strcat(multi,temp);
+//                strcat(multi,"#");
+//                sprintf(temp,"%d",client_list[d].client_id);
+//                strcat(multi,temp);
+//                strcat(multi,"#");
+//                strcat(multi,client_list[d].name);
+//                strcat(multi,"#");
+//                sprintf(temp,"%d",client_list[d].leader);
+//                strcat(multi,temp);
+
+//             }
+
+//          }
+         
+//          multicast(socket,multi);
+// }
+
 
 void detokenize(char buf[], char* token_result[], char* token){
    char* result;
@@ -158,6 +240,7 @@ const char* get_ip_address(){
    return addr_info[1];
 }
 
+
 void msg_removal(int s)
 {
   
@@ -181,17 +264,17 @@ void msg_removal(int s)
     if(flag == 0)
     { 
       int client_id = item->client_id;
-      int idx = 0;
-      for(idx;idx<MAX;idx++)
+      if(!TAILQ_EMPTY(&client_head))
       {
-        if(id[idx]!=0)
+        struct client *item_client;
+        TAILQ_FOREACH(item_client,&client_head,entries)
         {
-          if(client_list[idx].client_id == client_id)
+          if(item_client->client_id == client_id)
           {
             struct sockaddr_in clnt;
             clnt.sin_family = AF_INET;
-            clnt.sin_port = htons(client_list[idx].port);
-            clnt.sin_addr.s_addr = inet_addr(client_list[idx].ip);
+            clnt.sin_port = htons(item_client->port);
+            clnt.sin_addr.s_addr = inet_addr(item_client->ip);
             char msg[BUFLEN] = "SEQ#REM#",temp[BUFLEN];
             sprintf(temp,"%d",item->msg_id);
             strcat(msg,temp);
@@ -204,7 +287,8 @@ void msg_removal(int s)
             }
           }
         }
-      }
+      } 
+      
 
      // printf("Message to be removed: %s \n",item->msg);
       TAILQ_REMOVE(&message_head,item,entries);
@@ -247,21 +331,20 @@ void* message_receiving(int s)
             i++;
          }
 
-         seq = requestid(tok[0],atoi(tok[1]),tok[2]);   // Gets back a sequence number for the new client
-
-         if(seq == -1)
+         if(count_clients() == MAX)
          {
-            strcpy(reply,"FAILURE");
+          strcpy(reply,"FAILURE");
          }
          else
          {
-            char tmp[BUFLEN];
-            sprintf(tmp, "%d", seq);
-            strcpy(reply,"SUCCESS#");
-            strcat(reply,tmp);
-            strcat(reply,"#");
-            sprintf(tmp, "%d", msg_seq_id);
-            strcat(reply,tmp);
+         seq = requestid(tok[0],atoi(tok[1]),tok[2]);   // Gets back a sequence number for the new client
+         char tmp[BUFLEN];
+         sprintf(tmp, "%d", seq);
+         strcpy(reply,"SUCCESS#");
+         strcat(reply,tmp);
+         strcat(reply,"#");
+         sprintf(tmp, "%d", msg_seq_id);
+         strcat(reply,tmp);
          }
 
          if((sendto(socket,reply,sizeof(reply),0,(struct sockaddr*)&client, sizeof(client))) < 0)    //send reply back
@@ -277,21 +360,24 @@ void* message_receiving(int s)
          strcat(multi,temp);
 
 
-         int d = 0;
-         for(d;d<MAX;d++)
+         if(!TAILQ_EMPTY(&client_head))
          {
-            if(id[d]!=0)
+            struct client *item_client;
+            TAILQ_FOREACH(item_client,&client_head,entries)
             {
                strcat(multi,"#");
-               strcat(multi,client_list[d].ip);
+               strcat(multi,item_client->ip);
                strcat(multi,"#");
-               sprintf(temp,"%d",client_list[d].port);
+               sprintf(temp,"%d",item_client->port);
                strcat(multi,temp);
                strcat(multi,"#");
-               sprintf(temp,"%d",client_list[d].client_id);
+               sprintf(temp,"%d",item_client->client_id);
                strcat(multi,temp);
                strcat(multi,"#");
-               strcat(multi,client_list[d].name);
+               strcat(multi,item_client->name);
+               // strcat(multi,"#");
+               // sprintf(temp,"%d",item_client->leader);
+               // strcat(multi,temp);
 
             }
 
@@ -320,11 +406,8 @@ void* message_receiving(int s)
          }
 
          struct message *item;
-        //printf("before malloc \n");
          item = malloc(sizeof(*item));
-       // printf("after malloc \n");
          item->client_id = atoi(tok[0]);
-        // printf("%d\n", item->client_id);
          item->msg_id = atoi(tok[1]);
          strcpy(item->msg,tok[2]);
          item->seq_id = msg_seq_id++;
@@ -366,7 +449,6 @@ void* message_receiving(int s)
 
      else if(strcmp("ACK",token) == 0)
      {
-        // printf("inside acknowledgement: %s \n", buf );
          int i = 0;
          while(token!=NULL)
          {  
@@ -383,10 +465,9 @@ void* message_receiving(int s)
           {
             int client_id = atoi(tok[0]);
             item->ack_vector[client_id] = 2;
-          //  printf("Ack Vector updated : %s\n", item->msg);
             break;
           }
-         }
+        }
      }
 
    }
@@ -400,33 +481,25 @@ void* message_multicasting(int s)
 {
   int socket = s;
   int count = 0;
-  //printf("in multicasting thread \n");
   while(1)
   {
-    //printf("called msg removal \n");
     msg_removal(socket); 
-    //printf("done with msg removal\n"); 
     if(!TAILQ_EMPTY(&message_head))
     {         
       
       struct message *item,*tmp_item;
-      // TAILQ_FOREACH(item, &message_head, entries)
-      //    printf("Message queue %d %s\n",count++,item->msg);
-      //{
-          item = TAILQ_FIRST(&message_head);
-        
-        
-                    
-          int idx = 0, flag = 0;
-          for(idx;idx<MAX;idx++)
-          {
-            if(id[idx]!=0)
-            {
-              /*
-              Finding the right client structure
-              */
+      item = TAILQ_FIRST(&message_head);
+      int idx = 0, flag = 0;
+      if(!TAILQ_EMPTY(&client_head))
+      {
+        struct client *item_client;
+        TAILQ_FOREACH(item_client,&client_head,entries)
+        {
+          /*
+          Finding the right client structure
+          */
 
-              if(item->client_id == client_list[idx].client_id)
+              if(item->client_id == item_client->client_id)
               {
                  // printf("Found client structure \n");
                   char msg[BUFLEN] = "MSG#";
@@ -441,28 +514,17 @@ void* message_multicasting(int s)
                   strcat(msg,temp);
                   strcat(msg,"#");
                   strcat(msg,item->msg);
-                  //printf("Message to be sent : %s \n",msg);
-
+                  
               /*
               CHECK IF THE MESSAGE AT THE TOP IS THE ONE TO BE SENT NEXT
               */
 
-                int next_msg = client_list[idx].last_msg_id+1;
+                int next_msg = item_client->last_msg_id+1;
 
                 if(item->msg_id == next_msg)
                 {
-                  //printf("Message to be sent found at the top of the queue \n");
-                  //printf("Message to be sent : %s \n",msg);
                   multicast(socket,msg);
-
-                 // printf("done with multicast\n");
-
-                  client_list[idx].last_msg_id = item->msg_id;
-                  // printf("updated last msg id\n");
-                  
-                    // TAILQ_REMOVE(&message_head,item,entries);
-                    // free(item);
-                 
+                  item_client->last_msg_id = item->msg_id;
                   flag = 1;
                 }
 
@@ -472,13 +534,11 @@ void* message_multicasting(int s)
 
                 else
                 { 
-                  //printf("Inside else\n");
                   struct message *next;
                   TAILQ_FOREACH(next, &message_head, entries)
                   {
                     if(next->msg_id == next_msg)
                     {
-                      //printf("Found Next Message\n");
                       char msg_next[BUFLEN] = "MSG#";
                       char temp[BUFLEN];
                       sprintf(temp,"%d",next->seq_id);
@@ -492,18 +552,7 @@ void* message_multicasting(int s)
                       strcat(msg_next,"#");
                       strcat(msg_next,next->msg);
                       multicast(socket,msg_next);
-                      client_list[idx].last_msg_id = next->msg_id;
-                      // TAILQ_REMOVE(&message_head,next,entries);
-                      // free(next);
-                      
-                      //multicast(socket,msg);
-                      //client_list[idx].last_msg_id = item->msg_id;
-                      // TAILQ_REMOVE(&message_head,item,entries);
-                      // free(item);
-                      
-                      //flag = 1;
-                      //break;          //IS THIS NECESSARY?
-
+                      item_client->last_msg_id = next->msg_id;
                     }
                   }
                 }
@@ -514,16 +563,13 @@ void* message_multicasting(int s)
 
                 if(flag == 0)
                 { 
-                 // printf("Flag is 0\n");
                   struct message *last;
                   last = malloc(sizeof(*last));
                   last->seq_id = item->seq_id;
-                  //printf("%d\n", last->seq_id );
                   last->client_id = item->client_id;
                   last->msg_id = item->msg_id;
                   strcpy(last->msg,item->msg);
                   TAILQ_INSERT_TAIL(&message_head,last,entries);
-                  //printf("Message is inserted at the tail\n");
                   TAILQ_REMOVE(&message_head,item,entries);
                   free(item);
                 }
@@ -570,8 +616,25 @@ void* message_pinging()
          exit(-1);
       }
 
+      char * token;
+      token = strtok(buf,"#");
+
     if(strcmp("PING",buf)==0)
      {
+      
+       token = strtok(NULL,"#");
+       if(!TAILQ_EMPTY(&client_head))
+       {
+        struct client *item_client;
+        TAILQ_FOREACH(item_client,&client_head,entries)
+        {
+          if(item_client->client_id == atoi(token))
+          {
+            item_client->counter++;
+            break;
+          }
+        }
+       }
        
        if((sendto(s,ping_back,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
        {
@@ -585,8 +648,10 @@ void* message_pinging()
 
 
 int main(int argc, char *argv[]){
-   struct sockaddr_in server;
-   int s;
+   struct sockaddr_in server,client_in,client_out;
+   char buf[BUFLEN];
+   int s,n, len = sizeof(client_in);
+   char * tok[BUFLEN];
     
    if((s = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
       perror("Socket error");
@@ -601,33 +666,104 @@ int main(int argc, char *argv[]){
       perror("Bind error");
       exit(-1);
    }
-
-
-   /*
-  
-         BROADCAST IP and PORT to all clients after winning election and declare leader
-         SEQ#EA#IP#PORT
-
-   */
-
+ 
    char win_broadcast[BUFLEN]="SEQ#EA#";
    char tmp[BUFLEN];
+
    const char* my_ip_addr = get_ip_address();
+
+   //update_clientlist(my_ip_addr,s);
+
    strcat(win_broadcast,my_ip_addr);
    strcat(win_broadcast,"#");
    sprintf(tmp,"%d",PORT);
    strcat(win_broadcast,tmp);
 
-   multicast(s,win_broadcast);
+
+   // Sending the client that runs the sequencer the IP and Port info of the sequencer
+    client_out.sin_family = AF_INET;
+    client_out.sin_port = htons(PORT_PARENT);
+    client_out.sin_addr.s_addr = inet_addr(my_ip_addr);
+
+    if(sendto(s,win_broadcast,BUFLEN,0,(struct sockaddr*)&client_out,sizeof(client_out))<0)
+    {
+        exit(-1);
+    }
+
+    if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client_in, &len)) < 0)
+    {
+       perror("Receive Error");
+       exit(-1);
+    }    
+
+    detokenize(buf,tok,"#"); 
+
+    /* Initialize the tail queue */
+
+    TAILQ_INIT(&message_head); 
+    TAILQ_INIT(&client_head);
+
+    if (strcmp("NEWLEADER",tok[0]) == 0)
+    {
+      int i = 0, num_clients = atoi(tok[1]);
+      for(i;i<num_clients;i+=4)
+      {
+        struct client *c;
+        c = malloc(sizeof(*c));
+        strcpy(c->ip,tok[i+2]);
+        c->port = atoi(tok[i+3]);
+        strcpy(c->name,tok[i+5]);
+        c->last_msg_id = -1;
+        c->client_id = atoi(tok[i+4]);
+        if(strcmp(my_ip_addr,tok[i+2]) == 0)
+          c->leader = 1;
+        else
+          c->leader = 0;
+
+        c->counter = 0;
+        TAILQ_INSERT_TAIL(&client_head,c,entries);
+      }
+
+      multicast(s,win_broadcast);
+    } 
 
 
-   /* Initialize the tail queue */
-   TAILQ_INIT(&message_head);
+     char multi[BUFLEN] = "SEQ#CLIENT#INFO#";
+     char temp[BUFLEN];
+     int num_client = count_clients();
+     sprintf(temp,"%d",num_client);
+     strcat(multi,temp);
 
+
+     if(!TAILQ_EMPTY(&client_head))
+     {
+        struct client *item_client;
+        TAILQ_FOREACH(item_client,&client_head,entries)
+        {
+           strcat(multi,"#");
+           strcat(multi,item_client->ip);
+           strcat(multi,"#");
+           sprintf(temp,"%d",item_client->port);
+           strcat(multi,temp);
+           strcat(multi,"#");
+           sprintf(temp,"%d",item_client->client_id);
+           strcat(multi,temp);
+           strcat(multi,"#");
+           strcat(multi,item_client->name);
+           // strcat(multi,"#");
+           // sprintf(temp,"%d",item_client->leader);
+           // strcat(multi,temp);
+
+        }
+
+     }
+     
+         multicast(s,multi);
+    
 
    /*
 
-    Creating two threads to handle message receiving and multicasting simultaneously
+    Creating three threads to handle message receiving, multicasting and pinging simultaneously
 
    */
 
