@@ -16,7 +16,7 @@
 #define BUFLEN 1024
 #define MAX 15
 
-int id[MAX] = {0};
+// int id[MAX] = {0};
 int msg_seq_id = 0;
 
 struct client{
@@ -69,7 +69,9 @@ void multicast(int socket,char * msg)
    //printf("Inside");
 
    struct client *item;
-   TAILQ_FOREACH(item, &client_head, entries)
+   if(!TAILQ_EMPTY(&client_head))
+   {
+      TAILQ_FOREACH(item, &client_head, entries)
    {
          struct sockaddr_in clnt;
          clnt.sin_family = AF_INET;
@@ -83,7 +85,7 @@ void multicast(int socket,char * msg)
          }
          
     }
-     
+  } 
 }
 
 int count_clients()
@@ -412,7 +414,19 @@ void* message_receiving(int s)
          strcpy(item->msg,tok[2]);
          item->seq_id = msg_seq_id++;
 
+         int id[MAX] = {0};
+         if(!TAILQ_EMPTY(&client_head))
+         {
+          struct client *c;
+          TAILQ_FOREACH(c,&client_head,entries)
+          {
+            id[c->client_id] = 1;
+          }
+         }
+
+
          int idx = 0;
+
          for(idx;idx<MAX;idx++)
          {
           item->ack_vector[idx] = id[idx];
