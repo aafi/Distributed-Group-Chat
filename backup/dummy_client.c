@@ -23,7 +23,7 @@ void send_msg(int sockfd, char msg[BUFLEN], struct sockaddr_in serv_addr, sockle
 
 void receive_msg(int sockfd, char msg[BUFLEN], struct sockaddr_in *serv_addr, socklen_t *slen)
 {
-    if (recvfrom(sockfd, msg, BUFLEN, 0, (struct sockaddr*) serv_addr, slen)==-1)
+    if (recvfrom(sockfd, msg, BUFLEN, 0, (struct sockaddr*)&serv_addr, slen)==-1)
             err("recvfrom()");
 }
  
@@ -33,9 +33,9 @@ int main(int argc, char** argv)
     int sockfd, i;
     socklen_t slen=sizeof(serv_addr);
     char buf[BUFLEN], status[20];
-    if(argc != 1)
+    if(argc != 2)
     {
-      printf("Usage : %s\n",argv[0]);
+      printf("Usage : %s <client_port>\n",argv[0]);
       exit(0);
     }
     
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 
     bzero(&my_addr, sizeof(my_addr));
     my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(PORT);
+    my_addr.sin_port = htons(atoi(argv[1]));
     my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
  
     // bzero(&serv_addr, sizeof(serv_addr));
@@ -62,21 +62,16 @@ int main(int argc, char** argv)
       err("bind");
 
     //printf("Into while\n");
-
-    int c = 0;
  
     while(1)
     {
-        char temp[BUFLEN];
-        receive_msg(sockfd, buf, &serv_addr, &slen);
-        printf("%s\n", buf);
-        strcpy(buf, "active");
-        sprintf(temp, "%d", c++);
-        strcat(buf, temp);
-        send_msg(sockfd, buf, serv_addr, slen);       
+        receive_msg(sockfd, buf, &serv_addr, &slen); //MSG = "ELECTION"
+        //send_msg(sockfd, "active", serv_addr, slen);       
         //sprintf(buf, "%s", argv[2]);
         //printf("buf %s\n", buf);        
-        
+        printf("%s\n", buf);
+        receive_msg(sockfd, buf, &serv_addr, &slen);
+        printf("%s\n", buf);
 
         //exit(0);
     }
