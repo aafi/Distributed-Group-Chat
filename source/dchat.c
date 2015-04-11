@@ -777,7 +777,7 @@ void* election_algorithm(int curr_id){
             //}
             //printf("reached here as well\n");
             
-            if (strcmp(token_result[2], "STATUS") == 0)
+            if (strcmp(token_result[0], "STATUS") == 0)
             {
                 send_msg(sockfd, "I AM ALIVE", serv_addr_seq, slen);
             }
