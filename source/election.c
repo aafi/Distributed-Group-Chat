@@ -319,6 +319,12 @@ int main(int argc, char** argv)
 
             //}
             //printf("reached here as well\n");
+            
+            if (strcmp(token_result[2], "STATUS") == 0)
+            {
+                send_msg(sockfd, "I AM ALIVE", serv_addr_seq, slen);
+            }
+
             if (strcmp(token_result[0], "I AM LEADER") == 0)
             {
                 printf("New Leader: %s\n", token_result[1]);
