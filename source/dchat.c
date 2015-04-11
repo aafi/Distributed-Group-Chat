@@ -633,7 +633,7 @@ void* election_algorithm(int curr_id){
 
                 begin_election:
                 printf("2nd timeout: starting election\n");
-                for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS AND ELECTIONS THAT ELECTION IS BEING HELD
+                for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS THAT ELECTION IS BEING HELD
                 {
                 	serv_addr_client.sin_port = htons(client_list[i].port);
 
@@ -716,12 +716,13 @@ void* election_algorithm(int curr_id){
                                 
                                 send_msg(sockfd, buf, serv_addr_client, slen); //SENDING NEW LEADER TO CLIENT
 
-                                if (client_list[i].client_id != atoi(curr_ele_id))
+                                if (client_list[i].client_id == atoi(curr_ele_id))
                                 {
                                     
-                                    send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
+                                    send_msg(sockfd, "LEADER", serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
                                 //printf("checking: second inet_aton\n");
                                 }
+
                             }
                             break;
                         }
