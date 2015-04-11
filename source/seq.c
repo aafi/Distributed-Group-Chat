@@ -295,7 +295,9 @@ void* message_receiving(int s)
       {
          perror("Receive Error");
          exit(-1);
-      }       
+      } 
+
+      printf("Message Received : %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
