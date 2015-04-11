@@ -220,6 +220,13 @@ void start_sequencer(soc){
 	strcpy(leader.port, seq_info[3]);
 }
 
+void start_EA(){
+	void* election_algorithm(int);
+	pthread_t ea_thread;
+	int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
+	pthread_join(ea_thread, NULL);
+}
+
 int main(int argc, char* argv[]){
 	int soc = 0, serv_addr_size;
 	struct sockaddr_in my_addr;
@@ -292,6 +299,7 @@ int main(int argc, char* argv[]){
 			printf("Waiting for others to join:\n");
 
 			request_to_join(soc, my_ip_addr, argv[1]);
+			start_EA();
 		} else if(argc == 4){	
 			/*
 			JOIN an existing chat conversation
@@ -338,14 +346,12 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	pthread_t threads[3];
-	int rc0, rc1, rc2;
+	pthread_t threads[2];
+	int rc0, rc1;
 	rc0 = pthread_create(&threads[0], NULL, messenger, soc);
 	rc1 = pthread_create(&threads[1], NULL, housekeeping, soc);
-	rc2 = pthread_create(&threads[2], NULL, election_algorithm, client_id);
 	pthread_join(threads[0], NULL);
 	pthread_join(threads[1], NULL);
-	pthread_join(threads[2], NULL);
 	pthread_exit(NULL);
 
 	return 0;
@@ -362,7 +368,7 @@ void* housekeeping(int soc){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
-			// fprintf(stderr, "%s\n", recvBuff);
+			fprintf(stderr, "%s\n", recvBuff);
 		}
 
 		char* message[MAXSIZE];
@@ -409,6 +415,7 @@ void* housekeeping(int soc){
 				perror("ERROR: Sending message failed in ACK \n");
 			} 
 		} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
+			printf("Inside election of client!\n");
 			if (isLeader){
 				strcpy(sendBuff, "CANCEL");
 				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
@@ -613,7 +620,7 @@ void* election_algorithm(int curr_id){
 
     while(1)
     {
-    	
+    	sleep(1);
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
         {
             perror("Error");
