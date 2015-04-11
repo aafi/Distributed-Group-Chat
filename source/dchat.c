@@ -202,6 +202,7 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 void start_sequencer(soc){
 	int childId;
 	if ((childId = fork()) == 0){	// INSIDE SEQUENCER CHILD
+		printf("%d\n", childId);
 		execv("sequencer", NULL);
 	}
 	// SET LEADER INFO TO ITS OWN IP_ADDRESS AND PORT NUMBER
@@ -212,7 +213,7 @@ void start_sequencer(soc){
 	int serv_addr_size = sizeof(serv_addr);
 	if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 		perror("ERROR: Receiving message failed \n");
-	}
+	} 
 
 	char* seq_info[MAXSIZE];
 	detokenize(recvBuff, seq_info, DELIMITER);
@@ -299,7 +300,10 @@ int main(int argc, char* argv[]){
 			printf("Waiting for others to join:\n");
 
 			request_to_join(soc, my_ip_addr, argv[1]);
-			start_EA();
+			// start_EA();
+			pthread_t ea_thread;
+			int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
+			pthread_join(ea_thread, NULL);
 		} else if(argc == 4){	
 			/*
 			JOIN an existing chat conversation
