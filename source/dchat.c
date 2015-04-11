@@ -489,7 +489,7 @@ void* housekeeping(int soc){
 					temp_item = TAILQ_NEXT(item, entries);
 
 					if(item->msg_id == message_id){
-						strcpy(last_message, item->message)
+						strcpy(last_message, item->message);
 						TAILQ_REMOVE(&queue_head, item, entries);
 						free(item);
 						break;
