@@ -586,6 +586,7 @@ void* message_pinging(int sock)
     clock_t before = clock();
     do
     {
+      sleep(2);
       if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client_in, &len)) < 0)
         {
            perror("Receive Error Ping");
