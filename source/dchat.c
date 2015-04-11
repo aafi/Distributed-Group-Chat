@@ -18,7 +18,7 @@
 #define DELIMITER "#"
 #define MAX 15
 #define ELE_PORT 8174
-#define TIMEOUT_SEC 3
+#define TIMEOUT_SEC 1
 #define TIMEOUT_USEC 0
 #define BUFLEN 1024
 #define PORT_PING 5679
