@@ -633,7 +633,9 @@ void* election_algorithm(int curr_id){
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
             printf("timeout\n");
-            send_msg(sockfd, "ARE YOU ALIVE?", serv_addr_seq, slen);
+            strcpy(buf, "PING#");
+            strcat(buf, curr_ele_id);
+            send_msg(sockfd, buf, serv_addr_seq, slen);
             if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0) //DOUBLE CHECKING SEQ CRASH
             {
 
