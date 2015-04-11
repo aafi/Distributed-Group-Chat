@@ -756,9 +756,19 @@ void* election_algorithm(int curr_id){
 
                     if (strcmp(buf, "CANCEL") == 0)
                     {
-                    	send_msg(sockfd, "ELECTIONCANCEL", serv_addr, slen);
-                    	printf("ELECTION CANCELLED\n");
-                    	break;
+                    	for (i = 0; i < total_clients; i++)
+                        {
+                            serv_addr_client.sin_port = htons(client_list[i].port);
+
+                            if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
+                            {
+                                fprintf(stderr, "inet_aton() failed\n");
+                                exit(1);
+                            }
+                    	    send_msg(sockfd, "ELECTIONCANCEL", serv_addr, slen);
+                    	}
+                    	    //printf("ELECTION CANCELLED\n");
+                    	    break;
                     }
                     
 
