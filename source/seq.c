@@ -13,7 +13,7 @@
 #define NPACK 10
 #define BUFLEN 1024
 #define MAX 15
-#define TIMEOUT_SEC 3
+#define TIMEOUT_SEC 5
 #define TIMEOUT_USEC 0
 
 // int id[MAX] = {0};
@@ -580,7 +580,7 @@ void* message_pinging(int sock)
   while(1)
   {
 
-    int msec = 0, trigger = 10;
+    int msec = 0, trigger = 10000;
     clock_t before = clock();
     do
     {
