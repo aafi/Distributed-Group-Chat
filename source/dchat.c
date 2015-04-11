@@ -18,7 +18,7 @@
 #define DELIMITER "#"
 #define MAX 15
 #define ELE_PORT 8174
-#define TIMEOUT_SEC 1
+#define TIMEOUT_SEC 2
 #define TIMEOUT_USEC 0
 #define BUFLEN 1024
 #define PORT_PING 5679
@@ -619,7 +619,7 @@ void* election_algorithm(int curr_id){
 
     while(1)
     {
-    	sleep(1);
+    	sleep(3);
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
         {
             perror("Error");
