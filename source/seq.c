@@ -595,7 +595,7 @@ void* message_pinging(int sock)
       char * token;
       token = strtok(buf,"#");
 
-      if(strcmp("PING",buf)==0)
+      if(strcmp("PING",token)==0)
        {
         
          token = strtok(NULL,"#");
