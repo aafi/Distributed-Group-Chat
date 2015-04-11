@@ -629,6 +629,8 @@ void* message_pinging(int sock)
 
    }while(msec<trigger);
 
+   printf("outside do while\n");
+
    if(!TAILQ_EMPTY(&client_head))
    {
     struct client *item_client,*tmp_item;
@@ -637,6 +639,7 @@ void* message_pinging(int sock)
       tmp_item = TAILQ_NEXT(item_client,entries);
       if(item_client->counter<10)
       {
+        printf("less pings zomg!\n");
         char req_status[BUFLEN] = "STATUS";
         client_out.sin_family = AF_INET;
         client_out.sin_port = htons(item_client->port);
