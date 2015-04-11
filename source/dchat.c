@@ -489,6 +489,10 @@ void* housekeeping(int soc){
 				}
 			} else if (strcmp(seq_message_type, "STATUS") == 0){
 				printf("%s\n", message[2]);
+			} else if (strcmp(seq_message_type, "EA") == 0){
+				strcpy(leader.ip_addr, message[2]);
+				strcpy(leader.port, message[3]);
+				election = 0;
 			}
 		}
 	} // end of while(1)
