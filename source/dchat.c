@@ -341,6 +341,7 @@ int main(int argc, char* argv[]){
 
 			request_to_join(soc, my_ip_addr, argv[1]);
 			printf("%s joined the chat\n", argv[1]);
+			int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
 		}
 	}
 
