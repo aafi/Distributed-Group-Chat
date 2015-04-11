@@ -632,7 +632,7 @@ void* election_algorithm(int curr_id){
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
-            printf("timeout\n");
+            //printf("timeout\n");
             strcpy(buf, "PING#");
             strcat(buf, curr_ele_id);
             send_msg(sockfd, buf, serv_addr_seq, slen);
@@ -688,7 +688,7 @@ void* election_algorithm(int curr_id){
                     {
                         if (received_ok == 0)
                         {
-                            printf("I AM LEADER\n"); //BROADCAST TO ALL CLIENTS AND ELECETIONS
+                            //printf("I AM LEADER\n"); //BROADCAST TO ALL CLIENTS AND ELECETIONS
                             election = 1;
                             for (i = 0; i < total_clients; i++)
                             {
@@ -770,7 +770,7 @@ void* election_algorithm(int curr_id){
             if (strcmp(token_result[0], "CLIENT_ID") == 0)
             {
 
-                printf("here??\n");
+                //printf("here??\n");
             	send_msg(sockfd, "OK", serv_addr, slen);
                 goto begin_election;
             }
@@ -790,8 +790,7 @@ void* election_algorithm(int curr_id){
                 election = 1;
             }
             
-            //printf("First print\n");
-            printf("%s\n", buf);
+            //printf("%s\n", buf);
         }
         
     }
