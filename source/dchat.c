@@ -11,12 +11,18 @@
 #include <errno.h>
 #include <arpa/inet.h> 
 #include <sys/ioctl.h>
+#include <sys/time.h>
 
 #define PORT 1705
 #define MAXSIZE 1024
 #define DELIMITER "#"
 #define MAX 15
-#define SEQUENCER_PORT 5678
+#define ELE_PORT 8174
+#define TIMEOUT_SEC 3
+#define TIMEOUT_USEC 0
+#define BUFLEN 1024
+// #define SEQUENCER_PORT 5678
+
 
 struct Leader{
 	char ip_addr[MAXSIZE];
@@ -224,6 +230,7 @@ int main(int argc, char* argv[]){
 
 	void* housekeeping(int);
 	void* messenger(int);
+	void* election_algorithm(int);
 
 	if(argc < 2){	//INVALID ARGUMENTS TO THE PROGRAM
 		fprintf(stderr, "Invalid arguments. \nFormat: dchat USERNAME [IP-ADDR PORT]\n");
@@ -331,12 +338,14 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	pthread_t threads[2];
-	int rc0, rc1;
+	pthread_t threads[3];
+	int rc0, rc1, rc2;
 	rc0 = pthread_create(&threads[0], NULL, messenger, soc);
 	rc1 = pthread_create(&threads[1], NULL, housekeeping, soc);
+	rc2 = pthread_create(&threads[2], NULL, election_algorithm, client_id);
 	pthread_join(threads[0], NULL);
 	pthread_join(threads[1], NULL);
+	pthread_join(threads[2], NULL);
 	pthread_exit(NULL);
 
 	return 0;
@@ -555,16 +564,16 @@ void* election_algorithm(int curr_id){
     char buf[BUFLEN], temp[BUFLEN], curr_ele_id[BUFLEN];
     char* token_result[BUFLEN];
     sprintf(curr_ele_id, "%d", curr_id);
-    if(argc != 4)
-    {
-      printf("Usage : %s <Sequencer Server-IP> <sequencer port> <client_id> \n",argv[0]);
-      exit(0);
-    }
+    // if(argc != 4)
+    // {
+    //   printf("Usage : %s <Sequencer Server-IP> <sequencer port> <client_id> \n",argv[0]);
+    //   exit(0);
+    // }
     
-    populate_clients();
+    // populate_clients();
     //strcpy(buf, argv[3]);
     
-    curr_ele_id = atoi(argv[3]);
+    // curr_ele_id = atoi(argv[3]);
 
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0))==-1)
         err("socket");
@@ -581,7 +590,7 @@ void* election_algorithm(int curr_id){
     serv_addr_client.sin_family = AF_INET;
     serv_addr_ele.sin_family = AF_INET;
 
-    serv_addr_seq.sin_port = htons(leader.port);
+    serv_addr_seq.sin_port = htons(atoi(leader.port));
     my_addr.sin_port = htons(ELE_PORT);
     serv_addr_ele.sin_port = htons(ELE_PORT);
 
@@ -642,7 +651,7 @@ void* election_algorithm(int curr_id){
 
                     //printf("informing: 2nd inet_aton\n");
 
-                    if (client_list[i].client_id == curr_ele_id)
+                    if (client_list[i].client_id == atoi(curr_ele_id))
                     {
                         send_msg(sockfd, "ELECTION", serv_addr_client, slen);
                     }
@@ -666,7 +675,7 @@ void* election_algorithm(int curr_id){
                         fprintf(stderr, "inet_aton() failed\n");
                         exit(1);
                     }
-                    if (client_list[i].client_id > curr_ele_id)
+                    if (client_list[i].client_id > atoi(curr_ele_id))
                     {
                     	sprintf(temp, "%d", client_list[i].client_id);
                         strcpy(buf, "CLIENT_ID#");
@@ -707,7 +716,7 @@ void* election_algorithm(int curr_id){
                                 
                                 send_msg(sockfd, buf, serv_addr_client, slen); //SENDING NEW LEADER TO CLIENT
 
-                                if (client_list[i].client_id != curr_ele_id)
+                                if (client_list[i].client_id != atoi(curr_ele_id))
                                 {
                                     
                                     send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
