@@ -704,9 +704,9 @@ void* election_algorithm(int curr_id){
                                     exit(1);
                                 }
 
-                                sprintf(temp, "%d", curr_ele_id);
+                                // sprintf(temp, "%d", curr_ele_id);
                                 strcpy(buf, "I AM LEADER#");
-                                strcat(buf, temp);
+                                strcat(buf, curr_ele_id);
                                 
                                 send_msg(sockfd, buf, serv_addr_client, slen); //SENDING NEW LEADER TO CLIENT
 
