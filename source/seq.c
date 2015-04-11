@@ -636,7 +636,7 @@ void* message_pinging(int sock)
       tmp_item = TAILQ_NEXT(item_client,entries);
       if(item_client->counter<10)
       {
-        char req_status[BUFLEN] = "SEQ#PING#STATUS";
+        char req_status[BUFLEN] = "STATUS";
         client_out.sin_family = AF_INET;
         client_out.sin_port = htons(item_client->port);
         client_out.sin_addr.s_addr = inet_addr(item_client->ip);
