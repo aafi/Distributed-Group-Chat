@@ -754,8 +754,10 @@ void* election_algorithm(int curr_id){
                         break;
                     }
 
-                    if (strcmp(buf, "ELECTIONCANCEL") == 0)
+                    if (strcmp(buf, "CANCEL") == 0)
                     {
+                    	send_msg(sockfd, "ELECTIONCANCEL", serv_addr, slen);
+                    	printf("ELECTION CANCELLED\n");
                     	break;
                     }
                     
