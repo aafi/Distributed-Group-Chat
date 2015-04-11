@@ -711,7 +711,7 @@ void* election_algorithm(int curr_id){
                                 strcpy(buf, "I AM LEADER#");
                                 strcat(buf, curr_ele_id);
                                 
-                                send_msg(sockfd, buf, serv_addr_client, slen); //SENDING NEW LEADER TO CLIENT
+                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO CLIENT
 
                                 if (client_list[i].client_id == atoi(curr_ele_id))
                                 {
