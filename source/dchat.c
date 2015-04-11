@@ -367,7 +367,7 @@ void* housekeeping(int soc){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
-			fprintf(stderr, "%s\n", recvBuff);
+			// fprintf(stderr, "%s\n", recvBuff);
 		}
 
 		char* message[MAXSIZE];
