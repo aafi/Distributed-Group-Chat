@@ -22,8 +22,6 @@
 #define TIMEOUT_USEC 0
 #define BUFLEN 1024
 #define PORT_PING 5679
-// #define SEQUENCER_PORT 5678
-
 
 struct Leader{
 	char ip_addr[MAXSIZE];
@@ -55,7 +53,8 @@ int total_clients = 0;
 int client_id = 0;
 
 int last_global_seq_id = -1;	// The sequence id of the last message received from the sequencer/leader
-int message_id = -1;	// The message id of the last message removed from the client_queue
+int last_message_id = -1;	// The message id of the last message received from the sequencer
+int last_message_sent = -1;	// Last message sent by the client to the sequencer
 char last_message[MAXSIZE];		// The last message removed from the client queue
 
 int election = 0;	// Flag for if election is being held
@@ -406,6 +405,8 @@ void* housekeeping(int soc){
 			if (globalSeqNo == last_global_seq_id){
 				printf("%s: %s", client_name, message[4]);
 				last_global_seq_id = globalSeqNo + 1;
+				last_message_id = atoi(message[3]);
+				strcpy(last_message, message[4]);
 			}
 
 
@@ -492,12 +493,11 @@ void* housekeeping(int soc){
 				// Remove message from queue because sequencer has acknowledged receipt from all clients
 				// printf("Inside REMOVE\n");
 				struct node *item, *temp_item;
-				message_id = atoi(message[2]);
+				int message_id = atoi(message[2]);
 				for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
 					temp_item = TAILQ_NEXT(item, entries);
 
 					if(item->msg_id == message_id){
-						strcpy(last_message, item->message);
 						TAILQ_REMOVE(&queue_head, item, entries);
 						free(item);
 						break;
@@ -512,13 +512,16 @@ void* housekeeping(int soc){
 			} else if (strcmp(seq_message_type, "SEQNO") == 0){
 				strcpy(sendBuff, "SEQNO#");
 				char temp[MAXSIZE];
-				sprintf(temp, "%d", message_id);
+				sprintf(temp, "%d", last_message_id);
 				strcat(sendBuff, temp);
 				strcat(sendBuff, DELIMITER);
 				sprintf(temp, "%d", last_global_seq_id);
 				strcat(sendBuff, temp);
 				strcat(sendBuff, DELIMITER);
 				sprintf(temp, "%d", client_id);
+				strcat(sendBuff, temp);
+				strcat(sendBuff, DELIMITER);
+				sprintf(temp, "%d", last_message_sent);
 				strcat(sendBuff, temp);
 				strcat(sendBuff, DELIMITER);
 				strcat(sendBuff, last_message);
@@ -573,7 +576,7 @@ void* messenger(int soc){
 				perror("Could not send message to Sequencer\n");
 				// exit(-1);
 			}
-		}	// end of election check loop
+		}	// end of election check if
 	} // end of while(1)
 }
 
