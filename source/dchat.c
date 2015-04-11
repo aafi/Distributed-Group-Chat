@@ -713,7 +713,7 @@ void* election_algorithm(int curr_id){
                                 if (client_list[i].client_id == atoi(curr_ele_id))
                                 {
                                     
-                                    send_msg(sockfd, "LEADER", serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
+                                    send_msg(sockfd, "LEADER", serv_addr_client, slen); //SENDING NEW LEADER TO ELECTIONS
                                 //printf("checking: second inet_aton\n");
                                 }
 
