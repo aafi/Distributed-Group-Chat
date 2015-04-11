@@ -765,7 +765,7 @@ void* election_algorithm(int curr_id){
                                 fprintf(stderr, "inet_aton() failed\n");
                                 exit(1);
                             }
-                    	    send_msg(sockfd, "ELECTIONCANCEL", serv_addr, slen);
+                    	    send_msg(sockfd, "ELECTIONCANCEL", serv_addr_client, slen);
                     	}
                     	    //printf("ELECTION CANCELLED\n");
                     	    break;
