@@ -606,6 +606,7 @@ void* message_pinging(int sock)
           struct client *item_client;
           TAILQ_FOREACH(item_client,&client_head,entries)
           {
+            printf("Inside TAILQ_FOREACH \n");
             if(item_client->client_id == atoi(token))
             {
               item_client->counter++;
