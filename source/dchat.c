@@ -414,7 +414,7 @@ void* housekeeping(int soc){
 				perror("ERROR: Sending message failed in ACK \n");
 			} 
 		} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
-			printf("Inside election of client!\n");
+			printf("Inside election of client! %s\n", recvBuff);
 			if (isLeader == 1){
 				strcpy(sendBuff, "CANCEL");
 				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
@@ -424,8 +424,10 @@ void* housekeeping(int soc){
 				election = 1;
 			}
 		} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
+			printf("%s\n", recvBuff);
 			election = 0;
 		} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
+			printf("%s\n", recvBuff);
 			isLeader = 1;
 			char old_leader_ip[MAXSIZE];
 			strcpy(old_leader_ip, leader.ip_addr);
