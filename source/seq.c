@@ -642,7 +642,7 @@ void* message_pinging(int sock)
       tmp_item = TAILQ_NEXT(item_client,entries);
       if(item_client->counter<2)
       {
-        printf("less pings zomg!\n");
+        printf("less pings from %s\n",item_client->name);
         char req_status[BUFLEN] = "STATUS";
         client_out.sin_family = AF_INET;
         client_out.sin_port = htons(item_client->port);
@@ -670,6 +670,7 @@ void* message_pinging(int sock)
             free(item_client);
 
         }
+        item_client->counter = 0;
 
       }
      }
