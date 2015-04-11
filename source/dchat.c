@@ -54,6 +54,7 @@ int client_id = 0;
 
 int last_global_seq_id = -1;	// The sequence id of the last message received from the sequencer/leader
 int message_id = -1;	// The message id of the last message removed from the client_queue
+char last_message[MAXSIZE];		// The last message removed from the client queue
 
 int election = 0;	// Flag for if election is being held
 int isLeader = 0;	// Flag for if the current client is the leader
@@ -456,6 +457,9 @@ void* housekeeping(int soc){
 					strcat(sendBuff, DELIMITER);
 				}
 			}
+			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+				perror("ERROR: Sending message failed in ACK \n");
+			}
 			election = 0;
 		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
 			char seq_message_type[MAXSIZE];
@@ -485,6 +489,7 @@ void* housekeeping(int soc){
 					temp_item = TAILQ_NEXT(item, entries);
 
 					if(item->msg_id == message_id){
+						strcpy(last_message, item->message)
 						TAILQ_REMOVE(&queue_head, item, entries);
 						free(item);
 						break;
@@ -496,6 +501,23 @@ void* housekeeping(int soc){
 				strcpy(leader.ip_addr, message[2]);
 				strcpy(leader.port, message[3]);
 				election = 0;
+			} else if (strcmp(seq_message_type, "SEQNO") == 0){
+				strcpy(sendBuff, "SEQNO#");
+				char temp[MAXSIZE];
+				sprintf(temp, "%d", message_id);
+				strcat(sendBuff, temp);
+				strcat(sendBuff, DELIMITER);
+				sprintf(temp, "%d", last_global_seq_id);
+				strcat(sendBuff, temp);
+				strcat(sendBuff, DELIMITER);
+				sprintf(temp, "%d", client_id);
+				strcat(sendBuff, temp);
+				strcat(sendBuff, DELIMITER);
+				strcat(sendBuff, last_message);
+
+				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+					perror("ERROR: Sending message failed in ACK \n");
+				}
 			}
 		}
 	} // end of while(1)
