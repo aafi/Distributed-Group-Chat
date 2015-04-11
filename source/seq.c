@@ -297,7 +297,7 @@ void* message_receiving(int s)
          exit(-1);
       } 
 
-      printf("Message Received : %s\n", buf);      
+     // printf("Message Received : %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -593,11 +593,11 @@ void* message_pinging(int sock)
            exit(-1);
         }
 
-      printf("%s\n",buf); //DEEPTI DEBUGGING
+      //printf("%s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
-      printf("%s\n", token); //DEEPTI DEBUGGING
+      //printf("%s\n", token); //DEEPTI DEBUGGING
 
       if(strcmp("PING",token)==0)
        {
@@ -632,7 +632,7 @@ void* message_pinging(int sock)
 
    }while(msec<trigger);
 
-   printf("outside do while\n");
+  // printf("outside do while\n");
 
    if(!TAILQ_EMPTY(&client_head))
    {
@@ -642,7 +642,7 @@ void* message_pinging(int sock)
       tmp_item = TAILQ_NEXT(item_client,entries);
       if(item_client->counter<2)
       {
-        printf("less pings from %s\n",item_client->name);
+       // printf("less pings from %s\n",item_client->name);
         char req_status[BUFLEN] = "STATUS";
         client_out.sin_family = AF_INET;
         client_out.sin_port = htons(item_client->port);
