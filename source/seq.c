@@ -586,7 +586,7 @@ void* message_pinging(int sock)
     {
       if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client_in, &len)) < 0)
         {
-           perror("Receive Error");
+           perror("Receive Error Ping");
            exit(-1);
         }
 
@@ -614,6 +614,7 @@ void* message_pinging(int sock)
             }
           }
          }
+
          
          if((sendto(s,ping_back,BUFLEN,0,(struct sockaddr *)&client_in, sizeof(client_in))) < 0)
          {
