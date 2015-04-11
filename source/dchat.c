@@ -548,12 +548,13 @@ void receive_msg(int sockfd, char msg[BUFLEN], struct sockaddr_in *serv_addr, so
             err("recvfrom()");
 }
 
-void* election_algorithm(int curr_ele_id){
+void* election_algorithm(int curr_id){
 	struct sockaddr_in my_addr, serv_addr_seq, serv_addr_client, serv_addr_ele, serv_addr;
     int sockfd, i, election = 0;
     socklen_t slen=sizeof(serv_addr_seq);
-    char buf[BUFLEN], temp[BUFLEN];
+    char buf[BUFLEN], temp[BUFLEN], curr_ele_id[BUFLEN];
     char* token_result[BUFLEN];
+    sprintf(curr_ele_id, "%d", curr_id);
     if(argc != 4)
     {
       printf("Usage : %s <Sequencer Server-IP> <sequencer port> <client_id> \n",argv[0]);
@@ -580,16 +581,16 @@ void* election_algorithm(int curr_ele_id){
     serv_addr_client.sin_family = AF_INET;
     serv_addr_ele.sin_family = AF_INET;
 
-    serv_addr_seq.sin_port = htons(atoi(argv[2]));
-    my_addr.sin_port = htons(PORT);
-    serv_addr_ele.sin_port = htons(PORT);
+    serv_addr_seq.sin_port = htons(leader.port);
+    my_addr.sin_port = htons(ELE_PORT);
+    serv_addr_ele.sin_port = htons(ELE_PORT);
 
     my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(sockfd, (struct sockaddr* ) &my_addr, sizeof(my_addr))==-1)
       err("bind");
 
-    if (inet_aton(argv[1], &serv_addr_seq.sin_addr)==0)
+    if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
     {
         fprintf(stderr, "inet_aton() failed\n");
         exit(1);
@@ -610,7 +611,7 @@ void* election_algorithm(int curr_ele_id){
         }
         
         strcpy(buf, "PING#");
-        strcat(buf, argv[3]);
+        strcat(buf, curr_ele_id);
         send_msg(sockfd, buf, serv_addr_seq, slen); //PING SEQUENCER TO CHECK IF IT IS ACTIVE
         //printf("reached here\n");
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
