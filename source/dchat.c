@@ -42,12 +42,14 @@ Node structure for TAIL QUEUE
 */
 struct node{
 	int msg_id;
+	int global_id;
 	char message[MAXSIZE];
 	int acknowledged;
 	TAILQ_ENTRY(node) entries;
 };
 
-TAILQ_HEAD(, node) queue_head;		// head of the queue
+TAILQ_HEAD(, node) queue_head; // head of the message queue
+TAILQ_HEAD(, node) holdback_queue_head; // head of the holdback queue
 
 int total_clients = 0;
 int client_id = 0;
@@ -231,6 +233,7 @@ int main(int argc, char* argv[]){
 	pthread_t ea_thread;
 
 	TAILQ_INIT(&queue_head);		// Initialize TAILQ
+	TAILQ_INIT(&holdback_queue_head);		//Initialize TAILQ
 
 	void* housekeeping(int);
 	void* messenger(int);
@@ -404,6 +407,11 @@ void* housekeeping(int soc){
 				printf("%s: %s", client_name, message[4]);
 				last_global_seq_id = globalSeqNo + 1;
 			}
+
+
+			
+			//TODO: IMPLEMENT HOLDBACK QUEUE
+			
 
 			// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
 			strcpy(sendBuff, "ACK");
