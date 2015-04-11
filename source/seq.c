@@ -664,6 +664,7 @@ void* message_pinging(int sock)
             char status_msg[BUFLEN];
             sprintf(status_msg,"NOTICE %s left the chat or crashed",item_client->name);
             strcat(status,status_msg);
+            printf("%s\n",status);
             multicast(sock,status);
 
             TAILQ_REMOVE(&client_head,item_client,entries);
