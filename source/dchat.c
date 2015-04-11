@@ -643,24 +643,12 @@ void* election_algorithm(int curr_id){
                         exit(1);
                     }
                     //printf("Inofrming: first inet_aton\n");
-                    if (inet_aton(client_list[i].ip, &serv_addr_ele.sin_addr)==0)
-                    {
-                        fprintf(stderr, "inet_aton() failed\n");
-                        exit(1);
-                    }
 
                     //printf("informing: 2nd inet_aton\n");
 
-                    if (client_list[i].client_id == atoi(curr_ele_id))
-                    {
-                        send_msg(sockfd, "ELECTION", serv_addr_client, slen);
-                    }
-
-                    else
-                    {
-                        send_msg(sockfd, "ELECTION", serv_addr_client, slen); //TELL CLIENTS TO STOP FOR ELECTION AND WAIT FOR NEW LEADER
-                        //send_msg(sockfd, "ELECTION", serv_addr_ele, slen); //TELL ELECTIONS TO STOP PINGING AND PARTICIPATE IN ELECTION
-                    }
+                    
+                    send_msg(sockfd, "ELECTION", serv_addr_client, slen);
+                    
 
                 }
 
