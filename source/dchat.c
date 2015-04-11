@@ -56,7 +56,7 @@ int last_global_seq_id = -1;	// The sequence id of the last message received fro
 int message_id = -1;	// The message id of the last message removed from the client_queue
 
 int election = 0;	// Flag for if election is being held
-int isLeader = 01;
+int isLeader = 0;	// Flag for if the current client is the leader
 
 // int my_seq_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 
@@ -415,7 +415,7 @@ void* housekeeping(int soc){
 			} 
 		} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
 			printf("Inside election of client!\n");
-			if (isLeader){
+			if (isLeader == 1){
 				strcpy(sendBuff, "CANCEL");
 				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 					perror("ERROR: Sending message failed in ACK \n");
@@ -522,7 +522,7 @@ void* messenger(int soc){
 		TAILQ_INSERT_TAIL(&queue_head, item, entries);
 
 		// INITIATE COMMUNICATION WITH THE LEADER
-		if(!election){
+		if(election != 0){
 			struct sockaddr_in serv_addr;
 
 			serv_addr.sin_family = AF_INET;
