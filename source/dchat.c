@@ -300,10 +300,10 @@ int main(int argc, char* argv[]){
 			printf("Waiting for others to join:\n");
 
 			request_to_join(soc, my_ip_addr, argv[1]);
-			// start_EA();
-			pthread_t ea_thread;
-			int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
-			pthread_join(ea_thread, NULL);
+			start_EA();
+			// pthread_t ea_thread;
+			// int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
+			// pthread_join(ea_thread, NULL);
 		} else if(argc == 4){	
 			/*
 			JOIN an existing chat conversation
