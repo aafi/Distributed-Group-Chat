@@ -636,7 +636,7 @@ void* election_algorithm(int curr_id){
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
-            //printf("timeout\n");
+            printf("timeout\n");
             strcpy(buf, "PING#");
             strcat(buf, curr_ele_id);
             send_msg(sockfd, buf, serv_addr_seq, slen);
