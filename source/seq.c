@@ -602,14 +602,14 @@ void* message_pinging(int sock)
       if(strcmp("PING",token)==0)
        {
         
-         printf("reached if \n");
+       //  printf("reached if \n");
          token = strtok(NULL,"#");
          if(!TAILQ_EMPTY(&client_head))
          {
           struct client *item_client;
           TAILQ_FOREACH(item_client,&client_head,entries)
           {
-            printf("Inside TAILQ_FOREACH \n");
+           // printf("Inside TAILQ_FOREACH \n");
             if(item_client->client_id == atoi(token))
             {
               item_client->counter++;
