@@ -412,7 +412,6 @@ void* housekeeping(int soc){
 			election = 0;
 		} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
 			isLeader = 1;
-			// TODO: Handle starting sequencer
 			char old_leader_ip[MAXSIZE];
 			strcpy(old_leader_ip, leader.ip_addr);
 			start_sequencer(soc);
@@ -524,4 +523,269 @@ void* messenger(int soc){
 			}
 		}	// end of election check loop
 	} // end of while(1)
+}
+
+/*
+ELECTION ALGORITHM SPACE
+
+All functions below this point belong to the election algorithm
+*/
+void err(char *s)
+{
+    perror(s);
+    exit(1);
+}
+
+void send_msg(int sockfd, char msg[BUFLEN], struct sockaddr_in serv_addr, socklen_t slen)
+{
+    if (sendto(sockfd, msg, BUFLEN, 0, (struct sockaddr*) &serv_addr, slen)==-1)
+            err("sendto()");   
+}
+
+void receive_msg(int sockfd, char msg[BUFLEN], struct sockaddr_in *serv_addr, socklen_t *slen)
+{
+    if (recvfrom(sockfd, msg, BUFLEN, 0, (struct sockaddr*)&serv_addr, slen)==-1)
+            err("recvfrom()");
+}
+
+void* election_algorithm(int curr_ele_id){
+	struct sockaddr_in my_addr, serv_addr_seq, serv_addr_client, serv_addr_ele, serv_addr;
+    int sockfd, i, election = 0;
+    socklen_t slen=sizeof(serv_addr_seq);
+    char buf[BUFLEN], temp[BUFLEN];
+    char* token_result[BUFLEN];
+    if(argc != 4)
+    {
+      printf("Usage : %s <Sequencer Server-IP> <sequencer port> <client_id> \n",argv[0]);
+      exit(0);
+    }
+    
+    populate_clients();
+    //strcpy(buf, argv[3]);
+    
+    curr_ele_id = atoi(argv[3]);
+
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0))==-1)
+        err("socket");
+
+    //calling_client_addr = argv[1]
+    
+    bzero(&my_addr, sizeof(my_addr));
+    bzero(&serv_addr_seq, sizeof(serv_addr_seq));
+    bzero(&serv_addr_client, sizeof(serv_addr_client));
+    bzero(&serv_addr_ele, sizeof(serv_addr_ele));
+
+    my_addr.sin_family = AF_INET;
+    serv_addr_seq.sin_family = AF_INET;
+    serv_addr_client.sin_family = AF_INET;
+    serv_addr_ele.sin_family = AF_INET;
+
+    serv_addr_seq.sin_port = htons(atoi(argv[2]));
+    my_addr.sin_port = htons(PORT);
+    serv_addr_ele.sin_port = htons(PORT);
+
+    my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(sockfd, (struct sockaddr* ) &my_addr, sizeof(my_addr))==-1)
+      err("bind");
+
+    if (inet_aton(argv[1], &serv_addr_seq.sin_addr)==0)
+    {
+        fprintf(stderr, "inet_aton() failed\n");
+        exit(1);
+    }
+
+    printf("In election algorithm\n");
+
+    struct timeval tv;
+    tv.tv_sec = TIMEOUT_SEC;
+    tv.tv_usec = TIMEOUT_USEC;
+
+    while(1)
+    {
+    	
+        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+        {
+            perror("Error");
+        }
+        
+        strcpy(buf, "PING#");
+        strcat(buf, argv[3]);
+        send_msg(sockfd, buf, serv_addr_seq, slen); //PING SEQUENCER TO CHECK IF IT IS ACTIVE
+        //printf("reached here\n");
+        if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
+        {
+            //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
+            printf("timeout\n");
+            send_msg(sockfd, "ARE YOU ALIVE?", serv_addr_seq, slen);
+            if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0) //DOUBLE CHECKING SEQ CRASH
+            {
+
+                begin_election:
+                printf("2nd timeout: starting election\n");
+                for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS AND ELECTIONS THAT ELECTION IS BEING HELD
+                {
+                	serv_addr_client.sin_port = htons(client_list[i].port);
+
+                    if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
+                    {
+                        fprintf(stderr, "inet_aton() failed\n");
+                        exit(1);
+                    }
+                    //printf("Inofrming: first inet_aton\n");
+                    if (inet_aton(client_list[i].ip, &serv_addr_ele.sin_addr)==0)
+                    {
+                        fprintf(stderr, "inet_aton() failed\n");
+                        exit(1);
+                    }
+
+                    //printf("informing: 2nd inet_aton\n");
+
+                    if (client_list[i].client_id == curr_ele_id)
+                    {
+                        send_msg(sockfd, "ELECTION", serv_addr_client, slen);
+                    }
+
+                    else
+                    {
+                        send_msg(sockfd, "ELECTION", serv_addr_client, slen); //TELL CLIENTS TO STOP FOR ELECTION AND WAIT FOR NEW LEADER
+                        //send_msg(sockfd, "ELECTION", serv_addr_ele, slen); //TELL ELECTIONS TO STOP PINGING AND PARTICIPATE IN ELECTION
+                    }
+
+                }
+
+                for (i = 0; i < total_clients; i++) //SENDING ID TO ALL HIGHER ID ELECTIONS (MAKE THIS A FUNCTION??)
+                {
+                	//serv_addr_client.sin_port = htons(client_list[i].port);
+                	//serv_addr_ele.sin_port = htons(client_list[i].port);
+
+                    //printf("checking: first inet_aton\n");
+                    if (inet_aton(client_list[i].ip, &serv_addr_ele.sin_addr)==0)
+                    {
+                        fprintf(stderr, "inet_aton() failed\n");
+                        exit(1);
+                    }
+                    if (client_list[i].client_id > curr_ele_id)
+                    {
+                    	sprintf(temp, "%d", client_list[i].client_id);
+                        strcpy(buf, "CLIENT_ID#");
+                        strcat(buf, temp);
+                    	send_msg(sockfd, buf, serv_addr_ele, slen);
+                    }
+                    //printf("checking: second inet_aton\n");
+                }
+                int received_ok = 0;
+
+                while(1)
+                {
+                    if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
+                    {
+                        if (received_ok == 0)
+                        {
+                            printf("I AM LEADER\n"); //BROADCAST TO ALL CLIENTS AND ELECETIONS
+                            election = 1;
+                            for (i = 0; i < total_clients; i++)
+                            {
+                                serv_addr_client.sin_port = htons(client_list[i].port);
+
+                                if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
+                                {
+                                    fprintf(stderr, "inet_aton() failed\n");
+                                    exit(1);
+                                }
+                                //printf("checking: first inet_aton\n");
+                                if (inet_aton(client_list[i].ip, &serv_addr_ele.sin_addr)==0)
+                                {
+                                    fprintf(stderr, "inet_aton() failed\n");
+                                    exit(1);
+                                }
+
+                                sprintf(temp, "%d", curr_ele_id);
+                                strcpy(buf, "I AM LEADER#");
+                                strcat(buf, temp);
+                                
+                                send_msg(sockfd, buf, serv_addr_client, slen); //SENDING NEW LEADER TO CLIENT
+
+                                if (client_list[i].client_id != curr_ele_id)
+                                {
+                                    
+                                    send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
+                                //printf("checking: second inet_aton\n");
+                                }
+                            }
+                            break;
+                        }
+                        continue;
+                    }
+                    
+                    detokenize(buf, token_result, "#");
+                    //printf("%s\n", token_result[0]);
+                    if (strcmp(token_result[0], "OK") == 0)
+                    {
+                        if(received_ok == 0)
+                        {
+                            received_ok = 1;
+                        }
+                    }
+                    
+                    if (strcmp(token_result[0], "CLIENT_ID") == 0)
+                    {
+                        send_msg(sockfd, "OK", serv_addr, slen);
+                    }
+
+                    if (strcmp (token_result[0], "I AM LEADER") == 0)
+                    {
+                        printf("New Leader: %s\n", token_result[1]);
+                        election = 1;
+                        break;
+                    }
+                    
+
+                }
+                	
+                
+            }
+                        
+            
+        }
+        
+        if (election == 0)
+        {
+
+            detokenize(buf, token_result, "#");
+
+
+            // if (strcmp(token_result[0], "ELECTION") == 0)
+            // {
+            // 	receive_msg(sockfd, buf, &serv_addr, &slen);
+            // 	char* detokenized[BUFLEN]; 
+            // 	detokenize(buf, token_result, "#");
+            if (strcmp(token_result[0], "CLIENT_ID") == 0)
+            {
+
+                printf("here??\n");
+            	send_msg(sockfd, "OK", serv_addr, slen);
+                goto begin_election;
+            }
+            	//send_msg(sockfd, "OK", serv_addr, slen);
+
+            //}
+            //printf("reached here as well\n");
+            
+            if (strcmp(token_result[2], "STATUS") == 0)
+            {
+                send_msg(sockfd, "I AM ALIVE", serv_addr_seq, slen);
+            }
+
+            if (strcmp(token_result[0], "I AM LEADER") == 0)
+            {
+                printf("New Leader: %s\n", token_result[1]);
+                election = 1;
+            }
+            
+            //printf("First print\n");
+            printf("%s\n", buf);
+        }
+        
+    }
 }
