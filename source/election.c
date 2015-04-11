@@ -16,13 +16,6 @@
 #define TIMEOUT_USEC 0
 
 
-struct election_process
-{
-    char ip[MAX];
-    int port;
-    int ele_id;
-} ele_list[MAX];
-
 struct client{
     char ip[BUFLEN];
     int port;
