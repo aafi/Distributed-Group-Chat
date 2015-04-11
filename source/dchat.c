@@ -203,7 +203,6 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 void start_sequencer(soc){
 	int childId;
 	if ((childId = fork()) == 0){	// INSIDE SEQUENCER CHILD
-		printf("%d\n", childId);
 		execv("sequencer", NULL);
 	}
 	// SET LEADER INFO TO ITS OWN IP_ADDRESS AND PORT NUMBER
@@ -222,18 +221,13 @@ void start_sequencer(soc){
 	strcpy(leader.port, seq_info[3]);
 }
 
-void start_EA(){
-	void* election_algorithm(int);
-	pthread_t ea_thread;
-	int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
-	pthread_join(ea_thread, NULL);
-}
-
 int main(int argc, char* argv[]){
 	int soc = 0, serv_addr_size;
 	struct sockaddr_in my_addr;
 	char* mode;
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
+
+	pthread_t ea_thread;
 
 	TAILQ_INIT(&queue_head);		// Initialize TAILQ
 
@@ -301,9 +295,8 @@ int main(int argc, char* argv[]){
 			printf("Waiting for others to join:\n");
 
 			request_to_join(soc, my_ip_addr, argv[1]);
-			start_EA();
-			// pthread_t ea_thread;
-			// int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
+			// start_EA();
+			int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
 			// pthread_join(ea_thread, NULL);
 		} else if(argc == 4){	
 			/*
@@ -357,6 +350,7 @@ int main(int argc, char* argv[]){
 	rc1 = pthread_create(&threads[1], NULL, housekeeping, soc);
 	pthread_join(threads[0], NULL);
 	pthread_join(threads[1], NULL);
+	pthread_join(ea_thread, NULL);
 	pthread_exit(NULL);
 
 	return 0;
@@ -602,7 +596,7 @@ void* election_algorithm(int curr_id){
     serv_addr_client.sin_family = AF_INET;
     serv_addr_ele.sin_family = AF_INET;
 
-    serv_addr_seq.sin_port = htons(atoi(PORT_PING));
+    serv_addr_seq.sin_port = htons(PORT_PING);
     my_addr.sin_port = htons(ELE_PORT);
     serv_addr_ele.sin_port = htons(ELE_PORT);
 
