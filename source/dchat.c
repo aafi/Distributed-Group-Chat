@@ -638,8 +638,9 @@ void* election_algorithm(int curr_id){
             send_msg(sockfd, buf, serv_addr_seq, slen);
             if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0) //DOUBLE CHECKING SEQ CRASH
             {
-
+                
                 begin_election:
+                election = 1;
                 printf("2nd timeout: starting election\n");
                 for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS THAT ELECTION IS BEING HELD
                 {
@@ -745,6 +746,11 @@ void* election_algorithm(int curr_id){
                         printf("New Leader: %s\n", token_result[1]);
                         election = 1;
                         break;
+                    }
+
+                    if (strcmp(buf, "ELECTIONCANCEL") == 0)
+                    {
+                    	break;
                     }
                     
 
