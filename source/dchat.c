@@ -522,7 +522,7 @@ void* messenger(int soc){
 		TAILQ_INSERT_TAIL(&queue_head, item, entries);
 
 		// INITIATE COMMUNICATION WITH THE LEADER
-		if(election != 0){
+		if(election == 0){
 			struct sockaddr_in serv_addr;
 
 			serv_addr.sin_family = AF_INET;
