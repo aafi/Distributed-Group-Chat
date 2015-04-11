@@ -21,6 +21,7 @@
 #define TIMEOUT_SEC 3
 #define TIMEOUT_USEC 0
 #define BUFLEN 1024
+#define PORT_PING 5679
 // #define SEQUENCER_PORT 5678
 
 
@@ -601,7 +602,7 @@ void* election_algorithm(int curr_id){
     serv_addr_client.sin_family = AF_INET;
     serv_addr_ele.sin_family = AF_INET;
 
-    serv_addr_seq.sin_port = htons(atoi(leader.port));
+    serv_addr_seq.sin_port = htons(atoi(PORT_PING));
     my_addr.sin_port = htons(ELE_PORT);
     serv_addr_ele.sin_port = htons(ELE_PORT);
 

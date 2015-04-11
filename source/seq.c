@@ -590,14 +590,16 @@ void* message_pinging(int sock)
            exit(-1);
         }
 
-      printf("%s\n",buf);
+      printf("%s\n",buf); //DEEPTI DEBIGGING
 
       char * token;
       token = strtok(buf,"#");
+      printf("%s\n", token); //DEEPTI DEBUGGING
 
       if(strcmp("PING",token)==0)
        {
         
+         printf("reached if \n");
          token = strtok(NULL,"#");
          if(!TAILQ_EMPTY(&client_head))
          {
