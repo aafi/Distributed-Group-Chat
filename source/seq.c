@@ -301,7 +301,8 @@ void msg_removal(int s)
   if(TAILQ_EMPTY(&message_head) && (hb_counter == num_client_hb) )
   {
     printf("inside sendall condition\n");
-    multicast(s,"SEQ#SENDALL");
+    char temp[BUFLEN] = "SEQ#SENDALL";
+    multicast(s,temp);
   }
 }
 
