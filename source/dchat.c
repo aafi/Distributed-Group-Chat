@@ -457,8 +457,16 @@ void* housekeeping(int soc){
 					strcat(sendBuff, DELIMITER);
 				}
 			}
+			
+			other_user_addr.sin_family = AF_INET;
+			other_user_addr.sin_port = htons(atoi(leader.port));
+			if(inet_pton(AF_INET, leader.ip_addr, &other_user_addr.sin_addr)<=0)
+		    {
+		        perror("ERROR: inet_pton error occured \n");
+		        exit(-1);
+		    }
 			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-				perror("ERROR: Sending message failed in ACK \n");
+				perror("ERROR: Sending message failed \n");
 			}
 			election = 0;
 		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
