@@ -20,6 +20,7 @@
 int msg_seq_id = 0;
 int hb_counter = 0, num_client_hb = -1;
 
+
 struct client{
    char ip[BUFLEN];
    char name[BUFLEN];
@@ -476,7 +477,14 @@ void* message_receiving(int s)
         int flag;
         
         int client_id = atoi(hb[1]);
-        int count = (atoi(hb[2])*4)+3;
+
+        if(msg_seq_id == -1)
+          msg_seq_id = atoi(hb[2]);
+        else if(atoi(hb[2])<msg_seq_id)
+          msg_seq_id = atoi(hb[2]);
+
+        
+        int count = (atoi(hb[3])*4)+4;
 
 
         int id[MAX] = {0};
@@ -489,7 +497,7 @@ void* message_receiving(int s)
           }
         }
 
-        int idx = 3;
+        int idx = 4;
         for(idx;idx < count; idx+=4)
         {
           flag = 0;
@@ -853,6 +861,8 @@ int main(int argc, char *argv[]){
      // printf("%s\n",buf);
       int i = 2, num_clients = (atoi(tok[1])*4)+2;
       num_client_hb = atoi(tok[1]);
+      msg_seq_id = -1;
+
       for(i;i<num_clients;i+=4)
       {
         struct client *c;
