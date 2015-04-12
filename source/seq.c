@@ -828,7 +828,9 @@ int main(int argc, char *argv[]){
     {
        perror("Receive Error");
        exit(-1);
-    }    
+    } 
+
+    printf("%s\n",buf);   
 
     detokenize(buf,tok,"#"); 
 
