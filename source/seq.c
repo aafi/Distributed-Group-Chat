@@ -303,6 +303,7 @@ void msg_removal(int s)
     printf("inside sendall condition\n");
     char temp[BUFLEN] = "SEQ#SENDALL";
     multicast(s,temp);
+    hb_counter = -1;
   }
 }
 
