@@ -841,6 +841,7 @@ int main(int argc, char *argv[]){
 
     if (strcmp("NEWLEADER",tok[0]) == 0)
     {
+      printf("%s\n",buf);
       int i = 2, num_clients = (atoi(tok[1])*4)+2;
       num_client_hb = atoi(tok[1]);
       for(i;i<num_clients;i+=4)
