@@ -312,7 +312,7 @@ void* message_receiving(int s)
   char * tok[BUFLEN];
   struct sockaddr_in client;
   int n, len = sizeof(client);
-  char buf[BUFLEN],reply[BUFLEN];
+  char buf[BUFLEN],reply[BUFLEN],buf_copy[BUFLEN];
   const char * temp;
   int socket = s; 
 
@@ -324,6 +324,8 @@ void* message_receiving(int s)
          perror("Receive Error");
          exit(-1);
       } 
+
+    strcpy(buf_copy,buf);
 
      printf("Message Received : %s\n", buf);      
 
@@ -469,7 +471,7 @@ void* message_receiving(int s)
         printf("hb msg: %s\n", buf);
         hb_counter++;
         char * hb[BUFLEN];
-        detokenize(buf,hb,"#");
+        detokenize(buf_copy,hb,"#");
         int flag;
         
         int client_id = atoi(hb[1]);
