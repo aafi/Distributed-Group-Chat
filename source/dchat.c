@@ -267,10 +267,6 @@ int main(int argc, char* argv[]){
 			Also needs to start Election Algorithm program
 			*/
 
-			// pthread_t sequencer_thread;
-			// int thread_status = pthread_create(&sequencer_thread, NULL, sequencer);
-			// pthread_join(sequencer_thread, NULL);
-
 			start_sequencer(soc);
 
 			my_ip_addr = get_ip_address();
@@ -295,9 +291,6 @@ int main(int argc, char* argv[]){
 			printf("Waiting for others to join:\n");
 
 			request_to_join(soc, my_ip_addr, argv[1]);
-			// start_EA();
-			// int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
-			// pthread_join(ea_thread, NULL);
 		} else if(argc == 4){	
 			/*
 			JOIN an existing chat conversation
@@ -341,7 +334,6 @@ int main(int argc, char* argv[]){
 
 			request_to_join(soc, my_ip_addr, argv[1]);
 			printf("%s joined the chat\n", argv[1]);
-			// int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
 		}
 	}
 
