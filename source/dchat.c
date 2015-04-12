@@ -528,6 +528,10 @@ void* housekeeping(int soc){
 				strcat(sendBuff, temp);
 				strcat(sendBuff, DELIMITER);
 
+				sprintf(temp, "%d", last_global_seq_id);
+				strcat(sendBuff, temp);
+				strcat(sendBuff, DELIMITER);
+
 				int hb_count = 0;
 				struct node *item;
 				TAILQ_FOREACH(item, &holdback_queue_head, entries) {
