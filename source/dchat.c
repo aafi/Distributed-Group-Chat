@@ -558,7 +558,6 @@ void* housekeeping(int soc){
 					perror("ERROR: Sending message failed \n");
 				}
 			} else if (strcmp(seq_message_type, "SENDALL") == 0){
-				printf("Inside SENDALL:%s\n", recvBuff);
 				election = 0;
 				struct node *item;
 				TAILQ_FOREACH(item, &queue_head, entries){
@@ -853,7 +852,7 @@ void* election_algorithm(int curr_id){
 
                     if (strcmp (token_result[0], "I AM LEADER") == 0)
                     {
-                        // printf("New Leader: %s\n", token_result[1]);
+                        printf("New Leader: %s\n", token_result[1]);
                         election = 1;
                         break;
                     }
