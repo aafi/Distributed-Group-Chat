@@ -42,6 +42,7 @@ struct node{
 	int msg_id;
 	int global_id;
 	char message[MAXSIZE];
+	int client_id;
 	int acknowledged;
 	TAILQ_ENTRY(node) entries;
 };
@@ -53,14 +54,9 @@ int total_clients = 0;
 int client_id = 0;
 
 int last_global_seq_id = -1;	// The sequence id of the last message received from the sequencer/leader
-int last_message_id = -1;	// The message id of the last message received from the sequencer
-int last_message_sent = -1;	// Last message sent by the client to the sequencer
-char last_message[MAXSIZE];		// The last message removed from the client queue
 
 int election = 0;	// Flag for if election is being held
 int isLeader = 0;	// Flag for if the current client is the leader
-
-// int my_seq_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 
 /*
 method: detokenize
@@ -229,7 +225,7 @@ int main(int argc, char* argv[]){
 	char* mode;
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 
-	pthread_t ea_thread;
+	// pthread_t ea_thread;
 
 	TAILQ_INIT(&queue_head);		// Initialize TAILQ
 	TAILQ_INIT(&holdback_queue_head);		//Initialize TAILQ
@@ -237,6 +233,7 @@ int main(int argc, char* argv[]){
 	void* housekeeping(int);
 	void* messenger(int);
 	void* election_algorithm(int);
+	void* message_display();
 
 	if(argc < 2){	//INVALID ARGUMENTS TO THE PROGRAM
 		fprintf(stderr, "Invalid arguments. \nFormat: dchat USERNAME [IP-ADDR PORT]\n");
@@ -299,7 +296,7 @@ int main(int argc, char* argv[]){
 
 			request_to_join(soc, my_ip_addr, argv[1]);
 			// start_EA();
-			int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
+			// int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
 			// pthread_join(ea_thread, NULL);
 		} else if(argc == 4){	
 			/*
@@ -344,16 +341,19 @@ int main(int argc, char* argv[]){
 
 			request_to_join(soc, my_ip_addr, argv[1]);
 			printf("%s joined the chat\n", argv[1]);
-			int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
+			// int ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
 		}
 	}
 
-	pthread_t threads[2];
-	int rc0, rc1;
+	pthread_t threads[3], ea_thread;
+	int rc0, rc1, rc2, ea_status;
 	rc0 = pthread_create(&threads[0], NULL, messenger, soc);
 	rc1 = pthread_create(&threads[1], NULL, housekeeping, soc);
+	rc2 = pthread_create(&threads[2], NULL, message_display);
+	ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
 	pthread_join(threads[0], NULL);
 	pthread_join(threads[1], NULL);
+	pthread_join(threads[2], NULL);
 	pthread_join(ea_thread, NULL);
 	pthread_exit(NULL);
 
@@ -402,17 +402,16 @@ void* housekeeping(int soc){
 				}
 			}
 			int globalSeqNo = atoi(message[1]);
-			if (globalSeqNo == last_global_seq_id){
-				printf("%s: %s", client_name, message[4]);
-				last_global_seq_id = globalSeqNo + 1;
-				last_message_id = atoi(message[3]);
-				strcpy(last_message, message[4]);
-			}
 
-
-			
-			//TODO: IMPLEMENT HOLDBACK QUEUE
-			
+			// ADD MESSAGE TO HOLDBACK_QUEUE
+			struct node *item;
+			item = malloc(sizeof(*item));
+			item->msg_id = atoi(message[3]);
+			item->acknowledged = 0;
+			item->global_id = globalSeqNo;
+			item->client_id = clientId;
+			strcpy(item->message, message[4]);
+			TAILQ_INSERT_TAIL(&holdback_queue_head, item, entries);
 
 			// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
 			strcpy(sendBuff, "ACK");
@@ -503,34 +502,82 @@ void* housekeeping(int soc){
 						break;
 					}
 				}
+			} else if (strcmp(seq_message_type, "REMHB") == 0){
+				// Remove message form holdback queue based on broadcast from sequencer
+				struct node *item, *temp_item;
+				int seq_id = atoi(message[2]);
+				for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
+					temp_item = TAILQ_NEXT(item, entries);
+
+					if(item->global_id == seq_id){
+						TAILQ_REMOVE(&holdback_queue_head, item, entries);
+						free(item);
+						break;
+					}
+				}
 			} else if (strcmp(seq_message_type, "STATUS") == 0){
 				printf("%s\n", message[2]);
 			} else if (strcmp(seq_message_type, "EA") == 0){
 				strcpy(leader.ip_addr, message[2]);
 				strcpy(leader.port, message[3]);
-				election = 0;
-			} else if (strcmp(seq_message_type, "SEQNO") == 0){
-				strcpy(sendBuff, "SEQNO#");
+			} else if (strcmp(seq_message_type, "HB") == 0){
+				strcpy(sendBuff, "HB#");
 				char temp[MAXSIZE];
-				sprintf(temp, "%d", last_message_id);
-				strcat(sendBuff, temp);
-				strcat(sendBuff, DELIMITER);
-				sprintf(temp, "%d", last_global_seq_id);
-				strcat(sendBuff, temp);
-				strcat(sendBuff, DELIMITER);
 				sprintf(temp, "%d", client_id);
 				strcat(sendBuff, temp);
 				strcat(sendBuff, DELIMITER);
-				sprintf(temp, "%d", last_message_sent);
-				strcat(sendBuff, temp);
-				strcat(sendBuff, DELIMITER);
-				strcat(sendBuff, last_message);
 
-				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-					perror("ERROR: Sending message failed in ACK \n");
+				int hb_count = 0;
+				struct node *item;
+				TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+	                ++hb_count;
+		        }
+
+		        sprintf(temp, "%d", hb_count);
+		        strcat(sendBuff, temp);
+		        strcat(sendBuff, DELIMITER);
+
+		        TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+	                sprintf(temp, "%d", item->global_id);
+	                strcat(sendBuff, temp);
+	                strcat(sendBuff, DELIMITER);
+
+	                sprintf(temp, "%d", item->client_id);
+	                strcat(sendBuff, temp);
+	                strcat(sendBuff, DELIMITER);
+
+	                sprintf(temp, "%d", item->msg_id);
+	                strcat(sendBuff, temp);
+	                strcat(sendBuff, DELIMITER);
+
+	                strcat(sendBuff, item->message);
+	                strcat(sendBuff, DELIMITER);
+		        }
+
+		        if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+					perror("ERROR: Sending message failed \n");
+				}
+			} else if (strcmp(seq_message_type, "SENDALL") == 0){
+				election = 0;
+				struct node *item;
+				TAILQ_FOREACH(item, &queue_head, entries){
+					strcpy(sendBuff, "MESSAGE#");
+					char clientId[MAXSIZE];
+					sprintf(clientId, "%d", item->client_id);
+					strcat(sendBuff, clientId);
+					strcat(sendBuff, DELIMITER);
+					char messageId[MAXSIZE];
+					sprintf(messageId, "%d", item->msg_id);
+					strcat(sendBuff, messageId);
+					strcat(sendBuff, DELIMITER);
+					strcat(sendBuff, item->message);
+
+					if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+						perror("ERROR: Sending message failed \n");
+					}
 				}
 			}
-		}
+		} // end of leader related else-if
 	} // end of while(1)
 }
 
@@ -558,6 +605,7 @@ void* messenger(int soc){
 		item = malloc(sizeof(*item));
 		item->msg_id = msg_id - 1;
 		item->acknowledged = 0;
+		item->client_id = client_id;
 		strcpy(item->message, user_input);
 		TAILQ_INSERT_TAIL(&queue_head, item, entries);
 
@@ -578,6 +626,27 @@ void* messenger(int soc){
 			}
 		}	// end of election check if
 	} // end of while(1)
+}
+
+void* message_display(){
+	while(1){
+		int i = 0;
+		char client_name[MAXSIZE];
+
+		struct node *item;
+		TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+            if(item->global_id == last_global_seq_id){
+            	// need to find client name for printing
+            	for(i = 0; i < total_clients; ++i){
+            		if (item->client_id == client_list[i].client_id){
+            			strcpy(client_name, client_list[i].name);
+            		}
+            	}
+            	printf("%s: %s", client_name, item->message);
+            	last_global_seq_id = item->global_id + 1;
+            }
+        }
+	}
 }
 
 /*
