@@ -416,7 +416,6 @@ void* housekeeping(int soc){
 				perror("ERROR: Sending message failed in ACK \n");
 			} 
 		} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
-			// printf("Inside election of client! %s\n", recvBuff);
 			if (isLeader == 1){
 				strcpy(sendBuff, "CANCEL");
 				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
@@ -426,10 +425,8 @@ void* housekeeping(int soc){
 				election = 1;
 			}
 		} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
-			// printf("%s\n", recvBuff);
 			election = 0;
 		} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
-			// printf("%s\n", recvBuff);
 			isLeader = 1;
 			char old_leader_ip[MAXSIZE];
 			strcpy(old_leader_ip, leader.ip_addr);
@@ -490,7 +487,6 @@ void* housekeeping(int soc){
 				}
 			} else if (strcmp(seq_message_type, "REM") == 0){
 				// Remove message from queue because sequencer has acknowledged receipt from all clients
-				// printf("Inside REMOVE\n");
 				struct node *item, *temp_item;
 				int message_id = atoi(message[2]);
 				for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
@@ -521,7 +517,6 @@ void* housekeeping(int soc){
 				strcpy(leader.ip_addr, message[2]);
 				strcpy(leader.port, message[3]);
 			} else if (strcmp(seq_message_type, "HB") == 0){
-				printf("Inside HB: %s\n", recvBuff);
 				strcpy(sendBuff, "HB#");
 				char temp[MAXSIZE];
 				sprintf(temp, "%d", client_id);
@@ -726,7 +721,7 @@ void* election_algorithm(int curr_id){
         exit(1);
     }
 
-    printf("In election algorithm\n");
+    // printf("In election algorithm\n");
 
     struct timeval tv;
     tv.tv_sec = TIMEOUT_SEC;
@@ -747,7 +742,7 @@ void* election_algorithm(int curr_id){
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
-            printf("timeout\n");
+            // printf("timeout\n");
             strcpy(buf, "PING#");
             strcat(buf, curr_ele_id);
             send_msg(sockfd, buf, serv_addr_seq, slen);
@@ -756,7 +751,7 @@ void* election_algorithm(int curr_id){
                 
                 begin_election:
                 election = 1;
-                printf("2nd timeout: starting election\n");
+                // printf("2nd timeout: starting election\n");
                 for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS THAT ELECTION IS BEING HELD
                 {
                 	serv_addr_client.sin_port = htons(client_list[i].port);
@@ -858,7 +853,7 @@ void* election_algorithm(int curr_id){
 
                     if (strcmp (token_result[0], "I AM LEADER") == 0)
                     {
-                        printf("New Leader: %s\n", token_result[1]);
+                        // printf("New Leader: %s\n", token_result[1]);
                         election = 1;
                         break;
                     }
