@@ -96,6 +96,7 @@ void multicast(int socket,char * msg)
             perror("Broadcast Error");
             exit(-1);
          }
+         printf("MULTICAST MESSAGES: %s\n", msg);
          
     }
   } 
@@ -135,7 +136,7 @@ void multicast_clist(int socket)
      }
 
     multicast(socket,multi);
-    printf("%s\n",multi);
+    printf("MULTICAST CLIENT LIST: %s\n",multi);
 }
 
 
@@ -299,6 +300,7 @@ void msg_removal(int s)
 
   if(TAILQ_EMPTY(&message_head) && (hb_counter == num_client_hb) )
   {
+    printf("inside sendall condition\n");
     multicast(s,"SEQ#SENDALL");
   }
 }
