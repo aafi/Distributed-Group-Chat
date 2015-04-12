@@ -416,7 +416,7 @@ void* housekeeping(int soc){
 				perror("ERROR: Sending message failed in ACK \n");
 			} 
 		} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
-			printf("Inside election of client! %s\n", recvBuff);
+			// printf("Inside election of client! %s\n", recvBuff);
 			if (isLeader == 1){
 				strcpy(sendBuff, "CANCEL");
 				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
@@ -426,10 +426,10 @@ void* housekeeping(int soc){
 				election = 1;
 			}
 		} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
-			printf("%s\n", recvBuff);
+			// printf("%s\n", recvBuff);
 			election = 0;
 		} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
-			printf("%s\n", recvBuff);
+			// printf("%s\n", recvBuff);
 			isLeader = 1;
 			char old_leader_ip[MAXSIZE];
 			strcpy(old_leader_ip, leader.ip_addr);
@@ -457,7 +457,7 @@ void* housekeeping(int soc){
 					strcat(sendBuff, DELIMITER);
 				}
 			}
-			
+
 			other_user_addr.sin_family = AF_INET;
 			other_user_addr.sin_port = htons(atoi(leader.port));
 			if(inet_pton(AF_INET, leader.ip_addr, &other_user_addr.sin_addr)<=0)
@@ -521,6 +521,7 @@ void* housekeeping(int soc){
 				strcpy(leader.ip_addr, message[2]);
 				strcpy(leader.port, message[3]);
 			} else if (strcmp(seq_message_type, "HB") == 0){
+				printf("Inside HB: %s\n", recvBuff);
 				strcpy(sendBuff, "HB#");
 				char temp[MAXSIZE];
 				sprintf(temp, "%d", client_id);
@@ -558,6 +559,7 @@ void* housekeeping(int soc){
 					perror("ERROR: Sending message failed \n");
 				}
 			} else if (strcmp(seq_message_type, "SENDALL") == 0){
+				printf("Inside SENDALL:%s\n", recvBuff);
 				election = 0;
 				struct node *item;
 				TAILQ_FOREACH(item, &queue_head, entries){

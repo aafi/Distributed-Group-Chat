@@ -325,7 +325,7 @@ void* message_receiving(int s)
          exit(-1);
       } 
 
-     // printf("Message Received : %s\n", buf);      
+     printf("Message Received : %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -466,6 +466,7 @@ void* message_receiving(int s)
 
      else if(strcmp("HB",token)==0)
      {
+        printf("hb msg: %s\n", buf);
         hb_counter++;
         char * hb[BUFLEN];
         detokenize(buf,hb,"#");
