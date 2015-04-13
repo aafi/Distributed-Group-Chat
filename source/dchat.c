@@ -732,8 +732,7 @@ void* election_algorithm(int curr_id){
 
     while(1)
     {
-    	if (election == 1)
-    		election = 0;
+    	election = 0;
     	sleep(3);
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
         {
@@ -743,7 +742,7 @@ void* election_algorithm(int curr_id){
         strcpy(buf, "PING#");
         strcat(buf, curr_ele_id);
         send_msg(sockfd, buf, serv_addr_seq, slen); //PING SEQUENCER TO CHECK IF IT IS ACTIVE
-        printf("reached here\n");
+        //printf("reached here\n");
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
@@ -808,8 +807,8 @@ void* election_algorithm(int curr_id){
                             election = 1;
                             for (i = 0; i < total_clients; i++)
                             {
-                            	if (client_list[i].client_id != atoi(curr_ele_id))
-                            	{
+                            	//if (client_list[i].client_id != atoi(curr_ele_id))
+                            	//{
 
 
 	                                serv_addr_client.sin_port = htons(client_list[i].port);
@@ -830,13 +829,13 @@ void* election_algorithm(int curr_id){
 	                                strcpy(buf, "I AM LEADER#");
 	                                strcat(buf, curr_ele_id);
 	                                
-	                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO CLIENT
-                                }
+	                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
+                                //}
 
-                                else
+                                if (client_list[i].client_id == atoi(curr_ele_id))
                                 {
                                     
-                                    send_msg(sockfd, "LEADER", serv_addr_client, slen); //SENDING NEW LEADER TO ELECTIONS
+                                    send_msg(sockfd, "LEADER", serv_addr_client, slen); //SENDING NEW LEADER TO WINNING CLIENT
                                 //printf("checking: second inet_aton\n");
                                 }
 
@@ -863,7 +862,7 @@ void* election_algorithm(int curr_id){
 
                     if (strcmp (token_result[0], "I AM LEADER") == 0)
                     {
-                        printf("New Leader: %s\n", token_result[1]);
+                        //printf("New Leader: %s\n", token_result[1]);
                         election = 1;
                         break;
                     }
@@ -924,12 +923,12 @@ void* election_algorithm(int curr_id){
 
             if (strcmp(token_result[0], "I AM LEADER") == 0)
             {
-                printf("New Leader: %s\n", token_result[1]);
+                //printf("New Leader: %s\n", token_result[1]);
                 election = 1;
             }
             
-            //printf("%s\n", buf);
         }
+        //printf("%s\n", buf);
         
     }
 }
