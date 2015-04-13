@@ -738,7 +738,7 @@ void* election_algorithm(int curr_id){
         exit(1);
     }
 
-    printf("In election algorithm\n");
+    //printf("In election algorithm\n");
 
     struct timeval tv;
     tv.tv_sec = TIMEOUT_SEC;
@@ -760,7 +760,7 @@ void* election_algorithm(int curr_id){
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
-            printf("timeout\n");
+            //printf("timeout\n");
             strcpy(buf, "PING#");
             strcat(buf, curr_ele_id);
             send_msg(sockfd, buf, serv_addr_seq, slen);
@@ -769,7 +769,7 @@ void* election_algorithm(int curr_id){
                 
                 begin_election:
                 election = 1;
-                printf("2nd timeout: starting election\n");
+                //printf("2nd timeout: starting election\n");
                 for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS THAT ELECTION IS BEING HELD
                 {
                 	serv_addr_client.sin_port = htons(client_list[i].port);
@@ -817,7 +817,7 @@ void* election_algorithm(int curr_id){
                     {
                         if (received_ok == 0)
                         {
-                            printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
+                            //printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
                             election = 1;
                             for (i = 0; i < total_clients; i++)
                             {
@@ -859,6 +859,8 @@ void* election_algorithm(int curr_id){
                         }
                         continue;
                     }
+
+                    //printf("message received by election: %s\n", buf);
                     
                     detokenize(buf, token_result, "#");
                     //printf("%s\n", token_result[0]);
@@ -907,7 +909,7 @@ void* election_algorithm(int curr_id){
                         
             
         }
-        
+
         if (election == 0)
         {
 
@@ -943,7 +945,7 @@ void* election_algorithm(int curr_id){
             }
             
         }
-        //printf("%s\n", buf);
+        //printf("BUF: %s\n", buf);
         
     }
 }
