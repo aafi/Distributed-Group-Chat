@@ -569,7 +569,7 @@ void* housekeeping(int soc){
 	                strcat(sendBuff, item->message);
 	                strcat(sendBuff, DELIMITER);
 		        }
-		        printf("%s\n", sendBuff);
+
 		        if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 					perror("ERROR: Sending message failed \n");
 				}
@@ -587,7 +587,7 @@ void* housekeeping(int soc){
 					strcat(sendBuff, messageId);
 					strcat(sendBuff, DELIMITER);
 					strcat(sendBuff, item->message);
-					printf("%s\n", sendBuff);
+					
 					if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 						perror("ERROR: Sending message failed \n");
 					}
