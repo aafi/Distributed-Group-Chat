@@ -436,6 +436,7 @@ void* housekeeping(int soc){
 		} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
 			election = 0;
 		} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
+			printf("%s\n", recvBuff);
 			isLeader = 1;
 			char old_leader_ip[MAXSIZE];
 			strcpy(old_leader_ip, leader.ip_addr);
