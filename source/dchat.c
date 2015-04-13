@@ -55,6 +55,9 @@ int client_id = 0;
 
 int last_global_seq_id = -1;	// The sequence id of the last message received from the sequencer/leader
 
+int msg_id = 0;		// message id counter
+int last_msg_id = 0;	// message counter needs to be frozen once election begins
+
 int election = 0;	// Flag for if election is being held
 int isLeader = 0;	// Flag for if the current client is the leader
 
@@ -426,6 +429,7 @@ void* housekeeping(int soc){
 				} 
 			} else{
 				election = 1;
+				last_msg_id = msg_id;
 			}
 		} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
 			election = 0;
@@ -530,6 +534,10 @@ void* housekeeping(int soc){
 				strcat(sendBuff, temp);
 				strcat(sendBuff, DELIMITER);
 
+				sprintf(temp, "%d", last_msg_id);
+				strcat(sendBuff, temp);
+				strcat(sendBuff, DELIMITER);
+
 				int hb_count = 0;
 				struct node *item;
 				TAILQ_FOREACH(item, &holdback_queue_head, entries) {
@@ -585,7 +593,7 @@ void* housekeeping(int soc){
 }
 
 void* messenger(int soc){
-	int msg_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
+	msg_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 	char message[MAXSIZE];
 	char user_input[MAXSIZE];
 	while(1){
