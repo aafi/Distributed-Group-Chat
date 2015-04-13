@@ -728,6 +728,8 @@ void* election_algorithm(int curr_id){
 
     while(1)
     {
+    	if (election == 1)
+    		election = 0;
     	sleep(3);
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
         {
@@ -737,11 +739,11 @@ void* election_algorithm(int curr_id){
         strcpy(buf, "PING#");
         strcat(buf, curr_ele_id);
         send_msg(sockfd, buf, serv_addr_seq, slen); //PING SEQUENCER TO CHECK IF IT IS ACTIVE
-        //printf("reached here\n");
+        printf("reached here\n");
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
-            // printf("timeout\n");
+            printf("timeout\n");
             strcpy(buf, "PING#");
             strcat(buf, curr_ele_id);
             send_msg(sockfd, buf, serv_addr_seq, slen);
@@ -750,7 +752,7 @@ void* election_algorithm(int curr_id){
                 
                 begin_election:
                 election = 1;
-                // printf("2nd timeout: starting election\n");
+                printf("2nd timeout: starting election\n");
                 for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS THAT ELECTION IS BEING HELD
                 {
                 	serv_addr_client.sin_port = htons(client_list[i].port);
@@ -798,31 +800,36 @@ void* election_algorithm(int curr_id){
                     {
                         if (received_ok == 0)
                         {
-                            //printf("I AM LEADER\n"); //BROADCAST TO ALL CLIENTS AND ELECETIONS
+                            printf("I AM LEADER\n"); //BROADCAST TO ALL CLIENTS AND ELECETIONS
                             election = 1;
                             for (i = 0; i < total_clients; i++)
                             {
-                                serv_addr_client.sin_port = htons(client_list[i].port);
+                            	if (client_list[i].client_id != atoi(curr_ele_id))
+                            	{
 
-                                if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
-                                {
-                                    fprintf(stderr, "inet_aton() failed\n");
-                                    exit(1);
+
+	                                serv_addr_client.sin_port = htons(client_list[i].port);
+
+	                                if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
+	                                {
+	                                    fprintf(stderr, "inet_aton() failed\n");
+	                                    exit(1);
+	                                }
+	                                //printf("checking: first inet_aton\n");
+	                                if (inet_aton(client_list[i].ip, &serv_addr_ele.sin_addr)==0)
+	                                {
+	                                    fprintf(stderr, "inet_aton() failed\n");
+	                                    exit(1);
+	                                }
+
+	                                // sprintf(temp, "%d", curr_ele_id);
+	                                strcpy(buf, "I AM LEADER#");
+	                                strcat(buf, curr_ele_id);
+	                                
+	                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO CLIENT
                                 }
-                                //printf("checking: first inet_aton\n");
-                                if (inet_aton(client_list[i].ip, &serv_addr_ele.sin_addr)==0)
-                                {
-                                    fprintf(stderr, "inet_aton() failed\n");
-                                    exit(1);
-                                }
 
-                                // sprintf(temp, "%d", curr_ele_id);
-                                strcpy(buf, "I AM LEADER#");
-                                strcat(buf, curr_ele_id);
-                                
-                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO CLIENT
-
-                                if (client_list[i].client_id == atoi(curr_ele_id))
+                                else
                                 {
                                     
                                     send_msg(sockfd, "LEADER", serv_addr_client, slen); //SENDING NEW LEADER TO ELECTIONS
