@@ -366,7 +366,8 @@ void* housekeeping(int soc){
 			// fprintf(stderr, "%s\n", recvBuff);
 		}
 
-		char* message[MAXSIZE];
+		char* message[MAXSIZE], copy[MAXSIZE];
+		strcpy(copy, recvBuff);
 		detokenize(recvBuff, message, DELIMITER);
 
 		char messageType[MAXSIZE];
@@ -383,6 +384,7 @@ void* housekeeping(int soc){
 			}
 		} else if(strcmp(messageType, "MSG") == 0){
 			//Handle displaying of message
+			printf("%s\n", copy);
 			char client_name[MAXSIZE];
 			int clientId = atoi(message[2]);
 			//find the client name:
@@ -394,6 +396,7 @@ void* housekeeping(int soc){
 				}
 			}
 			int globalSeqNo = atoi(message[1]);
+			printf("%s\n", message[1]);
 
 			// ADD MESSAGE TO HOLDBACK_QUEUE
 			struct node *item;
@@ -553,7 +556,7 @@ void* housekeeping(int soc){
 	                strcat(sendBuff, item->message);
 	                strcat(sendBuff, DELIMITER);
 		        }
-
+		        printf("%s\n", sendBuff);
 		        if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 					perror("ERROR: Sending message failed \n");
 				}
@@ -571,7 +574,7 @@ void* housekeeping(int soc){
 					strcat(sendBuff, messageId);
 					strcat(sendBuff, DELIMITER);
 					strcat(sendBuff, item->message);
-
+					printf("%s\n", sendBuff);
 					if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 						perror("ERROR: Sending message failed \n");
 					}
@@ -635,6 +638,7 @@ void* message_display(){
 
 		struct node *item;
 		TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+			// printf("%d:%s\n", item->global_id, item->message);
             if(item->global_id == last_global_seq_id){
             	// need to find client name for printing
             	for(i = 0; i < total_clients; ++i){
@@ -720,7 +724,7 @@ void* election_algorithm(int curr_id){
         exit(1);
     }
 
-    // printf("In election algorithm\n");
+    printf("In election algorithm\n");
 
     struct timeval tv;
     tv.tv_sec = TIMEOUT_SEC;
