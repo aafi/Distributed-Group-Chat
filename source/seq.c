@@ -97,7 +97,7 @@ void multicast(int socket,char * msg)
             perror("Broadcast Error");
             exit(-1);
          }
-         //printf("MULTICAST MESSAGES: %s\n", msg);
+         printf("MULTICAST MESSAGES: %s\n", msg);
          
     }
   } 
@@ -137,7 +137,7 @@ void multicast_clist(int socket)
      }
 
     multicast(socket,multi);
-    //printf("MULTICAST CLIENT LIST: %s\n",multi);
+    printf("MULTICAST CLIENT LIST: %s\n",multi);
 }
 
 
@@ -301,7 +301,7 @@ void msg_removal(int s)
 
   if(TAILQ_EMPTY(&message_head) && (hb_counter == num_client_hb) )
   {
-    //printf("inside sendall condition\n");
+    printf("inside sendall condition\n");
     char temp[BUFLEN] = "SEQ#SENDALL";
     multicast(s,temp);
     hb_counter = -1;
@@ -329,7 +329,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-     //printf("Message Received : %s\n", buf);      
+     printf("Message Received : %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -470,7 +470,7 @@ void* message_receiving(int s)
 
      else if(strcmp("HB",token)==0)
      {
-       // printf("hb msg: %s\n", buf);
+        printf("hb msg: %s\n", buf);
         hb_counter++;
         char * hb[BUFLEN];
         detokenize(buf_copy,hb,"#");
