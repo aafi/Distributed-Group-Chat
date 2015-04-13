@@ -485,8 +485,10 @@ void* message_receiving(int s)
 
         printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
 
+
+
         
-        int count = (atoi(hb[3])*4)+4;
+        int count = (atoi(hb[4])*4)+5;
 
 
         int id[MAX] = {0};
@@ -496,10 +498,14 @@ void* message_receiving(int s)
           TAILQ_FOREACH(c,&client_head,entries)
           {
             id[c->client_id] = 1;
+            if(c->client_id == client_id)
+            {
+              c->last_msg_id = atoi(hb[3]);
+            }
           }
         }
 
-        int idx = 4;
+        int idx = 5;
         for(idx;idx < count; idx+=4)
         {
           flag = 0;
