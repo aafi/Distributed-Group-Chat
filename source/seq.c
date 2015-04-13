@@ -483,6 +483,8 @@ void* message_receiving(int s)
         else if(atoi(hb[2])<msg_seq_id)
           msg_seq_id = atoi(hb[2]);
 
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
+
         
         int count = (atoi(hb[3])*4)+4;
 
