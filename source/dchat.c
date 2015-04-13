@@ -32,6 +32,7 @@ struct client{
    char ip[MAXSIZE];
    int port;
    int client_id;
+   int last_msg_id;
    char name[MAXSIZE];
 }client_list[MAX];
 
@@ -366,7 +367,7 @@ void* housekeeping(int soc){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
-			fprintf(stderr, "CLIENT: %s\n", recvBuff);
+			// fprintf(stderr, "CLIENT: %s\n", recvBuff);
 		}
 
 		char* message[MAXSIZE], copy[MAXSIZE];
@@ -387,7 +388,7 @@ void* housekeeping(int soc){
 			}
 		} else if(strcmp(messageType, "MSG") == 0){
 			//Handle displaying of message
-			printf("%s\n", copy);
+			// printf("%s\n", copy);
 			char client_name[MAXSIZE];
 			int clientId = atoi(message[2]);
 			//find the client name:
@@ -395,11 +396,12 @@ void* housekeeping(int soc){
 			for(i = 0; i < total_clients; ++i){
 				if (clientId == client_list[i].client_id){
 					strcpy(client_name, client_list[i].name);
+					client_list[i].last_msg_id = atoi(message[3]);
 					break;
 				}
 			}
 			int globalSeqNo = atoi(message[1]);
-			printf("%s\n", message[1]);
+			// printf("%s\n", message[1]);
 
 			// ADD MESSAGE TO HOLDBACK_QUEUE
 			struct node *item;
@@ -429,7 +431,7 @@ void* housekeeping(int soc){
 				} 
 			} else{
 				election = 1;
-				last_msg_id = msg_id;
+				// last_msg_id = msg_id - 2;
 			}
 		} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
 			election = 0;
@@ -458,6 +460,9 @@ void* housekeeping(int soc){
 					strcat(sendBuff, temp);
 					strcat(sendBuff, DELIMITER);
 					strcat(sendBuff, client_list[count].name);
+					strcat(sendBuff, DELIMITER);
+					sprintf(temp, "%d", client_list[count].last_msg_id);
+					strcat(sendBuff, temp);
 					strcat(sendBuff, DELIMITER);
 				}
 			}
@@ -534,9 +539,9 @@ void* housekeeping(int soc){
 				strcat(sendBuff, temp);
 				strcat(sendBuff, DELIMITER);
 
-				sprintf(temp, "%d", last_msg_id);
-				strcat(sendBuff, temp);
-				strcat(sendBuff, DELIMITER);
+				// sprintf(temp, "%d", last_msg_id);
+				// strcat(sendBuff, temp);
+				// strcat(sendBuff, DELIMITER);
 
 				int hb_count = 0;
 				struct node *item;
@@ -622,6 +627,7 @@ void* messenger(int soc){
 
 		// INITIATE COMMUNICATION WITH THE LEADER
 		if(election == 0){
+			// last_msg_id = msg_id - 2;
 			struct sockaddr_in serv_addr;
 
 			serv_addr.sin_family = AF_INET;
