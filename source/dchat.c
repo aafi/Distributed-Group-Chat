@@ -803,7 +803,7 @@ void* election_algorithm(int curr_id){
                     {
                         if (received_ok == 0)
                         {
-                            printf("I AM LEADER\n"); //BROADCAST TO ALL CLIENTS AND ELECETIONS
+                            printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
                             election = 1;
                             for (i = 0; i < total_clients; i++)
                             {
@@ -830,7 +830,8 @@ void* election_algorithm(int curr_id){
 	                                strcat(buf, curr_ele_id);
 	                                
 	                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
-                                //}
+                                //} 
+	                                //TODO: NOW IT IS SENDING WINNING ELECTION TO ITSELF AS WELL WHICH IS NOT HANDLED IN THE WINNING ELECTION. BUT IT WORKS FOR SOME REASON. FIGURE OUT LATER.
 
                                 if (client_list[i].client_id == atoi(curr_ele_id))
                                 {
