@@ -468,6 +468,44 @@ void* message_receiving(int s)
         }
      }
 
+     else if(strcmp("LOST",token)==0)
+     {
+        token = strtok(NULL,"#");
+        int lost_msg_id = atoi(token);
+        char msg[BUFLEN] = "MSG#";
+        char temp[BUFLEN];
+        if(!TAILQ_EMPTY(&message_head))
+        {
+          struct message *item;
+          TAILQ_FOREACH(item, &message_head, entries)
+          {
+            if(lost_msg_id == item->seq_id)
+            {
+                          
+              sprintf(temp,"%d",item->seq_id);
+              strcat(msg,temp);
+              strcat(msg,"#");
+              sprintf(temp,"%d",item->client_id);
+              strcat(msg,temp);
+              strcat(msg,"#");
+              sprintf(temp,"%d",item->msg_id);
+              strcat(msg,temp);
+              strcat(msg,"#");
+              strcat(msg,item->msg);
+
+            }
+          }
+        }
+
+        if((sendto(socket,ack,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
+        {
+          perror("Lost Message Sending Error");
+          exit(-1);
+       }
+
+
+     }
+
      else if(strcmp("HB",token)==0)
      {
        // printf("hb msg: %s\n", buf);
