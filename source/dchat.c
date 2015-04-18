@@ -653,7 +653,7 @@ void* message_display(){
 
 		struct node *item;
 		TAILQ_FOREACH(item, &holdback_queue_head, entries) {
-			// printf("%d:%s\n", item->global_id, item->message);
+			printf("QUEUE-%d:%s ", item->global_id, item->message);
             if(item->global_id == last_global_seq_id){
             	// need to find client name for printing
             	for(i = 0; i < total_clients; ++i){
@@ -661,7 +661,7 @@ void* message_display(){
             			strcpy(client_name, client_list[i].name);
             		}
             	}
-            	printf("%d-%s: %s", last_global_seq_id, client_name, item->message);
+            	printf("\nMESSAGE#%d-%s: %s", last_global_seq_id, client_name, item->message);
             	last_global_seq_id = item->global_id + 1;
             }
         }
