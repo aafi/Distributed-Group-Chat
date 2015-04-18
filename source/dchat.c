@@ -882,6 +882,7 @@ void* election_algorithm(int curr_id){
                     {
                         //printf("New Leader: %s\n", token_result[1]);
                         election = 1;
+                        print("END OF ELECTION\n")
                         break;
                     }
 
