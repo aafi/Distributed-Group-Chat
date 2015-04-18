@@ -770,7 +770,7 @@ void* election_algorithm(int curr_id){
                 
                 begin_election:
                 election = 1;
-                //printf("2nd timeout: starting election\n");
+                printf("Starting election\n");
                 for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS THAT ELECTION IS BEING HELD
                 {
                 	serv_addr_client.sin_port = htons(client_list[i].port);
