@@ -497,7 +497,7 @@ void* message_receiving(int s)
           }
         }
 
-        if((sendto(socket,ack,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
+        if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
         {
           perror("Lost Message Sending Error");
           exit(-1);
