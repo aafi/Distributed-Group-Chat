@@ -157,7 +157,7 @@ int main(int argc, char** argv)
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
-            printf("timeout\n");
+            //printf("timeout\n");
             send_msg(sockfd, "ARE YOU ALIVE?", serv_addr_seq, slen);
             if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0) //DOUBLE CHECKING SEQ CRASH
             {
