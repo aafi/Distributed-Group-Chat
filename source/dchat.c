@@ -661,7 +661,7 @@ void* message_display(){
             			strcpy(client_name, client_list[i].name);
             		}
             	}
-            	printf("%s: %s", client_name, item->message);
+            	printf("%d-%s: %s", last_global_seq_id, client_name, item->message);
             	last_global_seq_id = item->global_id + 1;
             }
         }
