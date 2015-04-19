@@ -737,13 +737,14 @@ void* message_pinging(int sock)
    }
 
   struct timeval tv;
-  tv.tv_sec = TIMEOUT_SEC;
-  tv.tv_usec = TIMEOUT_USEC;
+  
 
 
   while(1)
   {
 
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
     int msec = 0, trigger = 10000;
     clock_t before = clock();
     do
@@ -814,6 +815,9 @@ void* message_pinging(int sock)
         {
             exit(-1);
         }
+
+        tv.tv_sec = TIMEOUT_SEC;
+        tv.tv_usec = TIMEOUT_USEC;
 
         if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
         {
