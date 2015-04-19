@@ -22,7 +22,7 @@
 #define TIMEOUT_USEC 0
 #define BUFLEN 1024
 #define PORT_PING 5679
-
+// int tempcount = 0;
 struct Leader{
 	char ip_addr[MAXSIZE];
 	char port[MAXSIZE];
@@ -425,8 +425,11 @@ void* housekeeping(int soc){
 			if(found == 0){
 				strcpy(sendBuff, "LOST#");
 				char temp[MAXSIZE];
-				sprintf(temp, "%d", last_global_seq_id);
+				sprintf(temp, "%d", last_global_seq_id + 1);
 				strcat(sendBuff, temp);
+				// strcat(sendBuff, DELIMITER);
+				// sprintf(temp, "%d", tempcount++);
+				// strcat(sendBuff, temp);
 
 				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 					perror("ERROR: Sending message failed in ACK \n");
