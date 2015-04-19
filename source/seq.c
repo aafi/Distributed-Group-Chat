@@ -470,19 +470,21 @@ void* message_receiving(int s)
 
      else if(strcmp("LOST",token)==0)
      {
-        printf("LOST MESSAGE REQUEST: %s\n", buf_copy );
+        printf("LOST MESSAGE REQUEST: %s\n", buf);
         token = strtok(NULL,"#");
         int lost_msg_id = atoi(token);
+        printf("Lost msg id : %d \n",lost_msg_id);
         char msg[BUFLEN] = "MSG#";
         char temp[BUFLEN];
-        if(!TAILQ_EMPTY(&message_head))
-        {
+        // if(!TAILQ_EMPTY(&message_head))
+        // {
           struct message *item;
           TAILQ_FOREACH(item, &message_head, entries)
           {
+            printf("current message being checked: %d \n",item->seq_id);
             if(lost_msg_id == item->seq_id)
             {
-                          
+              printf("Found correct message %d",lost_msg_id);         
               sprintf(temp,"%d",item->seq_id);
               strcat(msg,temp);
               strcat(msg,"#");
@@ -493,16 +495,17 @@ void* message_receiving(int s)
               strcat(msg,temp);
               strcat(msg,"#");
               strcat(msg,item->msg);
+              printf("SENDING LOST MSG: %s\n",msg);
+              if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
+              {
+                perror("Lost Message Sending Error");
+                exit(-1);
+              }
 
             }
           }
-        }
-
-        if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
-        {
-          perror("Lost Message Sending Error");
-          exit(-1);
-       }
+        //}
+        
 
 
      }
