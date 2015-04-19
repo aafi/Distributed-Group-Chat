@@ -843,6 +843,7 @@ void* message_pinging(int sock)
             printf("Number of Clients in the system: %d\n",count_clients());
 
         }
+        printf("Response from %s: %s\n",item_client->name,buf);
         item_client->counter = 0;
 
       }
