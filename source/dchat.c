@@ -792,7 +792,7 @@ void* election_algorithm(int curr_id){
     while(1)
     {
     	election = 0;
-    	sleep(3);
+    	sleep(0.5);
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
         {
             perror("Error");
