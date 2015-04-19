@@ -10,6 +10,7 @@
 #define PORT 5678
 #define PORT_PING 5679
 #define PORT_PARENT 1705
+#define PORT_ELE 8174
 #define NPACK 10
 #define BUFLEN 1024
 #define MAX 15
@@ -795,7 +796,7 @@ void* message_pinging(int sock)
 
    }while(msec<trigger);
 
-  // printf("outside do while\n");
+  //printf("Outside do while\n");
 
    if(!TAILQ_EMPTY(&client_head))
    {
@@ -803,19 +804,20 @@ void* message_pinging(int sock)
     for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client=tmp_item)
     {
       tmp_item = TAILQ_NEXT(item_client,entries);
-      if(item_client->counter<5)
+      //printf("Number of pings from client: %d\n", item_client -> counter);
+      if(item_client->counter<10)
       {
-       // printf("less pings from %s\n",item_client->name);
+       //printf("less pings from %s\n",item_client->name);
         char req_status[BUFLEN] = "STATUS";
         client_out.sin_family = AF_INET;
-        client_out.sin_port = htons(item_client->port);
+        client_out.sin_port = htons(PORT_ELE);
         client_out.sin_addr.s_addr = inet_addr(item_client->ip);
 
         if(sendto(s,req_status,BUFLEN,0,(struct sockaddr*)&client_out,sizeof(client_out))<0)
         {
             exit(-1);
         }
-        printf("REQUEST STATUS %s\n", req_status);
+        //printf("REQUEST STATUS %s\n", req_status);
 
         tv.tv_sec = TIMEOUT_SEC;
         tv.tv_usec = TIMEOUT_USEC;

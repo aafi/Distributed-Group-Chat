@@ -792,7 +792,8 @@ void* election_algorithm(int curr_id){
     while(1)
     {
     	election = 0;
-    	sleep(0.5);
+    	//int usleep(useconds_t 500);
+    	sleep(1);
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
         {
             perror("Error");
@@ -801,7 +802,7 @@ void* election_algorithm(int curr_id){
         strcpy(buf, "PING#");
         strcat(buf, curr_ele_id);
         send_msg(sockfd, buf, serv_addr_seq, slen); //PING SEQUENCER TO CHECK IF IT IS ACTIVE
-        //printf("reached here\n");
+        //printf("Pinged sequencer\n");
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
@@ -960,6 +961,7 @@ void* election_algorithm(int curr_id){
 
         if (election == 0)
         {
+        	//printf("message received by election: %s\n", buf);
 
             detokenize(buf, token_result, "#");
 
@@ -983,7 +985,7 @@ void* election_algorithm(int curr_id){
             
             if (strcmp(token_result[0], "STATUS") == 0)
             {
-            	printf("ELECTION: I'm still here!\n");
+            	//printf("ELECTION: I'm still here!\n");
                 send_msg(sockfd, "I AM ALIVE", serv_addr_seq, slen);
             }
 
