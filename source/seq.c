@@ -745,11 +745,11 @@ void* message_pinging(int sock)
 
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-    int msec = 0, trigger = 10000;
+    int msec = 0, trigger = 2000;
     clock_t before = clock();
     do
     {
-      sleep(2);
+      //sleep(0.5);
       if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client_in, &len)) < 0)
         {
            perror("Receive Error Ping");
@@ -803,7 +803,7 @@ void* message_pinging(int sock)
     for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client=tmp_item)
     {
       tmp_item = TAILQ_NEXT(item_client,entries);
-      if(item_client->counter<2)
+      if(item_client->counter<3)
       {
        // printf("less pings from %s\n",item_client->name);
         char req_status[BUFLEN] = "STATUS";
