@@ -802,8 +802,8 @@ void* election_algorithm(int curr_id){
     while(prog_exit == 0)
     {
     	election = 0;
-    	//int usleep(useconds_t 500);
-    	sleep(1);
+    	nanosleep((struct timespec[]){{0, 100000000}}, NULL);
+    	//sleep(1);
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
         {
             perror("Error");
