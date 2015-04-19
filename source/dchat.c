@@ -782,7 +782,7 @@ void* election_algorithm(int curr_id){
         err("socket");
 
     int reuse = 1;
-	if (setsockopt(socfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0) 
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0) 
     {
         perror("Setting socket timeout error");
     }
