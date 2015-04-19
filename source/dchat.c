@@ -250,6 +250,12 @@ int main(int argc, char* argv[]){
 			exit(-1);
 		}
 
+		int reuse = 1;
+		if (setsockopt(soc, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0) 
+	    {
+	        perror("Setting socket timeout error");
+	    }
+
 		my_addr.sin_family = AF_INET;
 		my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 		my_addr.sin_port = htons(PORT);
@@ -353,6 +359,7 @@ int main(int argc, char* argv[]){
 	pthread_join(ea_thread, NULL);
 	// 	printf("Success joining EA thread!\n");
 	// printf("Main about to exit-%d\n", prog_exit);
+	close(soc);
 	pthread_exit(NULL);
 
 	return 0;
@@ -370,7 +377,7 @@ void* housekeeping(int soc){
 
     if (setsockopt(soc, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
     {
-        perror("Error");
+        perror("Setting socket timeout error");
     }
 
 	while(prog_exit == 0){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
