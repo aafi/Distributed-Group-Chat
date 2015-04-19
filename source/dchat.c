@@ -682,7 +682,7 @@ void* message_display(soc){
 			temp_item = TAILQ_NEXT(item, entries);
 			
             if(item->global_id == last_global_seq_id){
-            	printf("%d-QUEUE-%d-%d:%s ", count, item->global_id, last_global_seq_id, item->message);
+            	// printf("%d-QUEUE-%d-%d:%s ", count, item->global_id, last_global_seq_id, item->message);
             	// need to find client name for printing
             	for(i = 0; i < total_clients; ++i){
             		if (item->client_id == client_list[i].client_id){
@@ -690,7 +690,7 @@ void* message_display(soc){
             		}
             	}
 
-            	printf("%s: %s", client_name, item->message);
+            	printf("%d-%s: %s", last_global_seq_id, client_name, item->message);
             	last_global_seq_id = item->global_id + 1;
 
             	// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
