@@ -798,7 +798,7 @@ void* election_algorithm(int curr_id){
     tv.tv_sec = TIMEOUT_SEC;
     tv.tv_usec = TIMEOUT_USEC;
 
-    while(!prog_exit)
+    while(prog_exit == 0)
     {
     	election = 0;
     	//int usleep(useconds_t 500);
