@@ -64,7 +64,7 @@ int election = 0;	// Flag for if election is being held
 int isLeader = 0;	// Flag for if the current client is the leader
 
 int prog_exit = 0;	// Flag to cause threads to exit
-int childId;
+int childId = -1;
 
 /*
 method: detokenize
@@ -361,7 +361,8 @@ int main(int argc, char* argv[]){
 	// 	printf("Success joining EA thread!\n");
 	// printf("Main about to exit-%d\n", prog_exit);
 	close(soc);
-	kill(childId, SIGKILL);
+	if (childId != -1)
+		kill(childId, SIGKILL);	
 
 	return 0;
 }
