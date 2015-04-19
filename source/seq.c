@@ -817,7 +817,7 @@ void* message_pinging(int sock)
         {
             exit(-1);
         }
-        //printf("REQUEST STATUS %s\n", req_status);
+        printf("REQUEST STATUS: %s\n", req_status);
 
         tv.tv_sec = TIMEOUT_SEC;
         tv.tv_usec = TIMEOUT_USEC;
@@ -839,6 +839,8 @@ void* message_pinging(int sock)
 
             TAILQ_REMOVE(&client_head,item_client,entries);
             free(item_client);
+
+            printf("Number of Clients in the system: %d\n",count_clients());
 
         }
         item_client->counter = 0;
