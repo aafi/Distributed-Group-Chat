@@ -22,7 +22,7 @@
 #define TIMEOUT_USEC 0
 #define BUFLEN 1024
 #define PORT_PING 5679
-// int tempcount = 0;
+
 struct Leader{
 	char ip_addr[MAXSIZE];
 	char port[MAXSIZE];
@@ -61,6 +61,8 @@ int last_msg_id = 0;	// message counter needs to be frozen once election begins
 
 int election = 0;	// Flag for if election is being held
 int isLeader = 0;	// Flag for if the current client is the leader
+
+int prog_exit = 0;	// Flag to cause threads to exit
 
 /*
 method: detokenize
@@ -362,12 +364,12 @@ void* housekeeping(int soc){
 	struct sockaddr_in other_user_addr;
 	int other_addr_size = sizeof(other_user_addr);
 
-	while(1){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
+	while(!prog_exit){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
 		
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
-			 //fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
+			 // fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
 		}
 
 		char* message[MAXSIZE], copy[MAXSIZE];
@@ -614,52 +616,59 @@ void* messenger(int soc){
 	msg_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 	char message[MAXSIZE];
 	char user_input[MAXSIZE];
-	while(1){
+	char eof_str[MAXSIZE];
+	sprintf(eof_str, "%d", EOF);
+	while(!prog_exit){
 		memset(user_input, 0, MAXSIZE);
 		fgets(user_input, MAXSIZE, stdin);
 
-		strcpy(message, "MESSAGE#");
-		char clientId[MAXSIZE];
-		sprintf(clientId, "%d", client_id);
-		strcat(message, clientId);
-		strcat(message, DELIMITER);
-		char messageId[MAXSIZE];
-		sprintf(messageId, "%d", msg_id++);
-		strcat(message, messageId);
-		strcat(message, DELIMITER);
-		strcat(message, user_input);
+		if (strcmp(user_input, eof_str) == 0){
+			// exit all threads
+			prog_exit = 1;
+		} else {
+			strcpy(message, "MESSAGE#");
+			char clientId[MAXSIZE];
+			sprintf(clientId, "%d", client_id);
+			strcat(message, clientId);
+			strcat(message, DELIMITER);
+			char messageId[MAXSIZE];
+			sprintf(messageId, "%d", msg_id++);
+			strcat(message, messageId);
+			strcat(message, DELIMITER);
+			strcat(message, user_input);
 
-		// ADD MESSAGE TO CLIENT_QUEUE
-		struct node *item;
-		item = malloc(sizeof(*item));
-		item->msg_id = msg_id - 1;
-		item->acknowledged = 0;
-		item->client_id = client_id;
-		strcpy(item->message, user_input);
-		TAILQ_INSERT_TAIL(&queue_head, item, entries);
+			// ADD MESSAGE TO CLIENT_QUEUE
+			struct node *item;
+			item = malloc(sizeof(*item));
+			item->msg_id = msg_id - 1;
+			item->acknowledged = 0;
+			item->client_id = client_id;
+			strcpy(item->message, user_input);
+			TAILQ_INSERT_TAIL(&queue_head, item, entries);
 
-		// INITIATE COMMUNICATION WITH THE LEADER
-		if(election == 0){
-			// last_msg_id = msg_id - 2;
-			struct sockaddr_in serv_addr;
+			// INITIATE COMMUNICATION WITH THE LEADER
+			if(election == 0){
+				// last_msg_id = msg_id - 2;
+				struct sockaddr_in serv_addr;
 
-			serv_addr.sin_family = AF_INET;
-			serv_addr.sin_port = htons(atoi(leader.port));
-			if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
-		    {
-		        perror("ERROR: inet_pton error occured \n");
-		        // exit(-1);
-		    }
-		    if (sendto(soc, message, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
-				perror("Could not send message to Sequencer\n");
-				// exit(-1);
-			}
-		}	// end of election check if
+				serv_addr.sin_family = AF_INET;
+				serv_addr.sin_port = htons(atoi(leader.port));
+				if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
+			    {
+			        perror("ERROR: inet_pton error occured \n");
+			        // exit(-1);
+			    }
+			    if (sendto(soc, message, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+					perror("Could not send message to Sequencer\n");
+					// exit(-1);
+				}
+			}	// end of election check if
+		}
 	} // end of while(1)
 }
 
 void* message_display(soc){
-	while(1){
+	while(!prog_exit){
 		int i = 0;
 		char client_name[MAXSIZE], sendBuff[MAXSIZE];
 
@@ -789,7 +798,7 @@ void* election_algorithm(int curr_id){
     tv.tv_sec = TIMEOUT_SEC;
     tv.tv_usec = TIMEOUT_USEC;
 
-    while(1)
+    while(!prog_exit)
     {
     	election = 0;
     	//int usleep(useconds_t 500);
