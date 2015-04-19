@@ -237,7 +237,7 @@ int main(int argc, char* argv[]){
 	void* housekeeping(int);
 	void* messenger(int);
 	void* election_algorithm(int);
-	void* message_display();
+	void* message_display(int);
 
 	if(argc < 2){	//INVALID ARGUMENTS TO THE PROGRAM
 		fprintf(stderr, "Invalid arguments. \nFormat: dchat USERNAME [IP-ADDR PORT]\n");
@@ -345,7 +345,7 @@ int main(int argc, char* argv[]){
 	int rc0, rc1, rc2, ea_status;
 	rc0 = pthread_create(&threads[0], NULL, messenger, soc);
 	rc1 = pthread_create(&threads[1], NULL, housekeeping, soc);
-	rc2 = pthread_create(&threads[2], NULL, message_display);
+	rc2 = pthread_create(&threads[2], NULL, message_display, soc);
 	ea_status = pthread_create(&ea_thread, NULL, election_algorithm, client_id);
 	pthread_join(threads[0], NULL);
 	pthread_join(threads[1], NULL);
@@ -401,10 +401,9 @@ void* housekeeping(int soc){
 				}
 			}
 			int globalSeqNo = atoi(message[1]);
-			// printf("%s\n", message[1]);
 
 			// ADD MESSAGE TO HOLDBACK_QUEUE
-			struct node *item;
+			struct node *item, *temp_item;
 			item = malloc(sizeof(*item));
 			item->msg_id = atoi(message[3]);
 			item->acknowledged = 0;
@@ -413,16 +412,26 @@ void* housekeeping(int soc){
 			strcpy(item->message, message[4]);
 			TAILQ_INSERT_TAIL(&holdback_queue_head, item, entries);
 
-			// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
-			strcpy(sendBuff, "ACK");
-			strcat(sendBuff, DELIMITER);
-			strcat(sendBuff, message[2]);
-			strcat(sendBuff, DELIMITER);
-			strcat(sendBuff, message[1]);
+			// check if next message is present in queue or not, else send a request for it LOST#global_seq_id
+			int found = 0;
+			for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
+				temp_item = TAILQ_NEXT(item, entries);
 
-			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-				perror("ERROR: Sending message failed in ACK \n");
-			} 
+				if(item->global_id == last_global_seq_id){
+					found = 1;
+					break;
+				}
+			}
+			if(found == 0){
+				strcpy(sendBuff, "LOST#");
+				char temp[MAXSIZE];
+				sprintf(temp, "%d", last_global_seq_id);
+				strcat(sendBuff, temp);
+
+				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+					perror("ERROR: Sending message failed in ACK \n");
+				} 
+			}
 		} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
 			if (isLeader == 1){
 				strcpy(sendBuff, "CANCEL");
@@ -646,23 +655,55 @@ void* messenger(int soc){
 	} // end of while(1)
 }
 
-void* message_display(){
+void* message_display(soc){
 	while(1){
 		int i = 0;
-		char client_name[MAXSIZE];
+		char client_name[MAXSIZE], sendBuff[MAXSIZE];
 
-		struct node *item;
+		struct sockaddr_in serv_addr;
+
+		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_port = htons(atoi(leader.port));
+		if(inet_pton(AF_INET, leader.ip_addr, &serv_addr.sin_addr)<=0)
+	    {
+	        perror("ERROR: inet_pton error occured \n");
+	        // exit(-1);
+	    }
+
+		struct node *item, *temp_item;
+		int count = 0;
 		TAILQ_FOREACH(item, &holdback_queue_head, entries) {
-			printf("QUEUE-%d:%s ", item->global_id, item->message);
+			++count;
+		}
+		for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
+			temp_item = TAILQ_NEXT(item, entries);
+			
             if(item->global_id == last_global_seq_id){
+            	printf("%d-QUEUE-%d-%d:%s ", count, item->global_id, last_global_seq_id, item->message);
             	// need to find client name for printing
             	for(i = 0; i < total_clients; ++i){
             		if (item->client_id == client_list[i].client_id){
             			strcpy(client_name, client_list[i].name);
             		}
             	}
-            	printf("\nMESSAGE#%d-%s: %s", last_global_seq_id, client_name, item->message);
+
+            	printf("%s: %s", client_name, item->message);
             	last_global_seq_id = item->global_id + 1;
+
+            	// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
+				strcpy(sendBuff, "ACK");
+				strcat(sendBuff, DELIMITER);
+				char temp[MAXSIZE];
+				sprintf(temp, "%d", item->client_id);
+				strcat(sendBuff, temp);
+				strcat(sendBuff, DELIMITER);
+				sprintf(temp, "%d", item->global_id);
+				strcat(sendBuff, temp);
+
+				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+					perror("ERROR: Sending message failed in ACK \n");
+				} 
+            	break;
             }
         }
 	}
