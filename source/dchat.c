@@ -959,6 +959,12 @@ void* election_algorithm(int curr_id){
                     	    printf("ELECTION CANCELLED\n");
                     	    break;
                     }
+
+                    if (strcmp(token_result[0], "STATUS") == 0)
+			        {
+			        	printf("ELECTION: I'm still here!\n");
+			            send_msg(sockfd, "I AM ALIVE", serv_addr, slen);
+			        }
                     
 
                 }
@@ -996,7 +1002,7 @@ void* election_algorithm(int curr_id){
             if (strcmp(token_result[0], "STATUS") == 0)
             {
             	printf("ELECTION: I'm still here!\n");
-                send_msg(sockfd, "I AM ALIVE", serv_addr_seq, slen);
+                send_msg(sockfd, "I AM ALIVE", serv_addr, slen);
             }
 
             if (strcmp(token_result[0], "I AM LEADER") == 0)
