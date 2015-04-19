@@ -820,6 +820,7 @@ void* election_algorithm(int curr_id){
                         {
                             //printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
                             election = 1;
+                            printf("Found new leader\n");
                             for (i = 0; i < total_clients; i++)
                             {
                             	//if (client_list[i].client_id != atoi(curr_ele_id))
@@ -843,7 +844,7 @@ void* election_algorithm(int curr_id){
 	                                // sprintf(temp, "%d", curr_ele_id);
 	                                strcpy(buf, "I AM LEADER#");
 	                                strcat(buf, curr_ele_id);
-	                                
+	                                printf("SENDING END OF ELECTION\n");
 	                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
                                 //} 
 	                                //TODO: NOW IT IS SENDING WINNING ELECTION TO ITSELF AS WELL WHICH IS NOT HANDLED IN THE WINNING ELECTION. BUT IT WORKS FOR SOME REASON. FIGURE OUT LATER.
@@ -864,6 +865,7 @@ void* election_algorithm(int curr_id){
                     //printf("message received by election: %s\n", buf);
                     
                     detokenize(buf, token_result, "#");
+                    //printf("buf: %s\n", buf);
                     //printf("%s\n", token_result[0]);
                     if (strcmp(token_result[0], "OK") == 0)
                     {
@@ -899,7 +901,7 @@ void* election_algorithm(int curr_id){
                             }
                     	    send_msg(sockfd, "ELECTIONCANCEL", serv_addr_client, slen);
                     	}
-                    	    //printf("ELECTION CANCELLED\n");
+                    	    printf("ELECTION CANCELLED\n");
                     	    break;
                     }
                     
@@ -942,7 +944,7 @@ void* election_algorithm(int curr_id){
 
             if (strcmp(token_result[0], "I AM LEADER") == 0)
             {
-                //printf("New Leader: %s\n", token_result[1]);
+                printf("END OF ELECTION\n");
                 election = 1;
             }
             
