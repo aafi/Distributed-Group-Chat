@@ -12,6 +12,7 @@
 #include <arpa/inet.h> 
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <signal.h>
 
 #define PORT 1705
 #define MAXSIZE 1024
@@ -63,6 +64,7 @@ int election = 0;	// Flag for if election is being held
 int isLeader = 0;	// Flag for if the current client is the leader
 
 int prog_exit = 0;	// Flag to cause threads to exit
+int childId;
 
 /*
 method: detokenize
@@ -205,7 +207,6 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 }
 
 void start_sequencer(soc){
-	int childId;
 	if ((childId = fork()) == 0){	// INSIDE SEQUENCER CHILD
 		execv("sequencer", NULL);
 	}
@@ -360,7 +361,7 @@ int main(int argc, char* argv[]){
 	// 	printf("Success joining EA thread!\n");
 	// printf("Main about to exit-%d\n", prog_exit);
 	close(soc);
-	pthread_exit(NULL);
+	kill(childId, SIGKILL);
 
 	return 0;
 }
