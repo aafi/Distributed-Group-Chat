@@ -817,7 +817,7 @@ void* message_pinging(int sock)
         {
             exit(-1);
         }
-        printf("REQUEST STATUS: %s\n", req_status);
+        printf("REQUEST STATUS to %s : %s\n",item_client->ip,req_status);
 
         tv.tv_sec = TIMEOUT_SEC;
         tv.tv_usec = TIMEOUT_USEC;
@@ -843,7 +843,8 @@ void* message_pinging(int sock)
             printf("Number of Clients in the system: %d\n",count_clients());
 
         }
-        printf("Response from %s: %s\n",item_client->name,buf);
+        else
+          printf("Response from %s: %s\n",item_client->name,buf);
         item_client->counter = 0;
 
       }
@@ -983,5 +984,7 @@ int main(int argc, char *argv[]){
   pthread_join(p1,NULL);
   pthread_join(p2,NULL);
   pthread_join(p3,NULL);
+
+
 
 }
