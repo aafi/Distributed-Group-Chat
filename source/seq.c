@@ -737,15 +737,15 @@ void* message_pinging(int sock)
       exit(-1);
    }
 
-  struct timeval tv;
+  // struct timeval tv;
   
 
 
   while(1)
   {
 
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
+    // tv.tv_sec = 0;
+    // tv.tv_usec = 0;
     int msec = 0, trigger = 2000;
     clock_t before = clock();
     do
@@ -805,32 +805,33 @@ void* message_pinging(int sock)
     {
       tmp_item = TAILQ_NEXT(item_client,entries);
       //printf("Number of pings from client: %d\n", item_client -> counter);
-      if(item_client->counter<10)
+      if(item_client->counter<5)
       {
-       //printf("less pings from %s\n",item_client->name);
-        char req_status[BUFLEN] = "STATUS";
-        client_out.sin_family = AF_INET;
-        client_out.sin_port = htons(PORT_ELE);
-        client_out.sin_addr.s_addr = inet_addr(item_client->ip);
+       // //printf("less pings from %s\n",item_client->name);
+       //  char req_status[BUFLEN] = "STATUS";
+       //  client_out.sin_family = AF_INET;
+       //  client_out.sin_port = htons(PORT_ELE);
+       //  client_out.sin_addr.s_addr = inet_addr(item_client->ip);
 
-        if(sendto(s,req_status,BUFLEN,0,(struct sockaddr*)&client_out,sizeof(client_out))<0)
-        {
-            exit(-1);
-        }
-        printf("REQUEST STATUS to %s : %s\n",item_client->ip,req_status);
+       //  if(sendto(s,req_status,BUFLEN,0,(struct sockaddr*)&client_out,sizeof(client_out))<0)
+       //  {
+       //      exit(-1);
+       //  }
+       //  printf("REQUEST STATUS to %s : %s\n",item_client->ip,req_status);
 
-        tv.tv_sec = TIMEOUT_SEC;
-        tv.tv_usec = TIMEOUT_USEC;
+       //  tv.tv_sec = TIMEOUT_SEC;
+       //  tv.tv_usec = TIMEOUT_USEC;
 
-        if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
-        {
-            perror("Error");
-        }
+       //  if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+       //  {
+       //      perror("Error");
+       //  }
 
-        if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr*)&client_out, &len_out) < 0)
-        {
+        
+       //  if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr*)&client_out, &len_out) < 0)
+       //  {
             char status[BUFLEN] = "SEQ#STATUS#";
-            printf("CLIENT RESPONSE: %s \n",buf);
+       //      printf("CLIENT RESPONSE: %s \n",buf);
             char status_msg[BUFLEN];
             sprintf(status_msg,"NOTICE %s left the chat or crashed",item_client->name);
             strcat(status,status_msg);
@@ -842,10 +843,10 @@ void* message_pinging(int sock)
 
             printf("Number of Clients in the system: %d\n",count_clients());
 
-        }
-        else
-          printf("Response from %s: %s\n",item_client->name,buf);
-        item_client->counter = 0;
+        // }
+        // else
+        //   printf("Response from %s: %s\n",item_client->name,buf);
+        // item_client->counter = 0;
 
       }
      }
