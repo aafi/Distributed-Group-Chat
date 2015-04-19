@@ -803,7 +803,7 @@ void* message_pinging(int sock)
     for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client=tmp_item)
     {
       tmp_item = TAILQ_NEXT(item_client,entries);
-      if(item_client->counter<3)
+      if(item_client->counter<5)
       {
        // printf("less pings from %s\n",item_client->name);
         char req_status[BUFLEN] = "STATUS";
