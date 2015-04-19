@@ -231,8 +231,6 @@ int main(int argc, char* argv[]){
 	char* mode;
 	char sendBuff[MAXSIZE], recvBuff[MAXSIZE];
 
-	// pthread_t ea_thread;
-
 	TAILQ_INIT(&queue_head);		// Initialize TAILQ
 	TAILQ_INIT(&holdback_queue_head);		//Initialize TAILQ
 
@@ -352,7 +350,9 @@ int main(int argc, char* argv[]){
 	pthread_join(threads[0], NULL);
 	pthread_join(threads[1], NULL);
 	pthread_join(threads[2], NULL);
-	pthread_join(ea_thread, NULL);
+	if (pthread_join(ea_thread, NULL) == 0)
+		printf("Success joining EA thread!\n");
+	printf("Main about to exit-%d\n", prog_exit);
 	pthread_exit(NULL);
 
 	return 0;
@@ -364,7 +364,7 @@ void* housekeeping(int soc){
 	struct sockaddr_in other_user_addr;
 	int other_addr_size = sizeof(other_user_addr);
 
-	while(!prog_exit){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
+	while(prog_exit == 0){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
 		
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
@@ -618,12 +618,13 @@ void* messenger(int soc){
 	char user_input[MAXSIZE];
 	char eof_str[MAXSIZE];
 	sprintf(eof_str, "%d", EOF);
-	while(!prog_exit){
+	while(prog_exit == 0){
 		memset(user_input, 0, MAXSIZE);
 		// fgets(user_input, MAXSIZE, stdin);
 
 		if (fgets(user_input, MAXSIZE, stdin) == NULL){
 			// exit all threads
+			printf("PROG-EXIT=%d\n", prog_exit);
 			prog_exit = 1;
 		} else {
 			strcpy(message, "MESSAGE#");
@@ -668,7 +669,7 @@ void* messenger(int soc){
 }
 
 void* message_display(soc){
-	while(!prog_exit){
+	while(prog_exit == 0){
 		int i = 0;
 		char client_name[MAXSIZE], sendBuff[MAXSIZE];
 
@@ -1008,4 +1009,6 @@ void* election_algorithm(int curr_id){
         //printf("BUF: %s\n", buf);
         
     }
+    printf("Goodbye from the ELECTION ALGORITHM\n");
+    pthread_exit(NULL);
 }
