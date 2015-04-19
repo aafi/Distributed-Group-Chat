@@ -13,7 +13,7 @@
 #define NPACK 10
 #define BUFLEN 1024
 #define MAX 15
-#define TIMEOUT_SEC 5
+#define TIMEOUT_SEC 3
 #define TIMEOUT_USEC 0
 
 // int id[MAX] = {0};
@@ -815,6 +815,7 @@ void* message_pinging(int sock)
         {
             exit(-1);
         }
+        printf("REQUEST STATUS %s\n", req_status);
 
         tv.tv_sec = TIMEOUT_SEC;
         tv.tv_usec = TIMEOUT_USEC;
@@ -827,6 +828,7 @@ void* message_pinging(int sock)
         if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr*)&client_out, &len_out) < 0)
         {
             char status[BUFLEN] = "SEQ#STATUS#";
+            printf("CLIENT RESPONSE: %s \n",buf);
             char status_msg[BUFLEN];
             sprintf(status_msg,"NOTICE %s left the chat or crashed",item_client->name);
             strcat(status,status_msg);
