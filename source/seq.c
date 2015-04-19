@@ -470,6 +470,7 @@ void* message_receiving(int s)
 
      else if(strcmp("LOST",token)==0)
      {
+        printf("LOST MESSAGE REQUEST: %s\n", buf_copy );
         token = strtok(NULL,"#");
         int lost_msg_id = atoi(token);
         char msg[BUFLEN] = "MSG#";
