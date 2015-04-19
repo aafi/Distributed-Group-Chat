@@ -350,9 +350,9 @@ int main(int argc, char* argv[]){
 	pthread_join(threads[0], NULL);
 	pthread_join(threads[1], NULL);
 	pthread_join(threads[2], NULL);
-	if (pthread_join(ea_thread, NULL) == 0)
-		printf("Success joining EA thread!\n");
-	printf("Main about to exit-%d\n", prog_exit);
+	pthread_join(ea_thread, NULL);
+	// 	printf("Success joining EA thread!\n");
+	// printf("Main about to exit-%d\n", prog_exit);
 	pthread_exit(NULL);
 
 	return 0;
@@ -1015,6 +1015,6 @@ void* election_algorithm(int curr_id){
         //printf("BUF: %s\n", buf);
         
     }
-    printf("Goodbye from the ELECTION ALGORITHM\n");
-    pthread_exit(NULL);
+    // printf("Goodbye from the ELECTION ALGORITHM\n");
+    // pthread_exit(NULL);
 }
