@@ -869,11 +869,16 @@ void* message_pinging(int sock)
           // item_client->counter = 0;
 
         }
+        else
+        {
+          item_client->counter = 0;
+        }
       }
       else
       {
         printf("Client just joined!!!!!!!!!!\n");
       }
+      
      }
    }
 
