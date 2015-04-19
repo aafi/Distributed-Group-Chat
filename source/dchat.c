@@ -620,9 +620,9 @@ void* messenger(int soc){
 	sprintf(eof_str, "%d", EOF);
 	while(!prog_exit){
 		memset(user_input, 0, MAXSIZE);
-		fgets(user_input, MAXSIZE, stdin);
+		// fgets(user_input, MAXSIZE, stdin);
 
-		if (strcmp(user_input, eof_str) == 0){
+		if (fgets(user_input, MAXSIZE, stdin) == NULL){
 			// exit all threads
 			prog_exit = 1;
 		} else {
