@@ -30,6 +30,7 @@ struct client{
    int last_msg_id;     //id of the last message sent by the client
    int leader;
    int counter;
+   double time_of_join;
 
    TAILQ_ENTRY(client) entries;
 
@@ -102,6 +103,15 @@ void multicast(int socket,char * msg)
          
     }
   } 
+}
+
+//struct timeval tv1;
+
+struct timeval get_current_time()
+{
+  struct timeval tv;
+  gettimeofday(&tv,NULL);
+  return tv;
 }
 
 void multicast_clist(int socket)
@@ -190,6 +200,9 @@ int requestid(char * ip, int port, char * name)
       c->leader = 0;
 
     c->counter = 0;
+
+    struct timeval join_time = get_current_time();
+    c->time_of_join = join_time.tv_sec + (join_time.tv_usec/1000000);
    
     TAILQ_INSERT_TAIL(&client_head,c,entries);
     
@@ -805,49 +818,55 @@ void* message_pinging(int sock)
     {
       tmp_item = TAILQ_NEXT(item_client,entries);
       //printf("Number of pings from client: %d\n", item_client -> counter);
-      if(item_client->counter<5)
+      struct timeval curr_time = get_current_time();
+      double t2 = curr_time.tv_sec + ( curr_time.tv_usec / 1000000 );
+
+      if((t2-item_client->time_of_join) > 2)
       {
-       // //printf("less pings from %s\n",item_client->name);
-       //  char req_status[BUFLEN] = "STATUS";
-       //  client_out.sin_family = AF_INET;
-       //  client_out.sin_port = htons(PORT_ELE);
-       //  client_out.sin_addr.s_addr = inet_addr(item_client->ip);
+        if(item_client->counter<5)
+        {
+         // //printf("less pings from %s\n",item_client->name);
+         //  char req_status[BUFLEN] = "STATUS";
+         //  client_out.sin_family = AF_INET;
+         //  client_out.sin_port = htons(PORT_ELE);
+         //  client_out.sin_addr.s_addr = inet_addr(item_client->ip);
 
-       //  if(sendto(s,req_status,BUFLEN,0,(struct sockaddr*)&client_out,sizeof(client_out))<0)
-       //  {
-       //      exit(-1);
-       //  }
-       //  printf("REQUEST STATUS to %s : %s\n",item_client->ip,req_status);
+         //  if(sendto(s,req_status,BUFLEN,0,(struct sockaddr*)&client_out,sizeof(client_out))<0)
+         //  {
+         //      exit(-1);
+         //  }
+         //  printf("REQUEST STATUS to %s : %s\n",item_client->ip,req_status);
 
-       //  tv.tv_sec = TIMEOUT_SEC;
-       //  tv.tv_usec = TIMEOUT_USEC;
+         //  tv.tv_sec = TIMEOUT_SEC;
+         //  tv.tv_usec = TIMEOUT_USEC;
 
-       //  if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
-       //  {
-       //      perror("Error");
-       //  }
+         //  if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+         //  {
+         //      perror("Error");
+         //  }
 
-        
-       //  if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr*)&client_out, &len_out) < 0)
-       //  {
-            char status[BUFLEN] = "SEQ#STATUS#";
-       //      printf("CLIENT RESPONSE: %s \n",buf);
-            char status_msg[BUFLEN];
-            sprintf(status_msg,"NOTICE %s left the chat or crashed",item_client->name);
-            strcat(status,status_msg);
-            //printf("%s\n",status);
-            multicast(sock,status);
+          
+         //  if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr*)&client_out, &len_out) < 0)
+         //  {
+              char status[BUFLEN] = "SEQ#STATUS#";
+         //      printf("CLIENT RESPONSE: %s \n",buf);
+              char status_msg[BUFLEN];
+              sprintf(status_msg,"NOTICE %s left the chat or crashed",item_client->name);
+              strcat(status,status_msg);
+              //printf("%s\n",status);
+              multicast(sock,status);
 
-            TAILQ_REMOVE(&client_head,item_client,entries);
-            free(item_client);
+              TAILQ_REMOVE(&client_head,item_client,entries);
+              free(item_client);
 
-            printf("Number of Clients in the system: %d\n",count_clients());
+              printf("Number of Clients in the system: %d\n",count_clients());
 
-        // }
-        // else
-        //   printf("Response from %s: %s\n",item_client->name,buf);
-        // item_client->counter = 0;
+          // }
+          // else
+          //   printf("Response from %s: %s\n",item_client->name,buf);
+          // item_client->counter = 0;
 
+        }
       }
      }
    }
