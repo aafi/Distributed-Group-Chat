@@ -774,6 +774,12 @@ void* election_algorithm(int curr_id){
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0))==-1)
         err("socket");
 
+    int reuse = 1;
+	if (setsockopt(soc, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0) 
+    {
+        perror("Setting socket timeout error");
+    }
+
     //calling_client_addr = argv[1]
     
     bzero(&my_addr, sizeof(my_addr));
@@ -1023,6 +1029,7 @@ void* election_algorithm(int curr_id){
         //printf("BUF: %s\n", buf);
         
     }
+    close(sockfd);
     // printf("Goodbye from the ELECTION ALGORITHM\n");
     // pthread_exit(NULL);
 }
