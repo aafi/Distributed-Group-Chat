@@ -364,10 +364,19 @@ void* housekeeping(int soc){
 	struct sockaddr_in other_user_addr;
 	int other_addr_size = sizeof(other_user_addr);
 
+	struct timeval tv;
+	tv.tv_sec = TIMEOUT_SEC;
+    tv.tv_usec = TIMEOUT_USEC;
+
+    if (setsockopt(soc, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+    {
+        perror("Error");
+    }
+
 	while(prog_exit == 0){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
 		
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
-			perror("Error: Receiving message failed \n");
+			// perror("Error: Receiving message failed \n");
 		} else {
 			 // fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
 		}
@@ -624,7 +633,6 @@ void* messenger(int soc){
 
 		if (fgets(user_input, MAXSIZE, stdin) == NULL){
 			// exit all threads
-			printf("PROG-EXIT=%d\n", prog_exit);
 			prog_exit = 1;
 		} else {
 			strcpy(message, "MESSAGE#");
