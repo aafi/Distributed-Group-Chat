@@ -824,6 +824,7 @@ void* election_algorithm(int curr_id){
 
     while(prog_exit == 0)
     {
+    	int won = 0;
     	if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
 		{
 		    fprintf(stderr, "inet_aton() failed\n");
@@ -901,10 +902,11 @@ void* election_algorithm(int curr_id){
                     if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
                     {
 
-                        if ((received_ok == 0) && (election == 0))
+                        if ((received_ok == 0) && (won == 0))
                         {
                             //printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
                             election = 1;
+                            won = 1;
                             printf("Found new leader\n");
                             for (i = 0; i < total_clients; i++)
                             {
