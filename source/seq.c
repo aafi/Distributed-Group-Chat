@@ -228,7 +228,7 @@ int requestid(char * ip, int port, char * name)
     struct timeval join_time = get_current_time();
     c->time_of_join = join_time.tv_sec + (join_time.tv_usec/1000000);
 
-    //printf("Client %s joined at %f\n",c->name,c->time_of_join);
+    printf("Client %s joined as client %d \n",c->name,c->client_id);
    
     TAILQ_INSERT_TAIL(&client_head,c,entries);
     
