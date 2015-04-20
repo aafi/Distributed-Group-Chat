@@ -941,7 +941,8 @@ void* election_algorithm(int curr_id){
                                 }
 
                             }
-                            //break;
+                            
+                            memset(buf, 0, BUFLEN);
                         }
                         continue;
                     }
