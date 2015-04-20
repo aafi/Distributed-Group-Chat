@@ -900,6 +900,7 @@ void* election_algorithm(int curr_id){
                 	printf("Waiting on receieve\n");
                     if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
                     {
+
                         if ((received_ok == 0) && (election == 0))
                         {
                             //printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
@@ -947,7 +948,7 @@ void* election_algorithm(int curr_id){
                         continue;
                     }
 
-                    //printf("message received by election: %s\n", buf);
+                    printf("message received by election: %s\n", buf);
                     
                     detokenize(buf, token_result, "#");
                     //printf("buf: %s\n", buf);
