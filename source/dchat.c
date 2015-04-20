@@ -710,7 +710,7 @@ void* message_display(soc){
 				strcpy(sendBuff, "ACK");
 				strcat(sendBuff, DELIMITER);
 				char temp[MAXSIZE];
-				sprintf(temp, "%d", item->client_id);
+				sprintf(temp, "%d", client_id);
 				strcat(sendBuff, temp);
 				strcat(sendBuff, DELIMITER);
 				sprintf(temp, "%d", item->global_id);
