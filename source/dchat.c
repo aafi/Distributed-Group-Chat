@@ -900,7 +900,7 @@ void* election_algorithm(int curr_id){
                 	printf("Waiting on receieve\n");
                     if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
                     {
-                        if ((received_ok == 0) || (election == 1))
+                        if ((received_ok == 0) && (election == 0))
                         {
                             //printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
                             election = 1;
