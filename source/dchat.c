@@ -897,6 +897,7 @@ void* election_algorithm(int curr_id){
 
                 while(1)
                 {
+                	printf("Waiting on receieve\n");
                     if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
                     {
                         if ((received_ok == 0) || (election == 1))
