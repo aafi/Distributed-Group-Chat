@@ -758,11 +758,11 @@ void* message_pinging(int sock)
   // struct timeval tv;
   
 
-  printf("ENTERED ELECTION THREAD\n");
+  // printf("ENTERED ELECTION THREAD\n");
 
   while(1)
   {
-
+    // printf("Inside while loop\n");
     // tv.tv_sec = 0;
     // tv.tv_usec = 0;
     int msec = 0, trigger = 2000;
@@ -776,7 +776,7 @@ void* message_pinging(int sock)
            exit(-1);
         }
 
-      //printf("%s\n",buf); //DEEPTI DEBUGGING
+     // printf("%s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
@@ -815,7 +815,7 @@ void* message_pinging(int sock)
 
    }while(msec<trigger);
 
-  //printf("Outside do while\n");
+  // printf("Outside do while\n");
 
    if(!TAILQ_EMPTY(&client_head))
    {
@@ -876,17 +876,19 @@ void* message_pinging(int sock)
         }
         else
         {
-          printf("Client Counter for %s : %d \n",item_client->name,item_client->counter);
+          //printf("Client Counter for %s : %d \n",item_client->name,item_client->counter);
           item_client->counter = 0;
         }
       }
-      else
-      {
-        printf("CLIENT JUST JOINED\n");
-      }
+      // else
+      // {
+      //   printf("CLIENT JUST JOINED\n");
+      // }
       
      }
    }
+   // else
+   //  printf("TAILQ is empty!\n" );
 
   //char * multi[BUFLEN] = "SEQ#CLIENT#INFO#";
   
