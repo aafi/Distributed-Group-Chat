@@ -444,12 +444,13 @@ void* housekeeping(int soc){
 				if(found == 0){
 					strcpy(sendBuff, "LOST#");
 					char temp[MAXSIZE];
-					sprintf(temp, "%d", last_global_seq_id + 1);
+					sprintf(temp, "%d", last_global_seq_id);
 					strcat(sendBuff, temp);
 					// strcat(sendBuff, DELIMITER);
 					// sprintf(temp, "%d", tempcount++);
 					// strcat(sendBuff, temp);
 
+					printf("LOST MESSAGE: %s\n", sendBuff);
 					if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 						perror("ERROR: Sending message failed in ACK \n");
 					} 
