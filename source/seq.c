@@ -194,13 +194,14 @@ int requestid(char * ip, int port, char * name)
    int client_id = 0;
    struct client *c,*item;
    c = malloc(sizeof(*c));
-   int i,flag = 0;
+   int i,flag;
 
    if(!TAILQ_EMPTY(&client_head))
    { 
     for(i=0;i<=count_clients();i++)
     {
       client_id = i;
+      flag = 0;
     TAILQ_FOREACH(item,&client_head,entries)
      {
         if(item->client_id == client_id)
