@@ -758,6 +758,7 @@ void* message_pinging(int sock)
   // struct timeval tv;
   
 
+  printf("ENTERED ELECTION THREAD\n");
 
   while(1)
   {
@@ -879,10 +880,10 @@ void* message_pinging(int sock)
           item_client->counter = 0;
         }
       }
-      // else
-      // {
-      //   printf("Client just joined!!!!!!!!!!\n");
-      // }
+      else
+      {
+        printf("CLIENT JUST JOINED\n");
+      }
       
      }
    }
