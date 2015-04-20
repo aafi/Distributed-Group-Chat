@@ -529,8 +529,8 @@ void* message_receiving(int s)
         //printf("Lost msg id : %d \n",lost_msg_id);
         char msg[BUFLEN] = "MSG#";
         char temp[BUFLEN];
-        // if(!TAILQ_EMPTY(&message_head))
-        // {
+        if(!TAILQ_EMPTY(&message_head))
+        {
           struct message *item;
           TAILQ_FOREACH(item, &message_head, entries)
           {
@@ -559,7 +559,9 @@ void* message_receiving(int s)
 
             }
           }
-        //}
+        }
+        else
+          printf("EMPTY MESSAGE QUEUE");
         
 
 
