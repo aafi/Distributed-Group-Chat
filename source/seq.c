@@ -309,7 +309,7 @@ void msg_removal(int s)
       
 
       TAILQ_REMOVE(&message_head,item,entries);
-      printf("Message to be removed: %s \n",item->msg);
+      // printf("Message to be removed: %s \n",item->msg);
       free(item);
       
     }
@@ -345,7 +345,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-      printf("Message Received SEQUENCER : %s\n", buf);      
+    //  printf("Message Received SEQUENCER : %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -463,7 +463,7 @@ void* message_receiving(int s)
 
      else if(strcmp("ACK",token) == 0)
      {
-         printf("ENTERING ACK LOOP \n");
+         // printf("ENTERING ACK LOOP \n");
          int i = 0;
          while(token!=NULL)
          {  
@@ -479,7 +479,7 @@ void* message_receiving(int s)
           if(atoi(tok[1]) == item->seq_id)
           {
             int client_id = atoi(tok[0]);
-            printf("MARKING ACK VECTOR FOR MSG %s FROM CLIENT %d \n",item->msg,client_id);
+            // printf("MARKING ACK VECTOR FOR MSG %s FROM CLIENT %d \n",item->msg,client_id);
             item->ack_vector[client_id] = 2;
             break;
           }
@@ -543,7 +543,7 @@ void* message_receiving(int s)
         else if(atoi(hb[2])<msg_seq_id)
           msg_seq_id = atoi(hb[2]);
 
-       printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
+      // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
 
 
 
@@ -635,7 +635,7 @@ void* message_multicasting(int s)
 
               if(item->client_id == item_client->client_id)
               {
-                 printf("Found client structure \n");
+                // printf("Found client structure \n");
                   
                   
               /*
@@ -643,7 +643,7 @@ void* message_multicasting(int s)
               */
 
                 int next_msg = item_client->last_msg_id+1;
-               printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
+             //  printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
 
                 if(item->msg_id == next_msg)
                 {
@@ -942,7 +942,7 @@ int main(int argc, char *argv[]){
        exit(-1);
     } 
 
-   printf("AFTER ELECTION: %s\n",buf);   
+  // printf("AFTER ELECTION: %s\n",buf);   
 
     detokenize(buf,tok,"#"); 
 
