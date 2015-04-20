@@ -387,246 +387,246 @@ void* housekeeping(int soc){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			// perror("Error: Receiving message failed \n");
 		} else {
-			 // fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
-		}
+			// fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
 
-		char* message[MAXSIZE], copy[MAXSIZE];
-		strcpy(copy, recvBuff);
-		detokenize(recvBuff, message, DELIMITER);
+			char* message[MAXSIZE], copy[MAXSIZE];
+			strcpy(copy, recvBuff);
+			detokenize(recvBuff, message, DELIMITER);
 
-		char messageType[MAXSIZE];
-		strcpy(messageType, message[0]);
+			char messageType[MAXSIZE];
+			strcpy(messageType, message[0]);
 
-		if(strcmp(messageType, "JOIN") == 0){
-			strcpy(sendBuff, "JOINLEADER#");
-			strcat(sendBuff, leader.ip_addr);
-			strcat(sendBuff, DELIMITER);
-			strcat(sendBuff, leader.port);
-
-			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-				perror("ERROR: Sending message failed for JOINLEADER \n");
-			}
-		} else if(strcmp(messageType, "MSG") == 0){
-			//Handle displaying of message
-			// printf("%s\n", copy);
-			char client_name[MAXSIZE];
-			int clientId = atoi(message[2]);
-			//find the client name:
-			int i = 0;
-			for(i = 0; i < total_clients; ++i){
-				if (clientId == client_list[i].client_id){
-					strcpy(client_name, client_list[i].name);
-					client_list[i].last_msg_id = atoi(message[3]);
-					break;
-				}
-			}
-			int globalSeqNo = atoi(message[1]);
-
-			// ADD MESSAGE TO HOLDBACK_QUEUE
-			struct node *item, *temp_item;
-			item = malloc(sizeof(*item));
-			item->msg_id = atoi(message[3]);
-			item->acknowledged = 0;
-			item->global_id = globalSeqNo;
-			item->client_id = clientId;
-			strcpy(item->message, message[4]);
-			TAILQ_INSERT_TAIL(&holdback_queue_head, item, entries);
-
-			// check if next message is present in queue or not, else send a request for it LOST#global_seq_id
-			int found = 0;
-			for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
-				temp_item = TAILQ_NEXT(item, entries);
-
-				if(item->global_id == last_global_seq_id){
-					found = 1;
-					break;
-				}
-			}
-			if(found == 0){
-				strcpy(sendBuff, "LOST#");
-				char temp[MAXSIZE];
-				sprintf(temp, "%d", last_global_seq_id + 1);
-				strcat(sendBuff, temp);
-				// strcat(sendBuff, DELIMITER);
-				// sprintf(temp, "%d", tempcount++);
-				// strcat(sendBuff, temp);
+			if(strcmp(messageType, "JOIN") == 0){
+				strcpy(sendBuff, "JOINLEADER#");
+				strcat(sendBuff, leader.ip_addr);
+				strcat(sendBuff, DELIMITER);
+				strcat(sendBuff, leader.port);
 
 				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-					perror("ERROR: Sending message failed in ACK \n");
-				} 
-			}
-		} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
-			if (isLeader == 1){
-				strcpy(sendBuff, "CANCEL");
-				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-					perror("ERROR: Sending message failed in ACK \n");
-				} 
-			} else{
-				election = 1;
-				// last_msg_id = msg_id - 2;
-			}
-		} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
-			election = 0;
-		} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
-			printf("%s\n", recvBuff);
-			isLeader = 1;
-			char old_leader_ip[MAXSIZE];
-			strcpy(old_leader_ip, leader.ip_addr);
-			start_sequencer(soc);
-
-			strcpy(sendBuff, "NEWLEADER#");
-			char temp[MAXSIZE];
-			sprintf(temp, "%d", total_clients - 1);
-			strcat(sendBuff, temp);
-			strcat(sendBuff, DELIMITER);
-
-			int count = 0;
-			for (count = 0; count < total_clients; ++count){
-				if (strcmp(old_leader_ip, client_list[count].ip) != 0){
-					strcat(sendBuff, client_list[count].ip);
-					strcat(sendBuff, DELIMITER);
-					char temp[MAXSIZE];
-					sprintf(temp, "%d", client_list[count].port);
-					strcat(sendBuff, temp);
-					strcat(sendBuff, DELIMITER);
-					sprintf(temp, "%d", client_list[count].client_id);
-					strcat(sendBuff, temp);
-					strcat(sendBuff, DELIMITER);
-					strcat(sendBuff, client_list[count].name);
-					strcat(sendBuff, DELIMITER);
-					sprintf(temp, "%d", client_list[count].last_msg_id);
-					strcat(sendBuff, temp);
-					strcat(sendBuff, DELIMITER);
+					perror("ERROR: Sending message failed for JOINLEADER \n");
 				}
-			}
-
-			other_user_addr.sin_family = AF_INET;
-			other_user_addr.sin_port = htons(atoi(leader.port));
-			if(inet_pton(AF_INET, leader.ip_addr, &other_user_addr.sin_addr)<=0)
-		    {
-		        perror("ERROR: inet_pton error occured \n");
-		        exit(-1);
-		    }
-			if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-				perror("ERROR: Sending message failed \n");
-			}
-			election = 0;
-		} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
-			char seq_message_type[MAXSIZE];
-			strcpy(seq_message_type, message[1]);
-
-			if (strcmp(seq_message_type, "CLIENT") == 0){
-				update_client_list(message);
-			} else if (strcmp(seq_message_type, "ACK") == 0){
-				// memset(recvBuff, 0, MAXSIZE);
-				// Acknowledgement received 
-				// IF ACKNOWLEDGEMENTS ARE NOT RECEIVED, AFTER A TIMEOUT, RESEND THE MESSAGE
-
-				// THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
-				int message_id = atoi(message[2]);
-				struct node *item;
-				TAILQ_FOREACH(item, &queue_head, entries){
-					if (item->msg_id == message_id){
-						item->acknowledged = 1;
-					}
-				}
-			} else if (strcmp(seq_message_type, "REM") == 0){
-				// Remove message from queue because sequencer has acknowledged receipt from all clients
-				struct node *item, *temp_item;
-				int message_id = atoi(message[2]);
-				for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
-					temp_item = TAILQ_NEXT(item, entries);
-
-					if(item->msg_id == message_id){
-						TAILQ_REMOVE(&queue_head, item, entries);
-						free(item);
+			} else if(strcmp(messageType, "MSG") == 0){
+				//Handle displaying of message
+				// printf("%s\n", copy);
+				char client_name[MAXSIZE];
+				int clientId = atoi(message[2]);
+				//find the client name:
+				int i = 0;
+				for(i = 0; i < total_clients; ++i){
+					if (clientId == client_list[i].client_id){
+						strcpy(client_name, client_list[i].name);
+						client_list[i].last_msg_id = atoi(message[3]);
 						break;
 					}
 				}
-			} else if (strcmp(seq_message_type, "REMHB") == 0){
-				// Remove message form holdback queue based on broadcast from sequencer
+				int globalSeqNo = atoi(message[1]);
+
+				// ADD MESSAGE TO HOLDBACK_QUEUE
 				struct node *item, *temp_item;
-				int seq_id = atoi(message[2]);
+				item = malloc(sizeof(*item));
+				item->msg_id = atoi(message[3]);
+				item->acknowledged = 0;
+				item->global_id = globalSeqNo;
+				item->client_id = clientId;
+				strcpy(item->message, message[4]);
+				TAILQ_INSERT_TAIL(&holdback_queue_head, item, entries);
+
+				// check if next message is present in queue or not, else send a request for it LOST#global_seq_id
+				int found = 0;
 				for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
 					temp_item = TAILQ_NEXT(item, entries);
 
-					if(item->global_id == seq_id){
-						TAILQ_REMOVE(&holdback_queue_head, item, entries);
-						free(item);
+					if(item->global_id == last_global_seq_id){
+						found = 1;
 						break;
 					}
 				}
-			} else if (strcmp(seq_message_type, "STATUS") == 0){
-				printf("%s\n", message[2]);
-			} else if (strcmp(seq_message_type, "EA") == 0){
-				strcpy(leader.ip_addr, message[2]);
-				strcpy(leader.port, message[3]);
-			} else if (strcmp(seq_message_type, "HB") == 0){
-				strcpy(sendBuff, "HB#");
-				char temp[MAXSIZE];
-				sprintf(temp, "%d", client_id);
-				strcat(sendBuff, temp);
-				strcat(sendBuff, DELIMITER);
+				if(found == 0){
+					strcpy(sendBuff, "LOST#");
+					char temp[MAXSIZE];
+					sprintf(temp, "%d", last_global_seq_id + 1);
+					strcat(sendBuff, temp);
+					// strcat(sendBuff, DELIMITER);
+					// sprintf(temp, "%d", tempcount++);
+					// strcat(sendBuff, temp);
 
-				sprintf(temp, "%d", last_global_seq_id);
-				strcat(sendBuff, temp);
-				strcat(sendBuff, DELIMITER);
-
-				// sprintf(temp, "%d", last_msg_id);
-				// strcat(sendBuff, temp);
-				// strcat(sendBuff, DELIMITER);
-
-				int hb_count = 0;
-				struct node *item;
-				TAILQ_FOREACH(item, &holdback_queue_head, entries) {
-	                ++hb_count;
-		        }
-
-		        sprintf(temp, "%d", hb_count);
-		        strcat(sendBuff, temp);
-		        strcat(sendBuff, DELIMITER);
-
-		        TAILQ_FOREACH(item, &holdback_queue_head, entries) {
-	                sprintf(temp, "%d", item->global_id);
-	                strcat(sendBuff, temp);
-	                strcat(sendBuff, DELIMITER);
-
-	                sprintf(temp, "%d", item->client_id);
-	                strcat(sendBuff, temp);
-	                strcat(sendBuff, DELIMITER);
-
-	                sprintf(temp, "%d", item->msg_id);
-	                strcat(sendBuff, temp);
-	                strcat(sendBuff, DELIMITER);
-
-	                strcat(sendBuff, item->message);
-	                strcat(sendBuff, DELIMITER);
-		        }
-
-		        if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-					perror("ERROR: Sending message failed \n");
-				}
-			} else if (strcmp(seq_message_type, "SENDALL") == 0){
-				election = 0;
-				struct node *item;
-				TAILQ_FOREACH(item, &queue_head, entries){
-					strcpy(sendBuff, "MESSAGE#");
-					char clientId[MAXSIZE];
-					sprintf(clientId, "%d", item->client_id);
-					strcat(sendBuff, clientId);
-					strcat(sendBuff, DELIMITER);
-					char messageId[MAXSIZE];
-					sprintf(messageId, "%d", item->msg_id);
-					strcat(sendBuff, messageId);
-					strcat(sendBuff, DELIMITER);
-					strcat(sendBuff, item->message);
-					
 					if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
-						perror("ERROR: Sending message failed \n");
+						perror("ERROR: Sending message failed in ACK \n");
+					} 
+				}
+			} else if(strcmp(messageType, "ELECTION") == 0){	// Election is taking place
+				if (isLeader == 1){
+					strcpy(sendBuff, "CANCEL");
+					if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+						perror("ERROR: Sending message failed in ACK \n");
+					} 
+				} else{
+					election = 1;
+					// last_msg_id = msg_id - 2;
+				}
+			} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
+				election = 0;
+			} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
+				printf("%s\n", recvBuff);
+				isLeader = 1;
+				char old_leader_ip[MAXSIZE];
+				strcpy(old_leader_ip, leader.ip_addr);
+				start_sequencer(soc);
+
+				strcpy(sendBuff, "NEWLEADER#");
+				char temp[MAXSIZE];
+				sprintf(temp, "%d", total_clients - 1);
+				strcat(sendBuff, temp);
+				strcat(sendBuff, DELIMITER);
+
+				int count = 0;
+				for (count = 0; count < total_clients; ++count){
+					if (strcmp(old_leader_ip, client_list[count].ip) != 0){
+						strcat(sendBuff, client_list[count].ip);
+						strcat(sendBuff, DELIMITER);
+						char temp[MAXSIZE];
+						sprintf(temp, "%d", client_list[count].port);
+						strcat(sendBuff, temp);
+						strcat(sendBuff, DELIMITER);
+						sprintf(temp, "%d", client_list[count].client_id);
+						strcat(sendBuff, temp);
+						strcat(sendBuff, DELIMITER);
+						strcat(sendBuff, client_list[count].name);
+						strcat(sendBuff, DELIMITER);
+						sprintf(temp, "%d", client_list[count].last_msg_id);
+						strcat(sendBuff, temp);
+						strcat(sendBuff, DELIMITER);
 					}
 				}
-			}
-		} // end of leader related else-if
+
+				other_user_addr.sin_family = AF_INET;
+				other_user_addr.sin_port = htons(atoi(leader.port));
+				if(inet_pton(AF_INET, leader.ip_addr, &other_user_addr.sin_addr)<=0)
+			    {
+			        perror("ERROR: inet_pton error occured \n");
+			        exit(-1);
+			    }
+				if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+					perror("ERROR: Sending message failed \n");
+				}
+				election = 0;
+			} else if(strcmp(messageType, "SEQ") == 0){		// HANDLES ALL LEADER RELATED MESSAGES!
+				char seq_message_type[MAXSIZE];
+				strcpy(seq_message_type, message[1]);
+
+				if (strcmp(seq_message_type, "CLIENT") == 0){
+					update_client_list(message);
+				} else if (strcmp(seq_message_type, "ACK") == 0){
+					// memset(recvBuff, 0, MAXSIZE);
+					// Acknowledgement received 
+					// IF ACKNOWLEDGEMENTS ARE NOT RECEIVED, AFTER A TIMEOUT, RESEND THE MESSAGE
+
+					// THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
+					int message_id = atoi(message[2]);
+					struct node *item;
+					TAILQ_FOREACH(item, &queue_head, entries){
+						if (item->msg_id == message_id){
+							item->acknowledged = 1;
+						}
+					}
+				} else if (strcmp(seq_message_type, "REM") == 0){
+					// Remove message from queue because sequencer has acknowledged receipt from all clients
+					struct node *item, *temp_item;
+					int message_id = atoi(message[2]);
+					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
+						temp_item = TAILQ_NEXT(item, entries);
+
+						if(item->msg_id == message_id){
+							TAILQ_REMOVE(&queue_head, item, entries);
+							free(item);
+							break;
+						}
+					}
+				} else if (strcmp(seq_message_type, "REMHB") == 0){
+					// Remove message form holdback queue based on broadcast from sequencer
+					struct node *item, *temp_item;
+					int seq_id = atoi(message[2]);
+					for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
+						temp_item = TAILQ_NEXT(item, entries);
+
+						if(item->global_id == seq_id){
+							TAILQ_REMOVE(&holdback_queue_head, item, entries);
+							free(item);
+							break;
+						}
+					}
+				} else if (strcmp(seq_message_type, "STATUS") == 0){
+					printf("%s\n", message[2]);
+				} else if (strcmp(seq_message_type, "EA") == 0){
+					strcpy(leader.ip_addr, message[2]);
+					strcpy(leader.port, message[3]);
+				} else if (strcmp(seq_message_type, "HB") == 0){
+					strcpy(sendBuff, "HB#");
+					char temp[MAXSIZE];
+					sprintf(temp, "%d", client_id);
+					strcat(sendBuff, temp);
+					strcat(sendBuff, DELIMITER);
+
+					sprintf(temp, "%d", last_global_seq_id);
+					strcat(sendBuff, temp);
+					strcat(sendBuff, DELIMITER);
+
+					// sprintf(temp, "%d", last_msg_id);
+					// strcat(sendBuff, temp);
+					// strcat(sendBuff, DELIMITER);
+
+					int hb_count = 0;
+					struct node *item;
+					TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+		                ++hb_count;
+			        }
+
+			        sprintf(temp, "%d", hb_count);
+			        strcat(sendBuff, temp);
+			        strcat(sendBuff, DELIMITER);
+
+			        TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+		                sprintf(temp, "%d", item->global_id);
+		                strcat(sendBuff, temp);
+		                strcat(sendBuff, DELIMITER);
+
+		                sprintf(temp, "%d", item->client_id);
+		                strcat(sendBuff, temp);
+		                strcat(sendBuff, DELIMITER);
+
+		                sprintf(temp, "%d", item->msg_id);
+		                strcat(sendBuff, temp);
+		                strcat(sendBuff, DELIMITER);
+
+		                strcat(sendBuff, item->message);
+		                strcat(sendBuff, DELIMITER);
+			        }
+
+			        if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+						perror("ERROR: Sending message failed \n");
+					}
+				} else if (strcmp(seq_message_type, "SENDALL") == 0){
+					election = 0;
+					struct node *item;
+					TAILQ_FOREACH(item, &queue_head, entries){
+						strcpy(sendBuff, "MESSAGE#");
+						char clientId[MAXSIZE];
+						sprintf(clientId, "%d", item->client_id);
+						strcat(sendBuff, clientId);
+						strcat(sendBuff, DELIMITER);
+						char messageId[MAXSIZE];
+						sprintf(messageId, "%d", item->msg_id);
+						strcat(sendBuff, messageId);
+						strcat(sendBuff, DELIMITER);
+						strcat(sendBuff, item->message);
+						
+						if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
+							perror("ERROR: Sending message failed \n");
+						}
+					}
+				}
+			} // end of leader related else-if
+		}
 	} // end of while(1)
 }
 
