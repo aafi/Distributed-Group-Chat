@@ -203,8 +203,8 @@ int requestid(char * ip, int port, char * name)
         {
           client_id++;
         }
-        else
-          break;
+        // else
+        //   break;
      }
    }
    else
