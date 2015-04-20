@@ -138,6 +138,7 @@ void update_client_list(char* all_client_details[]){
 		clnt.port = atoi(all_client_details[j + 1]);
 		clnt.client_id = atoi(all_client_details[j + 2]);
 		strcpy(clnt.name, all_client_details[j + 3]);
+		clnt.last_msg_id = -1;
 		client_list[i] = clnt;
 	}
 }
