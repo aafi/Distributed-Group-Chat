@@ -824,6 +824,11 @@ void* election_algorithm(int curr_id){
 
     while(prog_exit == 0)
     {
+    	if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
+		{
+		    fprintf(stderr, "inet_aton() failed\n");
+		    exit(1);
+		}
     	election = 0;
     	nanosleep((struct timespec[]){{0, 100000000}}, NULL);
     	//sleep(1);
