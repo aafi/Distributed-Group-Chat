@@ -446,9 +446,6 @@ void* housekeeping(int soc){
 					char temp[MAXSIZE];
 					sprintf(temp, "%d", last_global_seq_id);
 					strcat(sendBuff, temp);
-					// strcat(sendBuff, DELIMITER);
-					// sprintf(temp, "%d", tempcount++);
-					// strcat(sendBuff, temp);
 
 					printf("LOST MESSAGE: %s\n", sendBuff);
 					if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
@@ -463,7 +460,6 @@ void* housekeeping(int soc){
 					} 
 				} else{
 					election = 1;
-					// last_msg_id = msg_id - 2;
 				}
 			} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
 				election = 0;
@@ -518,7 +514,6 @@ void* housekeeping(int soc){
 				if (strcmp(seq_message_type, "CLIENT") == 0){
 					update_client_list(message);
 				} else if (strcmp(seq_message_type, "ACK") == 0){
-					// memset(recvBuff, 0, MAXSIZE);
 					// Acknowledgement received 
 					// IF ACKNOWLEDGEMENTS ARE NOT RECEIVED, AFTER A TIMEOUT, RESEND THE MESSAGE
 
@@ -571,10 +566,6 @@ void* housekeeping(int soc){
 					sprintf(temp, "%d", last_global_seq_id);
 					strcat(sendBuff, temp);
 					strcat(sendBuff, DELIMITER);
-
-					// sprintf(temp, "%d", last_msg_id);
-					// strcat(sendBuff, temp);
-					// strcat(sendBuff, DELIMITER);
 
 					int hb_count = 0;
 					struct node *item;
@@ -667,7 +658,6 @@ void* messenger(int soc){
 
 			// INITIATE COMMUNICATION WITH THE LEADER
 			if(election == 0){
-				// last_msg_id = msg_id - 2;
 				struct sockaddr_in serv_addr;
 
 				serv_addr.sin_family = AF_INET;
@@ -702,15 +692,10 @@ void* message_display(soc){
 	    }
 
 		struct node *item, *temp_item;
-		int count = 0;
-		TAILQ_FOREACH(item, &holdback_queue_head, entries) {
-			++count;
-		}
 		for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
 			temp_item = TAILQ_NEXT(item, entries);
 			
             if(item->global_id == last_global_seq_id){
-            	// printf("%d-QUEUE-%d-%d:%s ", count, item->global_id, last_global_seq_id, item->message);
             	// need to find client name for printing
             	for(i = 0; i < total_clients; ++i){
             		if (item->client_id == client_list[i].client_id){
