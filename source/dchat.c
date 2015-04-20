@@ -976,7 +976,10 @@ void* election_algorithm(int curr_id){
 				        }
                         
                         receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
-                        
+                        printf("Received from sequencer: %s\n", buf);
+
+
+
                         tv.tv_sec = TIMEOUT_SEC; //RESETTING TIMEOUT BACK TO NORMAL
 					    tv.tv_usec = TIMEOUT_USEC;
 					    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
@@ -1062,6 +1065,7 @@ void* election_algorithm(int curr_id){
                 
                 receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
                 
+                printf("Received from sequencer: %s\n", buf);
                 tv.tv_sec = TIMEOUT_SEC; //RESETTING TIMEOUT BACK TO NORMAL
 			    tv.tv_usec = TIMEOUT_USEC;
 			    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
