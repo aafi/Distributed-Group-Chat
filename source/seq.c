@@ -308,6 +308,7 @@ void msg_removal(int s)
     /* This means all the clients have received the message */
     if(flag == 0)
     { 
+      
       int client_id = item->client_id;
       if(!TAILQ_EMPTY(&client_head))
       {
@@ -340,6 +341,12 @@ void msg_removal(int s)
         }
       } 
       
+      printf("Printing ack vector before removing msg %d\n",item->seq_id);
+      for(idx=0;idx<MAX;idx++)
+      {
+      printf("%d ",item->ack_vector[idx]);
+      }
+      printf("\n");
 
       TAILQ_REMOVE(&message_head,item,entries);
       // printf("Message to be removed: %s \n",item->msg);
@@ -459,14 +466,16 @@ void* message_receiving(int s)
           }
          }
 
+         printf("Acknowledgement Vector Initialization\n");
 
          int idx = 0;
 
          for(idx;idx<MAX;idx++)
          {
           item->ack_vector[idx] = id[idx];
+          printf("%d ",item->ack_vector[idx]);
          }
-       
+        printf("\n");
 
          /*
                  * Add our item to the end of tail queue. The first
@@ -514,7 +523,7 @@ void* message_receiving(int s)
           if(atoi(tok[1]) == item->seq_id)
           {
             int client_id = atoi(tok[0]);
-            // printf("MARKING ACK VECTOR FOR MSG %s FROM CLIENT %d \n",item->msg,client_id);
+            printf("MARKING ACK VECTOR FOR MSG %s FROM CLIENT %d \n",item->msg,client_id);
             item->ack_vector[client_id] = 2;
             break;
           }
