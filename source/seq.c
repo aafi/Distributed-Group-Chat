@@ -308,7 +308,7 @@ void msg_removal(int s)
       } 
       
 
-     // printf("Message to be removed: %s \n",item->msg);
+      printf("Message to be removed: %s \n",item->msg);
       TAILQ_REMOVE(&message_head,item,entries);
       free(item);
       
@@ -463,6 +463,7 @@ void* message_receiving(int s)
 
      else if(strcmp("ACK",token) == 0)
      {
+         printf("ENTERING ACK LOOP \n");
          int i = 0;
          while(token!=NULL)
          {  
