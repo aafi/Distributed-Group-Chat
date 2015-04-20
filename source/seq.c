@@ -975,6 +975,8 @@ int main(int argc, char *argv[]){
           c->leader = 0;
 
         c->counter = 0;
+        struct timeval curr_time = get_current_time();
+        c->time_of_join = curr_time.tv_sec + ( curr_time.tv_usec / 1000000 );
         TAILQ_INSERT_TAIL(&client_head,c,entries);
       }
 
