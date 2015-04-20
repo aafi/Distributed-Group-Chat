@@ -524,7 +524,7 @@ void* message_receiving(int s)
           if(atoi(tok[1]) == item->seq_id)
           {
             int client_id = atoi(tok[0]);
-            printf("MARKING ACK VECTOR FOR MSG %s FROM CLIENT %d \n",item->msg,client_id);
+            printf("MARKING ACK VECTOR FOR MSG %d FROM CLIENT %d \n",item->seq_id,client_id);
             item->ack_vector[client_id] = 2;
             break;
           }
