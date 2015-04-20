@@ -352,6 +352,7 @@ void* message_receiving(int s)
 
       if (strcmp("REQUEST",token)==0)
       {
+         printf("JOIN MESSAGE : %s\n", buf_copy);
          int seq;
          int i = 0;
          while(token !=NULL)
@@ -874,6 +875,7 @@ void* message_pinging(int sock)
         }
         else
         {
+          printf("Client Counter for %s : %d \n",item_client->name,item_client->counter);
           item_client->counter = 0;
         }
       }
