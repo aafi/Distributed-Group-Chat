@@ -385,7 +385,7 @@ void* housekeeping(int soc){
 	while(prog_exit == 0){	// PUT THE SWITCH CASE FOR TYPES OF MESSAGES HERE TO PERFORM THAT PARTICULAT OPERATION!
 		
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
-			// perror("Error: Receiving message failed \n");
+			// If I don't receive a message, loop out and check if the program should still be running
 		} else {
 			// fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
 
