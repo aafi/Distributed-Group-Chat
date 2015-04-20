@@ -308,8 +308,8 @@ void msg_removal(int s)
       } 
       
 
-      printf("Message to be removed: %s \n",item->msg);
       TAILQ_REMOVE(&message_head,item,entries);
+      printf("Message to be removed: %s \n",item->msg);
       free(item);
       
     }
@@ -635,7 +635,7 @@ void* message_multicasting(int s)
 
               if(item->client_id == item_client->client_id)
               {
-                 // printf("Found client structure \n");
+                 printf("Found client structure \n");
                   
                   
               /*
@@ -643,7 +643,7 @@ void* message_multicasting(int s)
               */
 
                 int next_msg = item_client->last_msg_id+1;
-               // printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
+               printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
 
                 if(item->msg_id == next_msg)
                 {
@@ -862,6 +862,7 @@ void* message_pinging(int sock)
 
               TAILQ_REMOVE(&client_head,item_client,entries);
               free(item_client);
+              multicast_clist(sock);
 
               // printf("Number of Clients in the system: %d\n",count_clients());
 
@@ -885,7 +886,7 @@ void* message_pinging(int sock)
    }
 
   //char * multi[BUFLEN] = "SEQ#CLIENT#INFO#";
-  multicast_clist(sock);
+  
   //multicast(socket,multi);
  
  }
@@ -941,7 +942,7 @@ int main(int argc, char *argv[]){
        exit(-1);
     } 
 
-   // printf("%s\n",buf);   
+   printf("AFTER ELECTION: %s\n",buf);   
 
     detokenize(buf,tok,"#"); 
 
