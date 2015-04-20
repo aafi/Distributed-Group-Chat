@@ -507,7 +507,7 @@ void* message_receiving(int s)
 
      else if(strcmp("ACK",token) == 0)
      {
-         // printf("ENTERING ACK LOOP \n");
+         printf("ACKS: %s \n",buf_copy);
          int i = 0;
          while(token!=NULL)
          {  
@@ -520,6 +520,7 @@ void* message_receiving(int s)
          struct message *item;
          TAILQ_FOREACH(item, &message_head, entries)
          {
+          printf("INSIDE ACK FOREACH\n");
           if(atoi(tok[1]) == item->seq_id)
           {
             int client_id = atoi(tok[0]);
