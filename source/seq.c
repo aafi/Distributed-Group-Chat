@@ -523,7 +523,7 @@ void* message_receiving(int s)
 
      else if(strcmp("LOST",token)==0)
      {
-        //printf("LOST MESSAGE REQUEST: %s\n", buf);
+        printf("LOST MESSAGE REQUEST: %s\n", buf);
         token = strtok(NULL,"#");
         int lost_msg_id = atoi(token);
         //printf("Lost msg id : %d \n",lost_msg_id);
@@ -534,7 +534,7 @@ void* message_receiving(int s)
           struct message *item;
           TAILQ_FOREACH(item, &message_head, entries)
           {
-           // printf("current message being checked: %d \n",item->seq_id);
+            printf("current message being checked: %d \n",item->seq_id);
             if(lost_msg_id == item->seq_id)
             {
             //  printf("Found correct message %d",lost_msg_id);         
