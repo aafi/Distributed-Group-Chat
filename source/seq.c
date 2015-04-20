@@ -105,7 +105,31 @@ void multicast(int socket,char * msg)
   } 
 }
 
-//struct timeval tv1;
+void multicast_ea(int socket,char * msg)
+{
+   int idx = 0;
+   //printf("Inside");
+
+   struct client *item;
+   if(!TAILQ_EMPTY(&client_head))
+   {
+      TAILQ_FOREACH(item, &client_head, entries)
+   {
+         struct sockaddr_in clnt;
+         clnt.sin_family = AF_INET;
+         clnt.sin_port = htons(PORT_ELE);
+         clnt.sin_addr.s_addr = inet_addr(item->ip);
+        
+         if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&clnt, sizeof(clnt))) < 0)
+         {
+            perror("Broadcast Error");
+            exit(-1);
+         }
+        // printf("MULTICAST MESSAGES: %s\n", msg);
+         
+    }
+  } 
+}
 
 struct timeval get_current_time()
 {
@@ -393,7 +417,7 @@ void* message_receiving(int s)
          sprintf(status_msg,"NOTICE %s joined on %s:%s",tok[2],tok[0],tok[1]);
          strcat(status,status_msg);
          multicast(socket,status);
-         printf("NUMBER OF CLIENTS IN THE SYSTEM: %d\n",count_clients());
+         // printf("NUMBER OF CLIENTS IN THE SYSTEM: %d\n",count_clients());
 
        
       }
@@ -777,7 +801,7 @@ void* message_pinging(int sock)
            exit(-1);
         }
 
-      printf("%s\n",buf); //DEEPTI DEBUGGING
+      // printf("%s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
@@ -986,6 +1010,7 @@ int main(int argc, char *argv[]){
       }
 
       multicast(s,win_broadcast);
+      multicast_ea(s,win_broadcast);
     } 
     
     multicast_clist(s);
