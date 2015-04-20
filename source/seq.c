@@ -478,6 +478,7 @@ void* message_receiving(int s)
           if(atoi(tok[1]) == item->seq_id)
           {
             int client_id = atoi(tok[0]);
+            printf("MARKING ACK VECTOR FOR MSG %s FROM CLIENT %d \n",item->msg,client_id);
             item->ack_vector[client_id] = 2;
             break;
           }
@@ -541,7 +542,7 @@ void* message_receiving(int s)
         else if(atoi(hb[2])<msg_seq_id)
           msg_seq_id = atoi(hb[2]);
 
-       // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
+       printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
 
 
 
