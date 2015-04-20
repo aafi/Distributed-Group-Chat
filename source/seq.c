@@ -352,7 +352,7 @@ void* message_receiving(int s)
 
       if (strcmp("REQUEST",token)==0)
       {
-         printf("JOIN MESSAGE : %s\n", buf_copy);
+         //printf("JOIN MESSAGE : %s\n", buf_copy);
          int seq;
          int i = 0;
          while(token !=NULL)
@@ -393,6 +393,7 @@ void* message_receiving(int s)
          sprintf(status_msg,"NOTICE %s joined on %s:%s",tok[2],tok[0],tok[1]);
          strcat(status,status_msg);
          multicast(socket,status);
+         printf("NUMBER OF CLIENTS IN THE SYSTEM: %d\n",count_clients());
 
        
       }
@@ -776,7 +777,7 @@ void* message_pinging(int sock)
            exit(-1);
         }
 
-     // printf("%s\n",buf); //DEEPTI DEBUGGING
+      printf("%s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
@@ -887,8 +888,7 @@ void* message_pinging(int sock)
       
      }
    }
-   // else
-   //  printf("TAILQ is empty!\n" );
+   //ntf("TAILQ is empty!\n" );
 
   //char * multi[BUFLEN] = "SEQ#CLIENT#INFO#";
   
