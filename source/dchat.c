@@ -810,11 +810,11 @@ void* election_algorithm(int curr_id){
     if (bind(sockfd, (struct sockaddr* ) &my_addr, sizeof(my_addr))==-1)
       err("bind");
 
-    if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
-    {
-        fprintf(stderr, "inet_aton() failed\n");
-        exit(1);
-    }
+    // if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
+    // {
+    //     fprintf(stderr, "inet_aton() failed\n");
+    //     exit(1);
+    // }
 
     //printf("In election algorithm\n");
 
