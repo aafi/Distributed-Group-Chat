@@ -548,12 +548,14 @@ void* message_receiving(int s)
               strcat(msg,temp);
               strcat(msg,"#");
               strcat(msg,item->msg);
-             // printf("SENDING LOST MSG: %s\n",msg);
+              printf("SENDING LOST MSG: %s\n",msg);
               if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
               {
                 perror("Lost Message Sending Error");
                 exit(-1);
               }
+              else
+                printf("SENT LOST MESSAGE!\n");
 
             }
           }
