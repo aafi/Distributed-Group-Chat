@@ -631,6 +631,8 @@ void* housekeeping(int soc){
 						strcat(sendBuff, messageId);
 						strcat(sendBuff, DELIMITER);
 						strcat(sendBuff, item->message);
+
+						// printf("SENDALL: %s\n", item->message);
 						
 						if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 							perror("ERROR: Sending message failed \n");
