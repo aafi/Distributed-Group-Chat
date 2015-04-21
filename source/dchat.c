@@ -932,8 +932,7 @@ void* election_algorithm(int curr_id){
 	                                //printf("SENDING END OF ELECTION\n");
 	                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
                                 //} 
-	                                //TODO: NOW IT IS SENDING WINNING ELECTION TO ITSELF AS WELL WHICH IS NOT HANDLED IN THE WINNING ELECTION. BUT IT WORKS FOR SOME REASON. FIGURE OUT LATER.
-
+	                                
                                 if (client_list[i].client_id == atoi(curr_ele_id))
                                 {
                                     
@@ -979,7 +978,7 @@ void* election_algorithm(int curr_id){
 				        }
                         
                         receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
-                        printf("Received from sequencer: %s\n", buf);
+                        //printf("Received from sequencer: %s\n", buf);
 
 
 
