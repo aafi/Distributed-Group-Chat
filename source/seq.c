@@ -857,13 +857,33 @@ void* message_pinging(int sock)
     do
     {
       //sleep(0.5);
+      
+      //DEEPTI DEBUGGING
+      struct timeval tv;
+      tv.tv_sec = TIMEOUT_SEC;
+      tv.tv_usec = TIMEOUT_USEC;
+
+      if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+      {
+          perror("Error");
+      }
+
+
       if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client_in, &len)) < 0)
         {
            perror("Receive Error Ping");
            exit(-1);
         }
+
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+        if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+        {
+            perror("Error");
+        }
+        //DEEPTI DEBUGGING
       // flag = 0;
-      printf("%s\n",buf); //DEEPTI DEBUGGING
+      printf("Deepti Debugging: %s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
