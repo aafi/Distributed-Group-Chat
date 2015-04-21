@@ -45,7 +45,9 @@ struct message{
    int client_id;
    int msg_id;
    char msg[BUFLEN];
-   int ack_vector[MAX];
+   //int ack_vector[MAX];
+   int counter;
+   int sent;
 
    /*
          * This holds the pointers to the next and previous entries in
@@ -237,7 +239,7 @@ int requestid(char * ip, int port, char * name)
     struct timeval join_time = get_current_time();
     c->time_of_join = join_time.tv_sec + (join_time.tv_usec/1000000);
 
-    printf("Client %s joined as client %d \n",c->name,c->client_id);
+    // printf("Client %s joined as client %d \n",c->name,c->client_id);
    
     TAILQ_INSERT_TAIL(&client_head,c,entries);
     
@@ -294,19 +296,19 @@ void msg_removal(int s)
   for(item = TAILQ_FIRST(&message_head);item!=NULL;item=tmp_item)
   {
     tmp_item = TAILQ_NEXT(item,entries);
-    int flag = 0;
-    for(idx=0;idx<MAX;idx++)
-    {
-      if(item->ack_vector[idx] == 1)
-          {
-            flag = 1; 
-            //return -1;
-          }
-    }
+    // int flag = 0;
+    // for(idx=0;idx<MAX;idx++)
+    // {
+    //   if(item->ack_vector[idx] == 1)
+    //       {
+    //         flag = 1; 
+    //         //return -1;
+    //       }
+    // }
     
 
     /* This means all the clients have received the message */
-    if(flag == 0)
+    if(item->counter == 0)
     { 
       
       int client_id = item->client_id;
@@ -340,13 +342,13 @@ void msg_removal(int s)
           }
         }
       } 
-      
-      printf("Printing ack vector before removing msg %d\n",item->seq_id);
-      for(idx=0;idx<MAX;idx++)
-      {
-      printf("%d ",item->ack_vector[idx]);
-      }
-      printf("\n");
+      // printf("Removing message %d\n",item->seq_id);
+      // printf("Printing ack vector before removing msg %d\n",item->seq_id);
+      // for(idx=0;idx<MAX;idx++)
+      // {
+      // printf("%d ",item->ack_vector[idx]);
+      // }
+      // printf("\n");
 
       TAILQ_REMOVE(&message_head,item,entries);
       // printf("Message to be removed: %s \n",item->msg);
@@ -456,26 +458,29 @@ void* message_receiving(int s)
          strcpy(item->msg,tok[2]);
          item->seq_id = -1;
 
-         int id[MAX] = {0};
-         if(!TAILQ_EMPTY(&client_head))
-         {
-          struct client *c;
-          TAILQ_FOREACH(c,&client_head,entries)
-          {
-            id[c->client_id] = 1;
-          }
-         }
+         // int id[MAX] = {0};
+         // if(!TAILQ_EMPTY(&client_head))
+         // {
+         //  struct client *c;
+         //  TAILQ_FOREACH(c,&client_head,entries)
+         //  {
+         //    id[c->client_id] = 1;
+         //  }
+         // }
 
-         printf("Acknowledgement Vector Initialization\n");
+        //  printf("Acknowledgement Vector Initialization\n");
 
-         int idx = 0;
+        //  int idx = 0;
 
-         for(idx;idx<MAX;idx++)
-         {
-          item->ack_vector[idx] = id[idx];
-          printf("%d ",item->ack_vector[idx]);
-         }
-        printf("\n");
+        //  for(idx;idx<MAX;idx++)
+        //  {
+        //   item->ack_vector[idx] = id[idx];
+        //   printf("%d ",item->ack_vector[idx]);
+        //  }
+        // printf("\n");
+         item->counter = count_clients();
+         item->sent = 0;
+         // printf("Counter: %d\n",item->counter);
 
          /*
                  * Add our item to the end of tail queue. The first
@@ -487,6 +492,7 @@ void* message_receiving(int s)
          */
 
          TAILQ_INSERT_TAIL(&message_head,item,entries);
+
 
          /*
             Send acknowledgement back to the client that message has been received and put in the queue
@@ -507,33 +513,48 @@ void* message_receiving(int s)
 
      else if(strcmp("ACK",token) == 0)
      {
-         printf("ACKS: %s \n",buf_copy);
-         int i = 0;
-         while(token!=NULL)
-         {  
+         //printf("ACKS: %s \n",buf_copy);
+         // int i = 0;
+         // while(token!=NULL)
+         // {  
             
-            token = strtok(NULL,"#");
-            tok[i] = token;
-            i++;
-         }
+         //    token = strtok(NULL,"#");
+         //    tok[i] = token;
+         //    i++;
+         // }
 
-         struct message *item;
-         TAILQ_FOREACH(item, &message_head, entries)
+         char * ack[BUFLEN];
+         detokenize(buf_copy,ack,"#");
+
+         struct message *item,*temp_item;
+
+         if(!TAILQ_EMPTY(&message_head))
          {
-          printf("INSIDE ACK FOREACH\n");
-          if(atoi(tok[1]) == item->seq_id)
-          {
-            int client_id = atoi(tok[0]);
-            printf("MARKING ACK VECTOR FOR MSG %d FROM CLIENT %d \n",item->seq_id,client_id);
-            item->ack_vector[client_id] = 2;
-            break;
+          for(item=TAILQ_FIRST(&message_head);item!=NULL;item = temp_item)
+           {
+            temp_item = TAILQ_NEXT(item,entries);
+            // printf("INSIDE ACK FOREACH %s: %d\n", item->msg, item->seq_id);
+            if(atoi(ack[2]) == item->seq_id)
+            {
+              // int client_id = atoi(ack[1]);
+              // printf("MARKING ACK VECTOR FOR MSG %d FROM CLIENT %d \n",item->seq_id,client_id);
+              // item->ack_vector[client_id] = 2;
+              // break;
+              // printf("Message I am looking at: %s - %d\n", item->msg, item->counter);
+              item->counter--;
+              // printf("Decremented Counter for MSG %d to %d\n",item->seq_id,item->counter);  
+
+
+            }
           }
-        }
+      }
+      // else
+      //   printf("MESSAGE TAILQ IS EMPTY\n");
      }
 
      else if(strcmp("LOST",token)==0)
      {
-        printf("LOST MESSAGE REQUEST: %s\n", buf);
+        // printf("LOST MESSAGE REQUEST: %s\n", buf);
         token = strtok(NULL,"#");
         int lost_msg_id = atoi(token);
         //printf("Lost msg id : %d \n",lost_msg_id);
@@ -544,7 +565,7 @@ void* message_receiving(int s)
           struct message *item;
           TAILQ_FOREACH(item, &message_head, entries)
           {
-            printf("current message being checked: %d \n",item->seq_id);
+            // printf("current message being checked: %d \n",item->seq_id);
             if(lost_msg_id == item->seq_id)
             {
             //  printf("Found correct message %d",lost_msg_id);         
@@ -558,20 +579,20 @@ void* message_receiving(int s)
               strcat(msg,temp);
               strcat(msg,"#");
               strcat(msg,item->msg);
-              printf("SENDING LOST MSG: %s\n",msg);
+              // printf("SENDING LOST MSG: %s\n",msg);
               if((sendto(socket,msg,BUFLEN,0,(struct sockaddr *)&client, sizeof(client))) < 0)
               {
                 perror("Lost Message Sending Error");
                 exit(-1);
               }
-              else
-                printf("SENT LOST MESSAGE!\n");
+              // else
+              //   printf("SENT LOST MESSAGE!\n");
 
             }
           }
         }
-        else
-          printf("EMPTY MESSAGE QUEUE");
+        // else
+        //   printf("EMPTY MESSAGE QUEUE");
         
 
 
@@ -579,75 +600,86 @@ void* message_receiving(int s)
 
      else if(strcmp("HB",token)==0)
      {
-       // printf("hb msg: %s\n", buf);
+       // printf("hb msg: %s\n", buf_copy);
         hb_counter++;
         char * hb[BUFLEN];
         detokenize(buf_copy,hb,"#");
         int flag;
         
         int client_id = atoi(hb[1]);
+        //int flag = 0;
 
-        if(msg_seq_id == -1)
-          msg_seq_id = atoi(hb[2]);
+        if(msg_seq_id == 0)
+          {
+            msg_seq_id = atoi(hb[2]);
+           
+           // flag = 1;
+          }
         else if(atoi(hb[2])<msg_seq_id)
-          msg_seq_id = atoi(hb[2]);
+          {
+            msg_seq_id = atoi(hb[2]);
+          //  flag = 1;
+          }
 
-      // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
+      //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
 
-
+        // if((msg_seq_id == -1) && (flag == 0))
+        //   msg_seq_id = 0;
 
         
         int count = (atoi(hb[3])*4)+4;
 
 
-        int id[MAX] = {0};
-        if(!TAILQ_EMPTY(&client_head))
-        {
-          struct client *c;
-          TAILQ_FOREACH(c,&client_head,entries)
-          {
-            id[c->client_id] = 1;
-            // if(c->client_id == client_id)
-            // {
-            //   c->last_msg_id = atoi(hb[3]);
-            // }
-          }
-        }
+        // int id[MAX] = {0};
+        // if(!TAILQ_EMPTY(&client_head))
+        // {
+        //   struct client *c;
+        //   TAILQ_FOREACH(c,&client_head,entries)
+        //   {
+        //     id[c->client_id] = 1;
+        //     // if(c->client_id == client_id)
+        //     // {
+        //     //   c->last_msg_id = atoi(hb[3]);
+        //     // }
+        //   }
+        // }
 
         int idx = 4;
         for(idx;idx < count; idx+=4)
         {
-          flag = 0;
-          if(!TAILQ_EMPTY(&message_head))
-          { 
-            struct message *item;
-            TAILQ_FOREACH(item,&message_head,entries)
-            {
-              if(item->seq_id == atoi(tok[idx]))
-                {
-                  item->ack_vector[client_id] = 2;
-                  flag = 1;
-                }
-            }
-          }
+          //flag = 0;
+          // if(!TAILQ_EMPTY(&message_head))
+          // { 
+          //   struct message *item;
+          //   TAILQ_FOREACH(item,&message_head,entries)
+          //   {
+          //     if(item->seq_id == atoi(tok[idx]))
+          //       {
+          //         item->ack_vector[client_id] = 2;
+          //         flag = 1;
+          //       }
+          //   }
+          // }
 
-          if(flag == 0)
-          {
+          // if(flag == 0)
+          // {
             struct message *item;
             item = malloc(sizeof(*item));
             item->seq_id = atoi(tok[idx]);
             item->client_id = atoi(tok[idx+1]);
             item->msg_id = atoi(tok[idx+2]);
             strcpy(item->msg,tok[idx+3]);
-            int i = 0;
-            for(i;i<MAX;i++)
-            {
-              item->ack_vector[i] = id[i];
-            }
+            // int i = 0;
+            // for(i;i<MAX;i++)
+            // {
+            //   item->ack_vector[i] = id[i];
+            // }
 
-            item->ack_vector[client_id] = 2;
+            // item->ack_vector[client_id] = 2;
+            item->counter = atoi(hb[3]);
+            item->sent = 0;
             TAILQ_INSERT_TAIL(&message_head,item,entries);
-         }
+         //}
           
         }
 
@@ -672,6 +704,7 @@ void* message_multicasting(int s)
       
       struct message *item,*tmp_item;
       item = TAILQ_FIRST(&message_head);
+
       int idx = 0, flag = 0;
       if(!TAILQ_EMPTY(&client_head))
       {
@@ -684,7 +717,7 @@ void* message_multicasting(int s)
 
               if(item->client_id == item_client->client_id)
               {
-                // printf("Found client structure \n");
+              //  printf("Found client structure \n");
                   
                   
               /*
@@ -692,7 +725,7 @@ void* message_multicasting(int s)
               */
 
                 int next_msg = item_client->last_msg_id+1;
-             //  printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
+             // printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
 
                 if(item->msg_id == next_msg)
                 {
@@ -702,6 +735,7 @@ void* message_multicasting(int s)
 
                   //assigning global sequence id
                   item->seq_id = msg_seq_id++;
+                 // printf("SEQ ID: %d\n",item->seq_id);
 
                   sprintf(temp,"%d",item->seq_id);
                   strcat(msg,temp);
@@ -714,6 +748,7 @@ void* message_multicasting(int s)
                   strcat(msg,"#");
                   strcat(msg,item->msg);
 
+                  item->sent = 1;
                   multicast(socket,msg);
                   item_client->last_msg_id = item->msg_id;
                   flag = 1;
@@ -746,6 +781,7 @@ void* message_multicasting(int s)
                       strcat(msg_next,temp);
                       strcat(msg_next,"#");
                       strcat(msg_next,next->msg);
+                      next->sent = 1;
                       multicast(socket,msg_next);
                       item_client->last_msg_id = next->msg_id;
                     }
@@ -756,13 +792,15 @@ void* message_multicasting(int s)
                 IF NEXT MESSAGE TO BE SENT IS NOT FOUND IN QUEUE, PUSH TOP MESSAGE TO END OF QUEUE
                 */
 
-                if(flag == 0)
+                if((flag == 0) && (item->sent == 0))
                 { 
                   struct message *last;
                   last = malloc(sizeof(*last));
                   last->seq_id = item->seq_id;
                   last->client_id = item->client_id;
                   last->msg_id = item->msg_id;
+                  last->counter = item->counter;
+                  last->sent = item->sent;
                   strcpy(last->msg,item->msg);
                   TAILQ_INSERT_TAIL(&message_head,last,entries);
                   TAILQ_REMOVE(&message_head,item,entries);
@@ -992,7 +1030,7 @@ int main(int argc, char *argv[]){
     {
        perror("Receive Error");
        exit(-1);
-    } 
+    }
 
   // printf("AFTER ELECTION: %s\n",buf);   
 
@@ -1007,10 +1045,10 @@ int main(int argc, char *argv[]){
 
     if (strcmp("NEWLEADER",tok[0]) == 0)
     {
-     // printf("%s\n",buf);
+      // printf("%s\n",buf);
       int i = 2, num_clients = (atoi(tok[1])*5)+2;
       num_client_hb = atoi(tok[1]);
-      msg_seq_id = -1;
+      msg_seq_id = 0;
 
       for(i;i<num_clients;i+=5)
       {
@@ -1020,11 +1058,14 @@ int main(int argc, char *argv[]){
         c->port = atoi(tok[i+1]);
         strcpy(c->name,tok[i+3]);
         c->last_msg_id = atoi(tok[i+4]);
+        // printf("LAST MESSAGE ID %d\n",c->last_msg_id);
         c->client_id = atoi(tok[i+2]);
         if(strcmp(my_ip_addr,tok[i]) == 0)
           c->leader = 1;
         else
           c->leader = 0;
+
+        // counter for pings
 
         c->counter = 0;
         struct timeval curr_time = get_current_time();
