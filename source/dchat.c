@@ -129,8 +129,9 @@ This method is responsible for updating the client_list array with the new infor
 void update_client_list(char* all_client_details[]){
 	int i = 0;
 	int j = 0;
-	total_clients = atoi(all_client_details[3]) * 5 + 4;
-	for (i = 4; i < total_clients; i += 5){
+	total_clients = atoi(all_client_details[3]);
+	int end_details = total_clients * 5 + 4;
+	for (i = 4; i < end_details; i += 5){
 		struct client clnt;
 
 		strcpy(clnt.ip, all_client_details[i]);
@@ -199,6 +200,7 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
+			printf("%s\n", recvBuff);
 			char* all_client_details[MAXSIZE];
 			detokenize(recvBuff, all_client_details, DELIMITER);
 
