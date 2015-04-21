@@ -841,7 +841,7 @@ void* election_algorithm(int curr_id){
                 
                 begin_election:
                 election = 1;
-                printf("Starting election\n");
+                //printf("Starting election\n");
                 for (i = 0; i < total_clients; i++) //INFORMING ALL CLIENTS THAT ELECTION IS BEING HELD
                 {
                 	serv_addr_client.sin_port = htons(client_list[i].port);
@@ -894,7 +894,7 @@ void* election_algorithm(int curr_id){
                             //printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
                             election = 1;
                             won = 1;
-                            printf("Found new leader\n");
+                            //printf("Found new leader\n");
                             for (i = 0; i < total_clients; i++)
                             {
                             	//if (client_list[i].client_id != atoi(curr_ele_id))
@@ -918,7 +918,7 @@ void* election_algorithm(int curr_id){
 	                                // sprintf(temp, "%d", curr_ele_id);
 	                                strcpy(buf, "I AM LEADER#");
 	                                strcat(buf, curr_ele_id);
-	                                printf("SENDING END OF ELECTION\n");
+	                                //printf("SENDING END OF ELECTION\n");
 	                                send_msg(sockfd, buf, serv_addr_ele, slen); //SENDING NEW LEADER TO ELECTIONS
                                 //} 
 	                                //TODO: NOW IT IS SENDING WINNING ELECTION TO ITSELF AS WELL WHICH IS NOT HANDLED IN THE WINNING ELECTION. BUT IT WORKS FOR SOME REASON. FIGURE OUT LATER.
@@ -937,7 +937,7 @@ void* election_algorithm(int curr_id){
                         continue;
                     }
 
-                    printf("message received by election: %s\n", buf);
+                    //printf("message received by election: %s\n", buf);
                     
                     detokenize(buf, token_result, "#");
                     //printf("buf: %s\n", buf);
@@ -959,7 +959,7 @@ void* election_algorithm(int curr_id){
                     {
                         //printf("New Leader: %s\n", token_result[1]);
                         election = 1;
-                        printf("END OF ELECTION\n");
+                        //printf("END OF ELECTION\n");
                         tv.tv_sec = 0; //RESETTING TIMEOUT TO 0
 					    tv.tv_usec = 0;
 					    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
@@ -968,7 +968,7 @@ void* election_algorithm(int curr_id){
 				        }
                         
                         receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
-                        printf("Received from sequencer: %s\n", buf);
+                        //printf("Received from sequencer: %s\n", buf);
 
 
 
@@ -994,7 +994,7 @@ void* election_algorithm(int curr_id){
                             }
                     	    send_msg(sockfd, "ELECTIONCANCEL", serv_addr_client, slen);
                     	}
-                    	    printf("ELECTION CANCELLED\n");
+                    	    //printf("ELECTION CANCELLED\n");
                     	    break;
                     }
 
@@ -1046,7 +1046,7 @@ void* election_algorithm(int curr_id){
             if (strcmp(token_result[0], "I AM LEADER") == 0)
             {
             	receive_msg(sockfd, buf, &serv_addr, &slen);
-                printf("END OF ELECTION\n");
+                //printf("END OF ELECTION\n");
                 
                 tv.tv_sec = 0; //RESETTING TIMEOUT TO 0
 			    tv.tv_usec = 0;
@@ -1057,7 +1057,7 @@ void* election_algorithm(int curr_id){
                 
                 receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
                 
-                printf("Received from sequencer: %s\n", buf);
+                //printf("Received from sequencer: %s\n", buf);
                 tv.tv_sec = TIMEOUT_SEC; //RESETTING TIMEOUT BACK TO NORMAL
 			    tv.tv_usec = TIMEOUT_USEC;
 			    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
