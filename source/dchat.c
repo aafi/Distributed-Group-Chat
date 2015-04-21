@@ -873,7 +873,7 @@ void* election_algorithm(int curr_id){
 
                     if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
                     {
-                        fprintf(stderr, "Client ip address inet_aton() failed for sending election\n");
+                        fprintf(stderr, "Client inet_aton() failed for sending election\n");
                         exit(1);
                     }
                     //printf("Inofrming: first inet_aton\n");
