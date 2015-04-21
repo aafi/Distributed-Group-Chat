@@ -862,7 +862,7 @@ void* message_pinging(int sock)
            exit(-1);
         }
 
-      printf("%s\n",buf); //DEEPTI DEBUGGING
+      // printf("%s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
@@ -1046,9 +1046,11 @@ int main(int argc, char *argv[]){
     if (strcmp("NEWLEADER",tok[0]) == 0)
     {
       // printf("%s\n",buf);
-      int i = 2, num_clients = (atoi(tok[1])*5)+2;
+      char notice[BUFLEN];
+      int i = 3, num_clients = (atoi(tok[1])*5)+3;
       num_client_hb = atoi(tok[1]);
       msg_seq_id = 0;
+      strcpy(notice,tok[2]);
 
       for(i;i<num_clients;i+=5)
       {
@@ -1072,7 +1074,7 @@ int main(int argc, char *argv[]){
         c->time_of_join = curr_time.tv_sec + ( curr_time.tv_usec / 1000000 );
         TAILQ_INSERT_TAIL(&client_head,c,entries);
       }
-
+      multicast(s,notice);
       multicast(s,win_broadcast);
       multicast_ea(s,win_broadcast);
     } 
