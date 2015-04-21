@@ -901,7 +901,7 @@ void* election_algorithm(int curr_id){
 
                         if ((received_ok == 0) && (won == 0))
                         {
-                            //printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
+                            printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
                             election = 1;
                             won = 1;
                             //printf("Found new leader\n");
@@ -947,7 +947,7 @@ void* election_algorithm(int curr_id){
                         continue;
                     }
 
-                    //printf("message received by election: %s\n", buf);
+                    printf("message received by election: %s\n", buf);
                     
                     detokenize(buf, token_result, "#");
                     //printf("buf: %s\n", buf);
