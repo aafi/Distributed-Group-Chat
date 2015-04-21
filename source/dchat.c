@@ -471,31 +471,40 @@ void* housekeeping(int soc){
 				strcpy(old_leader_ip, leader.ip_addr);
 				start_sequencer(soc);
 
-				strcpy(sendBuff, "NEWLEADER#");
+				char buf_part1[MAXSIZE], buf_part2[MAXSIZE], buf_part3[MAXSIZE];
+
+				strcpy(buf_part1, "NEWLEADER#");
 				char temp[MAXSIZE];
 				sprintf(temp, "%d", total_clients - 1);
-				strcat(sendBuff, temp);
-				strcat(sendBuff, DELIMITER);
+				strcat(buf_part1, temp);
+				strcat(buf_part1, DELIMITER);
 
 				int count = 0;
 				for (count = 0; count < total_clients; ++count){
 					if (strcmp(old_leader_ip, client_list[count].ip) != 0){
-						strcat(sendBuff, client_list[count].ip);
-						strcat(sendBuff, DELIMITER);
+						strcat(buf_part3, client_list[count].ip);
+						strcat(buf_part3, DELIMITER);
 						char temp[MAXSIZE];
 						sprintf(temp, "%d", client_list[count].port);
-						strcat(sendBuff, temp);
-						strcat(sendBuff, DELIMITER);
+						strcat(buf_part3, temp);
+						strcat(buf_part3, DELIMITER);
 						sprintf(temp, "%d", client_list[count].client_id);
-						strcat(sendBuff, temp);
-						strcat(sendBuff, DELIMITER);
-						strcat(sendBuff, client_list[count].name);
-						strcat(sendBuff, DELIMITER);
+						strcat(buf_part3, temp);
+						strcat(buf_part3, DELIMITER);
+						strcat(buf_part3, client_list[count].name);
+						strcat(buf_part3, DELIMITER);
 						sprintf(temp, "%d", client_list[count].last_msg_id);
-						strcat(sendBuff, temp);
-						strcat(sendBuff, DELIMITER);
+						strcat(buf_part3, temp);
+						strcat(buf_part3, DELIMITER);
+					}
+					else
+					{
+						strcpy(buf_part2, "NOTICE ");
+						strcat(buf_part2, client_list[count].name);
+						strcat(buf_part2, " left the chat or crashed#");
 					}
 				}
+				sprintf(sendBuff, "%s%s%s", buf_part1, buf_part2, buf_part3);
 
 				other_user_addr.sin_family = AF_INET;
 				other_user_addr.sin_port = htons(atoi(leader.port));
