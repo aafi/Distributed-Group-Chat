@@ -862,7 +862,7 @@ void* message_pinging(int sock)
            exit(-1);
         }
 
-      // printf("%s\n",buf); //DEEPTI DEBUGGING
+      printf("%s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
