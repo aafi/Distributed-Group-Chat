@@ -387,7 +387,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-     // printf("SEQUENCER RECEIVED: %s\n", buf);      
+     printf("SEQUENCER RECEIVED: %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
