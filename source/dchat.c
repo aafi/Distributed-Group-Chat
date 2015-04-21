@@ -1056,7 +1056,7 @@ void* election_algorithm(int curr_id){
 
             if (strcmp(token_result[0], "I AM LEADER") == 0)
             {
-            	receive_msg(sockfd, buf, &serv_addr, &slen);
+            	//receive_msg(sockfd, buf, &serv_addr, &slen);
                 printf("END OF ELECTION 2\n");
                 
                 tv.tv_sec = 0; //RESETTING TIMEOUT TO 0
