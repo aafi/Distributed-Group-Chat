@@ -838,7 +838,7 @@ void* election_algorithm(int curr_id){
 		//     fprintf(stderr, "inet_aton() failed\n");
 		//     exit(1);
 		// }
-		printf("IP Address of Seq: %s\n", leader.ip_addr);
+		//printf("IP Address of Seq: %s\n", leader.ip_addr);
     	election = 0;
     	nanosleep((struct timespec[]){{0, 100000000}}, NULL);
     	//sleep(1);
@@ -850,7 +850,7 @@ void* election_algorithm(int curr_id){
         strcpy(buf, "PING#");
         strcat(buf, curr_ele_id);
         send_msg(sockfd, buf, serv_addr_seq, slen); //PING SEQUENCER TO CHECK IF IT IS ACTIVE
-        printf("Pinged sequencer\n");
+        //printf("Pinged sequencer\n");
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
