@@ -877,7 +877,7 @@ void* message_pinging(int sock)
         //}
         //DEEPTI DEBUGGING
       // flag = 0;
-      //printf("Deepti Debugging: %s\n",buf); //DEEPTI DEBUGGING
+      printf("Deepti Debugging: %s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
