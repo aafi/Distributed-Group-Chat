@@ -342,7 +342,7 @@ void msg_removal(int s)
           }
         }
       } 
-      printf("Removing message %d\n",item->seq_id);
+      // printf("Removing message %d\n",item->seq_id);
       // printf("Printing ack vector before removing msg %d\n",item->seq_id);
       // for(idx=0;idx<MAX;idx++)
       // {
@@ -387,7 +387,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-     printf("SEQUENCER RECEIVED: %s\n", buf);      
+     // printf("SEQUENCER RECEIVED: %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -426,7 +426,7 @@ void* message_receiving(int s)
             exit(-1);
          }
          else
-          printf("SUCCESS : %s\n",reply);
+          // printf("SUCCESS : %s\n",reply);
 
          
          multicast_clist(socket);
@@ -634,7 +634,7 @@ void* message_receiving(int s)
           flag = 0;
           if(!TAILQ_EMPTY(&message_head))
           { 
-            printf("Inside TAILQ\n");
+            // printf("Inside TAILQ\n");
             struct message *item,*temp_item;
             for(item=TAILQ_FIRST(&message_head);item!=NULL;item=temp_item)
             {
