@@ -873,7 +873,7 @@ void* election_algorithm(int curr_id){
 
                     if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
                     {
-                        fprintf(stderr, "inet_aton() failed\n");
+                        fprintf(stderr, "Client ip address inet_aton() failed for sending election\n");
                         exit(1);
                     }
                     //printf("Inofrming: first inet_aton\n");
@@ -894,7 +894,7 @@ void* election_algorithm(int curr_id){
                     //printf("checking: first inet_aton\n");
                     if (inet_aton(client_list[i].ip, &serv_addr_ele.sin_addr)==0)
                     {
-                        fprintf(stderr, "inet_aton() failed\n");
+                        fprintf(stderr, "Election inet_aton() of higher ids failed\n");
                         exit(1);
                     }
                     if (client_list[i].client_id > atoi(curr_ele_id))
@@ -930,13 +930,13 @@ void* election_algorithm(int curr_id){
 
 	                                if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
 	                                {
-	                                    fprintf(stderr, "inet_aton() failed\n");
+	                                    fprintf(stderr, "Client inet_aton() for sending new leader failed\n");
 	                                    exit(1);
 	                                }
 	                                //printf("checking: first inet_aton\n");
 	                                if (inet_aton(client_list[i].ip, &serv_addr_ele.sin_addr)==0)
 	                                {
-	                                    fprintf(stderr, "inet_aton() failed\n");
+	                                    fprintf(stderr, "Election inet_aton() for sending new leader failed\n");
 	                                    exit(1);
 	                                }
 
@@ -999,7 +999,7 @@ void* election_algorithm(int curr_id){
                         
                         if (inet_aton(new_leader_ip, &serv_addr_seq.sin_addr)==0)
 						{
-						    fprintf(stderr, "inet_aton() failed\n");
+						    fprintf(stderr, "New sequencer inet_aton() failed\n");
 						    exit(1);
 						}
 
@@ -1020,7 +1020,7 @@ void* election_algorithm(int curr_id){
 
                             if (inet_aton(client_list[i].ip, &serv_addr_client.sin_addr)==0)
                             {
-                                fprintf(stderr, "inet_aton() failed\n");
+                                fprintf(stderr, "Client inet_aton() for election cancel failed\n");
                                 exit(1);
                             }
                     	    send_msg(sockfd, "ELECTIONCANCEL", serv_addr_client, slen);
