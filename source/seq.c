@@ -390,7 +390,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-     printf("SEQUENCER RECEIVED: %s\n", buf);      
+     // printf("SEQUENCER RECEIVED: %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -805,8 +805,8 @@ void* message_multicasting(int s)
               } // end of if (finding the right client structure)
             }
           }   // end of for (looping through id array to find the existing clients)
-          else
-            printf("CLIENT QUEUE IS EMPTY\n");
+          // else
+          //   printf("CLIENT QUEUE IS EMPTY\n");
 
       //} // end of foreach (traversing through the message queue)
           // else
@@ -1058,7 +1058,7 @@ int main(int argc, char *argv[]){
        exit(-1);
     }
 
-    // printf("AFTER ELECTION: %s\n",buf);   
+    printf("AFTER ELECTION/NEW CHAT: %s\n",buf);   
 
     detokenize(buf,tok,"#"); 
 
