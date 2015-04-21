@@ -647,39 +647,34 @@ void* message_receiving(int s)
         int idx = 4;
         for(idx;idx < count; idx+=4)
         {
-          //flag = 0;
-          // if(!TAILQ_EMPTY(&message_head))
-          // { 
-          //   struct message *item;
-          //   TAILQ_FOREACH(item,&message_head,entries)
-          //   {
-          //     if(item->seq_id == atoi(tok[idx]))
-          //       {
-          //         item->ack_vector[client_id] = 2;
-          //         flag = 1;
-          //       }
-          //   }
-          // }
+          flag = 0;
+          if(!TAILQ_EMPTY(&message_head))
+          { 
+            struct message *item,*temp_item;
+            for(item=TAILQ_FIRST(&message_head);item!=NULL;item=temp_item)
+            {
+              temp_item = TAILQ_NEXT(item,entries);
+              if(item->seq_id == atoi(tok[idx]))
+                {
+                  item->counter--;
+                  flag = 1;
+                }
+            }
+          }
 
-          // if(flag == 0)
-          // {
+          if(flag == 0)
+          {
             struct message *item;
             item = malloc(sizeof(*item));
             item->seq_id = atoi(tok[idx]);
             item->client_id = atoi(tok[idx+1]);
             item->msg_id = atoi(tok[idx+2]);
             strcpy(item->msg,tok[idx+3]);
-            // int i = 0;
-            // for(i;i<MAX;i++)
-            // {
-            //   item->ack_vector[i] = id[i];
-            // }
-
-            // item->ack_vector[client_id] = 2;
             item->counter = atoi(hb[3]);
+            item->counter--;
             item->sent = 0;
             TAILQ_INSERT_TAIL(&message_head,item,entries);
-         //}
+         }
           
         }
 
