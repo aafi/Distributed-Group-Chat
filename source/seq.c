@@ -387,7 +387,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-    //  printf("Message Received SEQUENCER : %s\n", buf);      
+     printf("SEQUENCER RECEIVED: %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -1057,7 +1057,7 @@ int main(int argc, char *argv[]){
        exit(-1);
     }
 
-  // printf("AFTER ELECTION: %s\n",buf);   
+    // printf("AFTER ELECTION: %s\n",buf);   
 
     detokenize(buf,tok,"#"); 
 
