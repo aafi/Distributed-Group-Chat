@@ -185,7 +185,9 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 
 	if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 		perror("Error: Receiving message failed \n");
-	} 
+	} else{
+		printf("AFTER REQUEST:%s\n", recvBuff);
+	}
 
 	char* join_details[MAXSIZE];
 	detokenize(recvBuff, join_details, DELIMITER);
@@ -193,6 +195,7 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 	if (strcmp(join_details[0], "SUCCESS") == 0){
 		client_id = atoi(join_details[1]);
 		last_global_seq_id = atoi(join_details[2]);
+		printf("UPDATED GLOBALSEQID TO: %d\n", last_global_seq_id);
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
@@ -335,7 +338,7 @@ int main(int argc, char* argv[]){
 			}
 			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 				perror("ERROR: Receiving message failed \n");
-			}
+			} 
 
 			char* leader_details[MAXSIZE];
 			detokenize(recvBuff, leader_details, DELIMITER);
