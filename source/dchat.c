@@ -129,6 +129,7 @@ This method is responsible for updating the client_list array with the new infor
 void update_client_list(char* all_client_details[]){
 	int i = 0;
 	int j = 0;
+	memset(client_list, 0, MAX);
 	total_clients = atoi(all_client_details[3]);
 	int end_details = total_clients * 5 + 4;
 	for (i = 4; i < end_details; i += 5){
@@ -187,7 +188,7 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 	if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 		perror("Error: Receiving message failed \n");
 	} else{
-		printf("AFTER REQUEST:%s\n", recvBuff);
+		// printf("AFTER REQUEST:%s\n", recvBuff);
 	}
 
 	char* join_details[MAXSIZE];
@@ -196,11 +197,11 @@ void request_to_join(int soc, const char* my_ip_addr, char client_name[]){
 	if (strcmp(join_details[0], "SUCCESS") == 0){
 		client_id = atoi(join_details[1]);
 		last_global_seq_id = atoi(join_details[2]);
-		printf("UPDATED GLOBALSEQID TO: %d\n", last_global_seq_id);
+		// printf("UPDATED GLOBALSEQID TO: %d\n", last_global_seq_id);
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 			perror("Error: Receiving message failed \n");
 		} else {
-			printf("%s\n", recvBuff);
+			// printf("%s\n", recvBuff);
 			char* all_client_details[MAXSIZE];
 			detokenize(recvBuff, all_client_details, DELIMITER);
 
@@ -393,7 +394,7 @@ void* housekeeping(int soc){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			// If I don't receive a message, loop out and check if the program should still be running
 		} else {
-			fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
+			// fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
 
 			char* message[MAXSIZE], copy[MAXSIZE];
 			strcpy(copy, recvBuff);
@@ -730,7 +731,7 @@ void* message_display(soc){
             		}
             	}
 
-            	printf("%d-%s: %s", last_global_seq_id, client_name, item->message);
+            	// printf("%d-%s: %s", last_global_seq_id, client_name, item->message);
             	last_global_seq_id = item->global_id + 1;
 
             	// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
