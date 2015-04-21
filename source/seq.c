@@ -720,7 +720,7 @@ void* message_multicasting(int s)
               */
 
                 int next_msg = item_client->last_msg_id+1;
-                printf("CLIENT %d : MSG to be sent %d \n",item_client->client_id,next_msg);
+                // printf("CLIENT %d : MSG to be sent %d \n",item_client->client_id,next_msg);
              // printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
 
                 if(item->msg_id == next_msg)
