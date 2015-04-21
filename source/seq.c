@@ -871,7 +871,7 @@ void* message_pinging(int sock)
 
       if(strcmp("PING",token)==0)
        {
-        flag = 1;
+        // flag = 1;
         
        //  printf("reached if \n");
          token = strtok(NULL,"#");
