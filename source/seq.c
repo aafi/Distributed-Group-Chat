@@ -853,7 +853,7 @@ void* message_pinging(int sock)
     // tv.tv_usec = 0;
     int msec = 0, trigger = 2000;
     clock_t before = clock();
-    int flag;
+    // int flag;
     do
     {
       //sleep(0.5);
@@ -862,8 +862,8 @@ void* message_pinging(int sock)
            perror("Receive Error Ping");
            exit(-1);
         }
-      flag = 0;
-      // printf("%s\n",buf); //DEEPTI DEBUGGING
+      // flag = 0;
+      printf("%s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
@@ -904,8 +904,8 @@ void* message_pinging(int sock)
    }while(msec<trigger);
 
   // printf("Outside do while\n");
-   if(flag == 1)
-    printf("PING RECEIVED");
+   // if(flag == 1)
+   //  printf("PING RECEIVED");
 
    if(!TAILQ_EMPTY(&client_head))
    {
