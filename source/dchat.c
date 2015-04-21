@@ -774,7 +774,7 @@ void* election_algorithm(int curr_id){
 	struct sockaddr_in my_addr, serv_addr_seq, serv_addr_client, serv_addr_ele, serv_addr;
     int sockfd, i, election = 0;
     socklen_t slen=sizeof(serv_addr_seq);
-    char buf[BUFLEN], temp[BUFLEN], curr_ele_id[BUFLEN];
+    char buf[BUFLEN], temp[BUFLEN], curr_ele_id[BUFLEN], new_leader_ip[BUFLEN];
     char* token_result[BUFLEN];
     sprintf(curr_ele_id, "%d", curr_id);
     // if(argc != 4)
@@ -818,11 +818,11 @@ void* election_algorithm(int curr_id){
     if (bind(sockfd, (struct sockaddr* ) &my_addr, sizeof(my_addr))==-1)
       err("bind");
 
-    // if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
-    // {
-    //     fprintf(stderr, "inet_aton() failed\n");
-    //     exit(1);
-    // }
+    if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
+    {
+        fprintf(stderr, "inet_aton() failed\n");
+        exit(1);
+    }
 
     //printf("In election algorithm\n");
 
@@ -833,12 +833,12 @@ void* election_algorithm(int curr_id){
     while(prog_exit == 0)
     {
     	int won = 0;
-    	if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
-		{
-		    fprintf(stderr, "inet_aton() failed\n");
-		    exit(1);
-		}
-		//printf("IP Address of Seq: %s\n", leader.ip_addr);
+  //   	if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
+		// {
+		//     fprintf(stderr, "inet_aton() failed\n");
+		//     exit(1);
+		// }
+		printf("IP Address of Seq: %s\n", leader.ip_addr);
     	election = 0;
     	nanosleep((struct timespec[]){{0, 100000000}}, NULL);
     	//sleep(1);
@@ -850,7 +850,7 @@ void* election_algorithm(int curr_id){
         strcpy(buf, "PING#");
         strcat(buf, curr_ele_id);
         send_msg(sockfd, buf, serv_addr_seq, slen); //PING SEQUENCER TO CHECK IF IT IS ACTIVE
-        //printf("Pinged sequencer\n");
+        printf("Pinged sequencer\n");
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
@@ -990,8 +990,15 @@ void* election_algorithm(int curr_id){
                         
                         receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
                         printf("Received from sequencer: %s\n", buf);
-
-
+                        
+                        detokenize(buf, token_result, "#");
+                        strcpy(new_leader_ip, token_result[2]);
+                        
+                        if (inet_aton(new_leader_ip, &serv_addr_seq.sin_addr)==0)
+						{
+						    fprintf(stderr, "inet_aton() failed\n");
+						    exit(1);
+						}
 
                         tv.tv_sec = TIMEOUT_SEC; //RESETTING TIMEOUT BACK TO NORMAL
 					    tv.tv_usec = TIMEOUT_USEC;
@@ -1079,6 +1086,16 @@ void* election_algorithm(int curr_id){
                 receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
                 
                 printf("Received from sequencer (No crash detected): %s\n", buf);
+
+                detokenize(buf, token_result, "#");
+                strcpy(new_leader_ip, token_result[2]);
+                
+                if (inet_aton(new_leader_ip, &serv_addr_seq.sin_addr)==0)
+				{
+				    fprintf(stderr, "inet_aton() failed\n");
+				    exit(1);
+				}
+
                 tv.tv_sec = TIMEOUT_SEC; //RESETTING TIMEOUT BACK TO NORMAL
 			    tv.tv_usec = TIMEOUT_USEC;
 			    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
