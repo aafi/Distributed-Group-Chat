@@ -1046,11 +1046,11 @@ int main(int argc, char *argv[]){
     if (strcmp("NEWLEADER",tok[0]) == 0)
     {
       // printf("%s\n",buf);
-      char notice[BUFLEN];
+      char notice[BUFLEN] = "SEQ#STATUS#";
       int i = 3, num_clients = (atoi(tok[1])*5)+3;
       num_client_hb = atoi(tok[1]);
       msg_seq_id = 0;
-      strcpy(notice,tok[2]);
+      strcat(notice,tok[2]);
 
       for(i;i<num_clients;i+=5)
       {
