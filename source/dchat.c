@@ -472,6 +472,7 @@ void* housekeeping(int soc){
 				start_sequencer(soc);
 
 				char buf_part1[MAXSIZE], buf_part2[MAXSIZE], buf_part3[MAXSIZE];
+				strcpy(buf_part3, "");
 
 				strcpy(buf_part1, "NEWLEADER#");
 				char temp[MAXSIZE];
