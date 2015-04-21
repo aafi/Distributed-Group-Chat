@@ -851,6 +851,7 @@ void* message_pinging(int sock)
     // printf("Inside while loop\n");
     // tv.tv_sec = 0;
     // tv.tv_usec = 0;
+    printf("ELECTION THREAD\n"); //DEEPTI DEBUGGING
     int msec = 0, trigger = 2000;
     clock_t before = clock();
     // int flag;
