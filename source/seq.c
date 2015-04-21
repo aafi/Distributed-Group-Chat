@@ -902,6 +902,7 @@ void* message_pinging(int sock)
    }while(msec<trigger);
 
   // printf("Outside do while\n");
+   printf("%s\n",buf);
 
    if(!TAILQ_EMPTY(&client_head))
    {
