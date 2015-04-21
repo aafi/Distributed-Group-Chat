@@ -579,8 +579,11 @@ void* housekeeping(int soc){
 					strcat(sendBuff, DELIMITER);
 
 					int hb_count = 0;
-					struct node *item;
-					TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+					struct node *item, *temp_item;
+					// TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+					for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
+						temp_item = TAILQ_NEXT(item, entries);
+
 		                ++hb_count;
 			        }
 
@@ -588,7 +591,10 @@ void* housekeeping(int soc){
 			        strcat(sendBuff, temp);
 			        strcat(sendBuff, DELIMITER);
 
-			        TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+			        // TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+			        for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
+						temp_item = TAILQ_NEXT(item, entries);
+
 		                sprintf(temp, "%d", item->global_id);
 		                strcat(sendBuff, temp);
 		                strcat(sendBuff, DELIMITER);
@@ -610,8 +616,11 @@ void* housekeeping(int soc){
 					}
 				} else if (strcmp(seq_message_type, "SENDALL") == 0){
 					election = 0;
-					struct node *item;
-					TAILQ_FOREACH(item, &queue_head, entries){
+					struct node *item, *temp_item;
+					// TAILQ_FOREACH(item, &queue_head, entries){
+					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
+						temp_item = TAILQ_NEXT(item, entries);
+
 						strcpy(sendBuff, "MESSAGE#");
 						char clientId[MAXSIZE];
 						sprintf(clientId, "%d", item->client_id);
