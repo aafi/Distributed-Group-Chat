@@ -827,6 +827,7 @@ void* election_algorithm(int curr_id){
 		    fprintf(stderr, "inet_aton() failed\n");
 		    exit(1);
 		}
+		printf("IP Address of Seq: %s\n", ip_addr);
     	election = 0;
     	nanosleep((struct timespec[]){{0, 100000000}}, NULL);
     	//sleep(1);
