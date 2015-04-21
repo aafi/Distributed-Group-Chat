@@ -129,18 +129,17 @@ This method is responsible for updating the client_list array with the new infor
 void update_client_list(char* all_client_details[]){
 	int i = 0;
 	int j = 0;
-	total_clients = atoi(all_client_details[3]);
-	for (i = 0; i < total_clients; ++i){
-		j = (i + 1) * 5;
+	total_clients = atoi(all_client_details[3]) * 5 + 4;
+	for (i = 4; i < total_clients; i += 5){
 		struct client clnt;
 
-		strcpy(clnt.ip, all_client_details[j]);
-		clnt.port = atoi(all_client_details[j + 1]);
-		clnt.client_id = atoi(all_client_details[j + 2]);
-		strcpy(clnt.name, all_client_details[j + 3]);
-		clnt.last_msg_id = atoi(all_client_details[j + 4]);
+		strcpy(clnt.ip, all_client_details[i]);
+		clnt.port = atoi(all_client_details[i + 1]);
+		clnt.client_id = atoi(all_client_details[i + 2]);
+		strcpy(clnt.name, all_client_details[i + 3]);
+		clnt.last_msg_id = atoi(all_client_details[i + 4]);
 		// clnt.last_msg_id = -1;
-		client_list[i] = clnt;
+		client_list[j++] = clnt;
 	}
 }
 
