@@ -1057,7 +1057,9 @@ int main(int argc, char *argv[]){
         struct client *c;
         c = malloc(sizeof(*c));
         strcpy(c->ip,tok[i]);
+        // printf("IP: %s\n",c->ip);
         c->port = atoi(tok[i+1]);
+        // printf("PORT %d\n",c->port);
         strcpy(c->name,tok[i+3]);
         c->last_msg_id = atoi(tok[i+4]);
         // printf("LAST MESSAGE ID %d\n",c->last_msg_id);
@@ -1074,9 +1076,13 @@ int main(int argc, char *argv[]){
         c->time_of_join = curr_time.tv_sec + ( curr_time.tv_usec / 1000000 );
         TAILQ_INSERT_TAIL(&client_head,c,entries);
       }
-      multicast(s,notice);
+      
+      // printf("Win-broadcas: %s\n",win_broadcast);
+      // printf("notice message : %s\n",notice);
       multicast(s,win_broadcast);
       multicast_ea(s,win_broadcast);
+
+      multicast(s,notice);
     } 
     
     multicast_clist(s);
