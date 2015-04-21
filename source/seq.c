@@ -165,6 +165,9 @@ void multicast_clist(int socket)
            strcat(multi,temp);
            strcat(multi,"#");
            strcat(multi,item_client->name);
+           sprintf(temp,"%d",item_client->last_msg_id);
+           strcat(multi,"#");
+           strcat(multi,temp);
            // strcat(multi,"#");
            // sprintf(temp,"%d",item_client->leader);
            // strcat(multi,temp);
