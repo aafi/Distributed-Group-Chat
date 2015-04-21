@@ -342,7 +342,7 @@ void msg_removal(int s)
           }
         }
       } 
-      // printf("Removing message %d\n",item->seq_id);
+      printf("Removing message %d\n",item->seq_id);
       // printf("Printing ack vector before removing msg %d\n",item->seq_id);
       // for(idx=0;idx<MAX;idx++)
       // {
@@ -425,6 +425,8 @@ void* message_receiving(int s)
             perror("Send Error");
             exit(-1);
          }
+         else
+          printf("SUCCESS : %s\n",reply);
 
          
          multicast_clist(socket);
@@ -600,7 +602,7 @@ void* message_receiving(int s)
 
      else if(strcmp("HB",token)==0)
      {
-       // printf("hb msg: %s\n", buf_copy);
+        // printf("SEQUENCER hb msg: %s\n", buf_copy);
         hb_counter++;
         char * hb[BUFLEN];
         detokenize(buf_copy,hb,"#");
@@ -621,28 +623,10 @@ void* message_receiving(int s)
           //  flag = 1;
           }
 
-      //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
+      // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
 
-        // if((msg_seq_id == -1) && (flag == 0))
-        //   msg_seq_id = 0;
-
-        
+                
         int count = (atoi(hb[3])*4)+4;
-
-
-        // int id[MAX] = {0};
-        // if(!TAILQ_EMPTY(&client_head))
-        // {
-        //   struct client *c;
-        //   TAILQ_FOREACH(c,&client_head,entries)
-        //   {
-        //     id[c->client_id] = 1;
-        //     // if(c->client_id == client_id)
-        //     // {
-        //     //   c->last_msg_id = atoi(hb[3]);
-        //     // }
-        //   }
-        // }
 
         int idx = 4;
         for(idx;idx < count; idx+=4)
@@ -650,31 +634,44 @@ void* message_receiving(int s)
           flag = 0;
           if(!TAILQ_EMPTY(&message_head))
           { 
+            printf("Inside TAILQ\n");
             struct message *item,*temp_item;
             for(item=TAILQ_FIRST(&message_head);item!=NULL;item=temp_item)
             {
               temp_item = TAILQ_NEXT(item,entries);
-              if(item->seq_id == atoi(tok[idx]))
+              if(item->seq_id == atoi(hb[idx]))
                 {
+                  // printf("Found message\n");
                   item->counter--;
                   flag = 1;
+                  // printf("COUNTER FOR HB MSG %d : %d\n",item->seq_id,item->counter);
                 }
             }
           }
 
           if(flag == 0)
           {
-            struct message *item;
-            item = malloc(sizeof(*item));
-            item->seq_id = atoi(tok[idx]);
-            item->client_id = atoi(tok[idx+1]);
-            item->msg_id = atoi(tok[idx+2]);
-            strcpy(item->msg,tok[idx+3]);
-            item->counter = atoi(hb[3]);
-            item->counter--;
-            item->sent = 0;
-            TAILQ_INSERT_TAIL(&message_head,item,entries);
+            // printf("Inside Flag equals 0\n");
+            struct message *msg;
+            msg = malloc(sizeof(*msg));
+            // printf("after malloc\n");
+            // printf("seq id %d\n",atoi(hb[idx]));
+            msg->seq_id = atoi(hb[idx]);
+            // printf("set seq id\n");
+            msg->client_id = atoi(hb[idx+1]);
+            // printf("set client id\n");
+            msg->msg_id = atoi(hb[idx+2]);
+            // printf("set msg id\n");
+            strcpy(msg->msg,hb[idx+3]);
+            // printf("set msg %s\n",msg->msg);
+            msg->counter = atoi(hb[3]);
+            // printf("set counter\n");
+            msg->counter--;
+            // printf("COUNTER FOR HB MSG %d : %d\n",msg->seq_id,msg->counter);
+            msg->sent = 0;
+            TAILQ_INSERT_TAIL(&message_head,msg,entries);
          }
+         // printf("OUTSIDE flag = 0 IF\n");
           
         }
 
@@ -807,6 +804,7 @@ void* message_multicasting(int s)
 
       //} // end of foreach (traversing through the message queue)
     }
+
   } // end of while
 }
 
