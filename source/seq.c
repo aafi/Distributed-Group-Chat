@@ -196,7 +196,7 @@ void multicast_clist(int socket)
 
     // pthread_mutex_unlock(&client_lock);
 
-    printf("MULTICASTING CLIENT LIST: %s\n",multi);
+    // printf("MULTICASTING CLIENT LIST: %s\n",multi);
     multicast(socket,multi);
    // printf("MULTICAST CLIENT LIST: %s\n",multi);
 }
