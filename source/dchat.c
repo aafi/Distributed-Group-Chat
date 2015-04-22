@@ -440,8 +440,8 @@ void* housekeeping(int soc){
 
 				// check if next message is present in queue or not, else send a request for it LOST#global_seq_id
 				int found = 0;
-				for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
-					temp_item = TAILQ_NEXT(item, entries);
+				for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
+					// temp_item = TAILQ_NEXT(item, entries);
 
 					if(item->global_id == last_global_seq_id){
 						found = 1;
@@ -537,8 +537,8 @@ void* housekeeping(int soc){
 					// THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
 					int message_id = atoi(message[2]);
 					struct node *item, *temp_item;
-					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
-						temp_item = TAILQ_NEXT(item, entries);
+					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
+						// temp_item = TAILQ_NEXT(item, entries);
 
 						if (item->msg_id == message_id){
 							item->acknowledged = 1;
@@ -598,8 +598,8 @@ void* housekeeping(int soc){
 					int hb_count = 0;
 					struct node *item, *temp_item;
 					// TAILQ_FOREACH(item, &holdback_queue_head, entries) {
-					for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
-						temp_item = TAILQ_NEXT(item, entries);
+					for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
+						// temp_item = TAILQ_NEXT(item, entries);
 
 		                ++hb_count;
 			        }
@@ -609,8 +609,8 @@ void* housekeeping(int soc){
 			        strcat(sendBuff, DELIMITER);
 
 			        // TAILQ_FOREACH(item, &holdback_queue_head, entries) {
-			        for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
-						temp_item = TAILQ_NEXT(item, entries);
+			        for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
+						// temp_item = TAILQ_NEXT(item, entries);
 
 		                sprintf(temp, "%d", item->global_id);
 		                strcat(sendBuff, temp);
@@ -635,8 +635,8 @@ void* housekeeping(int soc){
 					election = 0;
 					struct node *item, *temp_item;
 					// TAILQ_FOREACH(item, &queue_head, entries){
-					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
-						temp_item = TAILQ_NEXT(item, entries);
+					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
+						// temp_item = TAILQ_NEXT(item, entries);
 
 						strcpy(sendBuff, "MESSAGE#");
 						char clientId[MAXSIZE];
@@ -731,8 +731,8 @@ void* message_display(soc){
 	    }
 
 		struct node *item, *temp_item;
-		for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
-			temp_item = TAILQ_NEXT(item, entries);
+		for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
+			// temp_item = TAILQ_NEXT(item, entries);
 			
             if(item->global_id == last_global_seq_id){
             	// need to find client name for printing
