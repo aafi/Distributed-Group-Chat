@@ -129,7 +129,7 @@ This method is responsible for updating the client_list array with the new infor
 void update_client_list(char* all_client_details[]){
 	int i = 0;
 	int j = 0;
-	memset(client_list, 0, MAX);
+	// memset(client_list, 0, MAX);
 	total_clients = atoi(all_client_details[3]);
 	int end_details = total_clients * 5 + 4;
 	for (i = 4; i < end_details; i += 5){
@@ -731,7 +731,7 @@ void* message_display(soc){
             		}
             	}
 
-            	// printf("%d-%s: %s", last_global_seq_id, client_name, item->message);
+            	printf("%d-%s: %s", last_global_seq_id, client_name, item->message);
             	last_global_seq_id = item->global_id + 1;
 
             	// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
