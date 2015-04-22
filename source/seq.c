@@ -993,7 +993,11 @@ void* message_pinging(int sock)
           
          //  if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr*)&client_out, &len_out) < 0)
          //  {
-              char status[BUFLEN] = "SEQ#STATUS#";
+              char status[BUFLEN] = "SEQ#EXIT#";
+              char tmp[BUFLEN];
+              sprintf(tmp,"%d",item_client->client_id);
+              strcat(status,tmp);
+              strcat(status,"#");
          //      printf("CLIENT RESPONSE: %s \n",buf);
               char status_msg[BUFLEN];
               sprintf(status_msg,"NOTICE %s left the chat or crashed",item_client->name);
