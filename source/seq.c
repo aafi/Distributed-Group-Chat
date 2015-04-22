@@ -90,9 +90,9 @@ void multicast(int socket,char * msg)
    if(!TAILQ_EMPTY(&client_head))
    {
       // TAILQ_FOREACH(item, &client_head, entries)
-    for(item=TAILQ_FIRST(&client_head);item!=NULL;item=temp_item)
+    for(item=TAILQ_FIRST(&client_head);item!=NULL;item=TAILQ_NEXT(item,entries))
    {
-         temp_item = TAILQ_NEXT(item,entries);
+         //temp_item = TAILQ_NEXT(item,entries);
          struct sockaddr_in clnt;
          clnt.sin_family = AF_INET;
          clnt.sin_port = htons(item->port);
@@ -118,9 +118,9 @@ void multicast_ea(int socket,char * msg)
    if(!TAILQ_EMPTY(&client_head))
    {
       // TAILQ_FOREACH(item, &client_head, entries)
-   for(item=TAILQ_FIRST(&client_head);item!=NULL;item=temp_item)
+   for(item=TAILQ_FIRST(&client_head);item!=NULL;item=TAILQ_NEXT(item,entries))
    {
-         temp_item = TAILQ_NEXT(item,entries);
+         // temp_item = TAILQ_NEXT(item,entries);
          struct sockaddr_in clnt;
          clnt.sin_family = AF_INET;
          clnt.sin_port = htons(PORT_ELE);
@@ -158,9 +158,9 @@ void multicast_clist(int socket)
      {
         struct client *item_client,*temp_item;
         // TAILQ_FOREACH(item_client,&client_head,entries)
-        for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client = temp_item)
+        for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client = TAILQ_NEXT(item_client,entries))
         {
-           temp_item = TAILQ_NEXT(item_client,entries);
+           // temp_item = TAILQ_NEXT(item_client,entries);
            strcat(multi,"#");
            strcat(multi,item_client->ip);
            strcat(multi,"#");
@@ -194,9 +194,9 @@ int count_clients()
   struct client *item_client,*temp;
   if(!TAILQ_EMPTY(&client_head))
    {
-    for(item_client = TAILQ_FIRST(&client_head); item_client!=NULL;item_client = temp)
+    for(item_client = TAILQ_FIRST(&client_head); item_client!=NULL;item_client = TAILQ_NEXT(item_client,entries))
     {
-      temp = TAILQ_NEXT(item_client,entries);
+      // temp = TAILQ_NEXT(item_client,entries);
       num_client++;
     }
    } 
@@ -218,9 +218,9 @@ int requestid(char * ip, int port, char * name)
       client_id = i;
       flag = 0;
     //TAILQ_FOREACH(item,&client_head,entries)
-    for(item = TAILQ_FIRST(&client_head);item!=NULL;item = temp_item)
+    for(item = TAILQ_FIRST(&client_head);item!=NULL;item = TAILQ_NEXT(item,entries))
      {
-        temp_item = TAILQ_NEXT(item,entries);
+        // temp_item = TAILQ_NEXT(item,entries);
         if(item->client_id == client_id)
         {
           flag = 1;
@@ -322,9 +322,9 @@ void msg_removal(int s)
       {
         struct client *item_client,*client_next;
         //TAILQ_FOREACH(item_client,&client_head,entries)
-        for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client = client_next)
+        for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client = TAILQ_NEXT(item_client,entries))
         {
-          client_next = TAILQ_NEXT(item_client,entries);
+          // client_next = TAILQ_NEXT(item_client,entries);
           if(item_client->client_id == client_id)
           {
             struct sockaddr_in clnt;
@@ -508,9 +508,9 @@ void* message_receiving(int s)
 
          // DEBUGGGGGGGINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
          struct client *item_client,*temp_client;
-         for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=temp_client)
+         for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
          {
-            temp_client = TAILQ_NEXT(item_client,entries);
+            // temp_client = TAILQ_NEXT(item_client,entries);
             if(item_client->client_id == item->client_id)
               printf("FOR CLIENT %d : LAST MSG ID %d\n",item_client->client_id,item_client->last_msg_id);
          }
@@ -552,9 +552,9 @@ void* message_receiving(int s)
 
          if(!TAILQ_EMPTY(&message_head))
          {
-          for(item=TAILQ_FIRST(&message_head);item!=NULL;item = temp_item)
+          for(item=TAILQ_FIRST(&message_head);item!=NULL;item = TAILQ_NEXT(item,entries))
            {
-            temp_item = TAILQ_NEXT(item,entries);
+            // temp_item = TAILQ_NEXT(item,entries);
             // printf("INSIDE ACK FOREACH %s: %d\n", item->msg, item->seq_id);
             if(atoi(ack[2]) == item->seq_id)
             {
@@ -585,9 +585,9 @@ void* message_receiving(int s)
         if(!TAILQ_EMPTY(&message_head))
         {
           struct message *item,*temp_item;
-          for(item=TAILQ_FIRST(&message_head); item!=NULL; item = temp_item)
+          for(item=TAILQ_FIRST(&message_head); item!=NULL; item = TAILQ_NEXT(item,entries))
           {
-            temp_item = TAILQ_NEXT(item,entries);
+            // temp_item = TAILQ_NEXT(item,entries);
             // printf("current message being checked: %d \n",item->seq_id);
             if(lost_msg_id == item->seq_id)
             {
@@ -657,9 +657,9 @@ void* message_receiving(int s)
           { 
             // printf("Inside TAILQ\n");
             struct message *item,*temp_item;
-            for(item=TAILQ_FIRST(&message_head);item!=NULL;item=temp_item)
+            for(item=TAILQ_FIRST(&message_head);item!=NULL;item=TAILQ_NEXT(item,entries))
             {
-              temp_item = TAILQ_NEXT(item,entries);
+              // temp_item = TAILQ_NEXT(item,entries);
               if(item->seq_id == atoi(hb[idx]))
                 {
                   // printf("Found message\n");
@@ -723,9 +723,9 @@ void* message_multicasting(int s)
       {
         struct client *item_client,*tmp_client;
         //TAILQ_FOREACH(item_client,&client_head,entries)
-        for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=tmp_client)
+        for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
         {
-          tmp_client = TAILQ_NEXT(item_client,entries);
+          // tmp_client = TAILQ_NEXT(item_client,entries);
           /*
           Finding the right client structure
           */
@@ -746,6 +746,7 @@ void* message_multicasting(int s)
                 if(item->msg_id == next_msg)
                 {
 
+                  printf("SEQUENCER: MESSAGE %d FOUND TOP OF THE QUEUE\n",item->msg_id);
                   char msg[BUFLEN] = "MSG#";
                   char temp[BUFLEN];
 
@@ -780,11 +781,12 @@ void* message_multicasting(int s)
                 { 
                   struct message *next,*tmp_next;
                   // TAILQ_FOREACH(next, &message_head, entries)
-                  for(next=TAILQ_FIRST(&message_head);next!=NULL;next=tmp_next)
+                  for(next=TAILQ_FIRST(&message_head);next!=NULL;next=TAILQ_NEXT(next,entries))
                   {
-                    tmp_next = TAILQ_NEXT(next,entries);
+                    // tmp_next = TAILQ_NEXT(next,entries);
                     if(next->msg_id == next_msg)
                     {
+                      printf("SEQUENCER: MESSAGE %d FOUND LATER IN THE QUEUE\n",next->msg_id);
                       char msg_next[BUFLEN] = "MSG#";
                       char temp[BUFLEN];
 
@@ -926,9 +928,9 @@ void* message_pinging(int sock)
          {
           struct client *item_client,*tmp_clnt;
           // TAILQ_FOREACH(item_client,&client_head,entries)
-          for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client=tmp_clnt)
+          for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
           {
-            tmp_clnt = TAILQ_NEXT(item_client,entries);
+            // tmp_clnt = TAILQ_NEXT(item_client,entries);
            // printf("Inside TAILQ_FOREACH \n");
             if(item_client->client_id == atoi(token))
             {
