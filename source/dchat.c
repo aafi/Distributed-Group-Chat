@@ -572,6 +572,15 @@ void* housekeeping(int soc){
 					}
 				} else if (strcmp(seq_message_type, "STATUS") == 0){
 					printf("%s\n", message[2]);
+				} else if (strcmp(seq_message_type, "EXIT") == 0){
+					printf("%s\n", message[3]);
+					int clientId = atoi(message[2]);
+					if (client_id == clientId){
+						prog_exit = 1;
+						if (isLeader == 1){
+							kill(childId, SIGKILL);	
+						}
+					}
 				} else if (strcmp(seq_message_type, "EA") == 0){
 					strcpy(leader.ip_addr, message[2]);
 					strcpy(leader.port, message[3]);
