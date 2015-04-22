@@ -990,7 +990,7 @@ void* election_algorithm(int curr_id){
                     {
                         //printf("New Leader: %s\n", token_result[1]);
                         election = 1;
-                        printf("END OF ELECTION 1\n");
+                        //printf("END OF ELECTION 1\n");
                         tv.tv_sec = 0; //RESETTING TIMEOUT TO 0
 					    tv.tv_usec = 0;
 					    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
