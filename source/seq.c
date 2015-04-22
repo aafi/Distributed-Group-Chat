@@ -86,11 +86,13 @@ void multicast(int socket,char * msg)
    int idx = 0;
    //printf("Inside");
 
-   struct client *item;
+   struct client *item,*temp_item;
    if(!TAILQ_EMPTY(&client_head))
    {
-      TAILQ_FOREACH(item, &client_head, entries)
+      // TAILQ_FOREACH(item, &client_head, entries)
+    for(item=TAILQ_FIRST(&client_head);item!=NULL;item=temp_item)
    {
+         temp_item = TAILQ_NEXT(item,entries);
          struct sockaddr_in clnt;
          clnt.sin_family = AF_INET;
          clnt.sin_port = htons(item->port);
@@ -112,11 +114,13 @@ void multicast_ea(int socket,char * msg)
    int idx = 0;
    //printf("Inside");
 
-   struct client *item;
+   struct client *item,*temp_item;
    if(!TAILQ_EMPTY(&client_head))
    {
-      TAILQ_FOREACH(item, &client_head, entries)
+      // TAILQ_FOREACH(item, &client_head, entries)
+   for(item=TAILQ_FIRST(&client_head);item!=NULL;item=temp_item)
    {
+         temp_item = TAILQ_NEXT(item,entries);
          struct sockaddr_in clnt;
          clnt.sin_family = AF_INET;
          clnt.sin_port = htons(PORT_ELE);
@@ -152,9 +156,11 @@ void multicast_clist(int socket)
 
      if(!TAILQ_EMPTY(&client_head))
      {
-        struct client *item_client;
-        TAILQ_FOREACH(item_client,&client_head,entries)
+        struct client *item_client,*temp_item;
+        // TAILQ_FOREACH(item_client,&client_head,entries)
+        for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client = temp_item)
         {
+           temp_item = TAILQ_NEXT(item_client,entries);
            strcat(multi,"#");
            strcat(multi,item_client->ip);
            strcat(multi,"#");
@@ -185,11 +191,14 @@ void multicast_clist(int socket)
 int count_clients()
 {
   int num_client = 0;
-  struct client *item_client;
+  struct client *item_client,*temp;
   if(!TAILQ_EMPTY(&client_head))
    {
-    TAILQ_FOREACH(item_client, &client_head, entries)
+    for(item_client = TAILQ_FIRST(&client_head); item_client!=NULL;item_client = temp)
+    {
+      temp = TAILQ_NEXT(item_client,entries);
       num_client++;
+    }
    } 
   return num_client;
 }
@@ -198,7 +207,7 @@ int count_clients()
 int requestid(char * ip, int port, char * name)
 {
    int client_id = 0;
-   struct client *c,*item;
+   struct client *c,*item,*temp_item;
    c = malloc(sizeof(*c));
    int i,flag;
 
@@ -208,8 +217,10 @@ int requestid(char * ip, int port, char * name)
     {
       client_id = i;
       flag = 0;
-    TAILQ_FOREACH(item,&client_head,entries)
+    //TAILQ_FOREACH(item,&client_head,entries)
+    for(item = TAILQ_FIRST(&client_head);item!=NULL;item = temp_item)
      {
+        temp_item = TAILQ_NEXT(item,entries);
         if(item->client_id == client_id)
         {
           flag = 1;
@@ -300,16 +311,7 @@ void msg_removal(int s)
   for(item = TAILQ_FIRST(&message_head);item!=NULL;item=tmp_item)
   {
     tmp_item = TAILQ_NEXT(item,entries);
-    // int flag = 0;
-    // for(idx=0;idx<MAX;idx++)
-    // {
-    //   if(item->ack_vector[idx] == 1)
-    //       {
-    //         flag = 1; 
-    //         //return -1;
-    //       }
-    // }
-    
+      
 
     /* This means all the clients have received the message */
     if(item->counter == 0)
@@ -318,9 +320,11 @@ void msg_removal(int s)
       int client_id = item->client_id;
       if(!TAILQ_EMPTY(&client_head))
       {
-        struct client *item_client;
-        TAILQ_FOREACH(item_client,&client_head,entries)
+        struct client *item_client,*client_next;
+        //TAILQ_FOREACH(item_client,&client_head,entries)
+        for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client = client_next)
         {
+          client_next = TAILQ_NEXT(item_client,entries);
           if(item_client->client_id == client_id)
           {
             struct sockaddr_in clnt;
@@ -568,9 +572,10 @@ void* message_receiving(int s)
         char temp[BUFLEN];
         if(!TAILQ_EMPTY(&message_head))
         {
-          struct message *item;
-          TAILQ_FOREACH(item, &message_head, entries)
+          struct message *item,*temp_item;
+          for(item=TAILQ_FIRST(&message_head); item!=NULL; item = temp_item)
           {
+            temp_item = TAILQ_NEXT(item,entries);
             // printf("current message being checked: %d \n",item->seq_id);
             if(lost_msg_id == item->seq_id)
             {
@@ -704,9 +709,11 @@ void* message_multicasting(int s)
       int idx = 0, flag = 0;
       if(!TAILQ_EMPTY(&client_head))
       {
-        struct client *item_client;
-        TAILQ_FOREACH(item_client,&client_head,entries)
+        struct client *item_client,*tmp_client;
+        //TAILQ_FOREACH(item_client,&client_head,entries)
+        for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=tmp_client)
         {
+          tmp_client = TAILQ_NEXT(item_client,entries);
           /*
           Finding the right client structure
           */
@@ -759,9 +766,11 @@ void* message_multicasting(int s)
 
                 else
                 { 
-                  struct message *next;
-                  TAILQ_FOREACH(next, &message_head, entries)
+                  struct message *next,*tmp_next;
+                  // TAILQ_FOREACH(next, &message_head, entries)
+                  for(next=TAILQ_FIRST(&message_head);next!=NULL;next=tmp_next)
                   {
+                    tmp_next = TAILQ_NEXT(next,entries);
                     if(next->msg_id == next_msg)
                     {
                       char msg_next[BUFLEN] = "MSG#";
@@ -903,9 +912,11 @@ void* message_pinging(int sock)
          token = strtok(NULL,"#");
          if(!TAILQ_EMPTY(&client_head))
          {
-          struct client *item_client;
-          TAILQ_FOREACH(item_client,&client_head,entries)
+          struct client *item_client,*tmp_clnt;
+          // TAILQ_FOREACH(item_client,&client_head,entries)
+          for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client=tmp_clnt)
           {
+            tmp_clnt = TAILQ_NEXT(item_client,entries);
            // printf("Inside TAILQ_FOREACH \n");
             if(item_client->client_id == atoi(token))
             {
