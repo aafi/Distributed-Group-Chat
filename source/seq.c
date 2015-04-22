@@ -1058,7 +1058,7 @@ int main(int argc, char *argv[]){
        exit(-1);
     }
 
-    printf("AFTER ELECTION/NEW CHAT: %s\n",buf);   
+    // printf("AFTER ELECTION/NEW CHAT: %s\n",buf);   
 
     detokenize(buf,tok,"#"); 
 
