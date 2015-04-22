@@ -452,6 +452,8 @@ void* message_receiving(int s)
 
       else if (strcmp("MESSAGE",token)==0)
       {
+         
+         printf("SEQUENCER : %s\n",buf_copy);
          int i = 0;
          while(token!=NULL)
          {  
