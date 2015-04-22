@@ -552,6 +552,7 @@ void* housekeeping(int soc){
 						temp_item = TAILQ_NEXT(item, entries);
 
 						if(item->msg_id == message_id){
+							printf("Removing message from MQ: %d-%s\n", item->msg_id, item->message);
 							TAILQ_REMOVE(&queue_head, item, entries);
 							free(item);
 							break;
@@ -565,6 +566,7 @@ void* housekeeping(int soc){
 						temp_item = TAILQ_NEXT(item, entries);
 
 						if(item->global_id == seq_id){
+							printf("Removing message from HB: %d-%s\n", item->msg_id, item->message);
 							TAILQ_REMOVE(&holdback_queue_head, item, entries);
 							free(item);
 							break;
