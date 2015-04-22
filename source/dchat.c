@@ -552,7 +552,7 @@ void* housekeeping(int soc){
 						temp_item = TAILQ_NEXT(item, entries);
 
 						if(item->msg_id == message_id){
-							printf("Removing message from MQ: %d-%s\n", item->msg_id, item->message);
+							// printf("Removing message from MQ: %d-%s\n", item->msg_id, item->message);
 							TAILQ_REMOVE(&queue_head, item, entries);
 							free(item);
 							break;
@@ -566,7 +566,7 @@ void* housekeeping(int soc){
 						temp_item = TAILQ_NEXT(item, entries);
 
 						if(item->global_id == seq_id){
-							printf("Removing message from HB: %d-%s\n", item->msg_id, item->message);
+							// printf("Removing message from HB: %d-%s\n", item->msg_id, item->message);
 							TAILQ_REMOVE(&holdback_queue_head, item, entries);
 							free(item);
 							break;
@@ -851,8 +851,8 @@ void* election_algorithm(int curr_id){
 
     while(prog_exit == 0)
     {
-    	if (election == 1)
-    		printf("Out of election\n");
+    	// if (election == 1)
+    		// printf("Out of election\n");
     	int won = 0;
   //   	if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
 		// {
