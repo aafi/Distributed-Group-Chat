@@ -506,6 +506,16 @@ void* message_receiving(int s)
          TAILQ_INSERT_TAIL(&message_head,item,entries);
 
 
+         // DEBUGGGGGGGINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
+         struct client *item_client,*temp_client;
+         for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=temp_client)
+         {
+            temp_client = TAILQ_NEXT(item_client,entries);
+            if(item_client->client_id == item->client_id)
+              printf("FOR CLIENT %d : LAST MSG ID %d\n",item_client->client_id,item_client->last_msg_id);
+         }
+
+
          /*
             Send acknowledgement back to the client that message has been received and put in the queue
           
