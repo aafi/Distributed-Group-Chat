@@ -1104,7 +1104,7 @@ void* election_algorithm(int curr_id){
                 
                 receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
                 
-                printf("Received from sequencer (No crash detected): %s\n", buf);
+                //printf("Received from sequencer (No crash detected): %s\n", buf);
 
                 detokenize(buf, token_result, "#");
                 strcpy(new_leader_ip, token_result[2]);
