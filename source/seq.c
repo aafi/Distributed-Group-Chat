@@ -818,12 +818,12 @@ void* message_multicasting(int s)
                   free(item);
                 }
               } // end of if (finding the right client structure)
-            }
+            //}
           }   // end of for (looping through id array to find the existing clients)
           // else
           //   printf("CLIENT QUEUE IS EMPTY\n");
 
-      //} // end of foreach (traversing through the message queue)
+      } // end of foreach (traversing through the message queue)
           // else
           //   printf("MESSAGE QUEUE IS EMPTY\n");
     }
