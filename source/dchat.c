@@ -536,8 +536,10 @@ void* housekeeping(int soc){
 
 					// THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
 					int message_id = atoi(message[2]);
-					struct node *item;
-					TAILQ_FOREACH(item, &queue_head, entries){
+					struct node *item, *temp_item;
+					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
+						temp_item = TAILQ_NEXT(item, entries);
+
 						if (item->msg_id == message_id){
 							item->acknowledged = 1;
 						}
