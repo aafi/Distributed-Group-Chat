@@ -747,7 +747,9 @@ void* message_multicasting(int s)
 
                   item->sent = 1;
                   multicast(socket,msg);
+
                   item_client->last_msg_id = item->msg_id;
+                  printf("CLIEND ID: %d ... MESSAGE ID : %d\n",item_client->client_id,item_client->last_msg_id);
                   flag = 1;
                 }
 
@@ -781,6 +783,7 @@ void* message_multicasting(int s)
                       next->sent = 1;
                       multicast(socket,msg_next);
                       item_client->last_msg_id = next->msg_id;
+                      printf("CLIEND ID: %d ... MESSAGE ID : %d\n",item_client->client_id,item_client->last_msg_id);
                     }
                   }
                 }
