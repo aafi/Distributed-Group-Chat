@@ -872,7 +872,7 @@ void* message_pinging(int sock)
   // struct timeval tv;
   
 
-  // printf("ENTERED ELECTION THREAD\n");
+  //printf("ENTERED ELECTION THREAD\n");
 
   while(1)
   {
@@ -888,14 +888,14 @@ void* message_pinging(int sock)
       //sleep(0.5);
       
       //DEEPTI DEBUGGING
-      //struct timeval tv;
-      //tv.tv_sec = TIMEOUT_SEC;
-      //tv.tv_usec = TIMEOUT_USEC;
+      // struct timeval tv;
+      // tv.tv_sec = TIMEOUT_SEC;
+      // tv.tv_usec = TIMEOUT_USEC;
 
-      //if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
-      //{
-        //  perror("Error");
-      //}
+      // if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+      // {
+      //     perror("Error");
+      // }
 
 
       if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client_in, &len)) < 0)
@@ -904,15 +904,15 @@ void* message_pinging(int sock)
            exit(-1);
         }
 
-        //tv.tv_sec = 0;
-        //tv.tv_usec = 0;
-        //if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
-        //{
-          //  perror("Error");
-        //}
+        // tv.tv_sec = 0;
+        // tv.tv_usec = 0;
+        // if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+        // {
+        //     perror("Error");
+        // }
         //DEEPTI DEBUGGING
       // flag = 0;
-      // printf("Deepti Debugging: %s\n",buf); //DEEPTI DEBUGGING
+      //printf("Deepti Debugging: %s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
       token = strtok(buf,"#");
