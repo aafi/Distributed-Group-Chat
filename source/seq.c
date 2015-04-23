@@ -374,7 +374,7 @@ void msg_removal(int s)
 
       
       TAILQ_REMOVE(&message_head,item,entries);
-      printf("Message to be removed: %s \n",item->msg);
+      // printf("Message to be removed: %s \n",item->msg);
       free(item);
       
     }
@@ -384,7 +384,7 @@ void msg_removal(int s)
 
   if(TAILQ_EMPTY(&message_head) && (hb_counter == num_client_hb) )
   {
-   printf("inside sendall condition\n");
+   // printf("inside sendall condition\n");
     char temp[BUFLEN] = "SEQ#SENDALL";
     pthread_mutex_lock(&client_lock);
     multicast(s,temp);
@@ -416,7 +416,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-     printf("SEQUENCER RECEIVED: %s\n", buf);      
+     // printf("SEQUENCER RECEIVED: %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -485,7 +485,7 @@ void* message_receiving(int s)
       else if (strcmp("MESSAGE",token)==0)
       {
          
-         printf("SEQUENCER : %s\n",buf_copy);
+         // printf("SEQUENCER : %s\n",buf_copy);
          int i = 0;
          // while(token!=NULL)
          // {  
@@ -543,24 +543,24 @@ void* message_receiving(int s)
         pthread_mutex_lock(&message_lock);
 
          TAILQ_INSERT_TAIL(&message_head,item,entries);
-         printf("SEQUENCER ADDED MESSAGE %s to the queue \n",item->msg);
+         // printf("SEQUENCER ADDED MESSAGE %s to the queue \n",item->msg);
         pthread_mutex_unlock(&message_lock);
 
          
 
 
          // DEBUGGGGGGGINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
-         struct client *item_client,*temp_client;
+         // struct client *item_client,*temp_client;
 
-         pthread_mutex_lock(&client_lock);
-         for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
-         {
-            // temp_client = TAILQ_NEXT(item_client,entries);
-            if(item_client->client_id == item->client_id)
-              printf("FOR CLIENT %d : LAST MSG ID %d\n",item_client->client_id,item_client->last_msg_id);
-         }
+         // pthread_mutex_lock(&client_lock);
+         // for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
+         // {
+         //    // temp_client = TAILQ_NEXT(item_client,entries);
+         //    if(item_client->client_id == item->client_id)
+         //      printf("FOR CLIENT %d : LAST MSG ID %d\n",item_client->client_id,item_client->last_msg_id);
+         // }
 
-         pthread_mutex_unlock(&client_lock);
+         // pthread_mutex_unlock(&client_lock);
 
          /*
             Send acknowledgement back to the client that message has been received and put in the queue
@@ -616,7 +616,7 @@ void* message_receiving(int s)
 
      else if(strcmp("LOST",token)==0)
      {
-        printf("LOST MESSAGE REQUEST: %s\n", buf);
+        // printf("LOST MESSAGE REQUEST: %s\n", buf);
         token = strtok(NULL,"#");
         int lost_msg_id = atoi(token);
         //printf("Lost msg id : %d \n",lost_msg_id);
@@ -667,7 +667,7 @@ void* message_receiving(int s)
 
      else if(strcmp("HB",token)==0)
      {
-        printf("SEQUENCER hb msg: %s\n", buf_copy);
+        // printf("SEQUENCER hb msg: %s\n", buf_copy);
         hb_counter++;
         char * hb[BUFLEN];
         detokenize(buf_copy,hb,"#");
@@ -701,7 +701,7 @@ void* message_receiving(int s)
           pthread_mutex_unlock(&message_lock);
         }
 
-      printf("!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
+      // printf("!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
 
                 
         int count = (atoi(hb[3])*4)+4;

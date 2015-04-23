@@ -313,8 +313,9 @@ int main(int argc, char* argv[]){
 			}
 
 			mode = "WAITING";
-			fprintf(stderr, "%s started a new chat on %s:%d\n", argv[1], my_ip_addr, PORT);
-			printf("Waiting for others to join:\n");
+			fprintf(stderr, "%s started a new chat, listening on %s:%d\n", argv[1], my_ip_addr, PORT);
+			fprintf(stderr, "Succeeded, current users: \n%s %s:%d (LEADER)\n",argv[1],my_ip_addr,PORT);
+			printf("Waiting for others to join....\n");
 
 			request_to_join(soc, my_ip_addr, argv[1]);
 		} else if(argc == 4){	
@@ -329,6 +330,8 @@ int main(int argc, char* argv[]){
 			Needs to contact the leader (sequencer) to actually join the damn chat!
 			*/
 			mode = "JOINING";
+
+			printf("%s joining a new chat on %s:%s, listening on %s:%d\n",argv[1],argv[2],argv[3],my_ip_addr,PORT);
 
 			struct sockaddr_in serv_addr;
 
