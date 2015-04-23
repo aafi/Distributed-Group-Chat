@@ -416,7 +416,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-     // printf("SEQUENCER RECEIVED: %s\n", buf);      
+     printf("SEQUENCER RECEIVED: %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -487,21 +487,38 @@ void* message_receiving(int s)
          
          printf("SEQUENCER : %s\n",buf_copy);
          int i = 0;
-         while(token!=NULL)
-         {  
+         // while(token!=NULL)
+         // {  
             
-            token = strtok(NULL,"#");
-            tok[i] = token;
-            i++;
-         }
+         //    token = strtok(NULL,"#");
+         //    tok[i] = token;
+         //    i++;
+         // }
 
+         char *tok[BUFLEN];
+         detokenize(buf_copy,tok,"#");
+
+
+         // printf("tokenization done\n");
          struct message *item;
          item = malloc(sizeof(*item));
-         item->client_id = atoi(tok[0]);
-         item->msg_id = atoi(tok[1]);
-         strcpy(item->msg,tok[2]);
+
+         // printf("AFTER MALLOC IN MESSAGE\n");
+         if(item!=NULL)
+         {
+          // printf("INSIDE MALLOC IF %s %s %s\n", tok[1],tok[2],tok[3]);
+         item->client_id = atoi(tok[1]);
+         // printf("Assigns client id\n");
+         item->msg_id = atoi(tok[2]);
+         // printf("Assigns message id\n");
+         strcpy(item->msg,tok[3]);
+         // printf("assigns message\n");
          item->seq_id = -1;
-         printf("AFTER MALLOC IN MESSAGE\n");
+         // printf("assigns global seq id as -1\n");
+        }
+        // else
+        //   printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!MALLOC FAIL\n");
+         
 
          
          pthread_mutex_lock(&client_lock);
@@ -763,6 +780,7 @@ void* message_multicasting(int s)
   int count = 0;
   while(1)
   {
+    // printf("MULTICASTING THREAD\n");
     msg_removal(socket); 
 
     pthread_mutex_lock(&message_lock);
@@ -777,7 +795,6 @@ void* message_multicasting(int s)
         tmp_item = TAILQ_NEXT(item, entries);
         if(item->sent == 1)
           {
-            // item = TAILQ_NEXT(item,entries);
             item = tmp_item;
           }
          else
@@ -954,6 +971,7 @@ void* message_pinging(int sock)
 
   while(1)
   {
+    // printf("ELCTION THREAD\n");
     // printf("Inside while loop\n");
     // tv.tv_sec = 0;
     // tv.tv_usec = 0;
