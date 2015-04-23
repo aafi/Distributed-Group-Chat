@@ -499,7 +499,7 @@ void* housekeeping(int soc){
 					sprintf(temp, "%d", last_global_seq_id);
 					strcat(sendBuff, temp);
 
-					printf("LOST MESSAGE: %s\n", sendBuff);
+					// printf("LOST MESSAGE: %s\n", sendBuff);
 					if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 						perror("ERROR: Sending message failed in ACK \n");
 					} 
