@@ -1060,7 +1060,9 @@ void* election_algorithm(int curr_id){
                     
                     if (strcmp(token_result[0], "CLIENT_ID") == 0)
                     {
-                        send_msg(sockfd, "OK", serv_addr, slen);
+                        //send_msg(sockfd, "OK", serv_addr, slen);
+                        if (sendto(sockfd, "OK", BUFLEN, 0, (struct sockaddr*) &serv_addr, slen)==-1)
+                            err("sendto()");
                     }
 
                     if (strcmp (token_result[0], "I AM LEADER") == 0)
