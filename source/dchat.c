@@ -808,7 +808,7 @@ void* message_display(soc){
             		}
             	}
 
-            	printf("%d-%s: %s", last_global_seq_id, client_name, item->message);
+            	printf("%s: %s", client_name, item->message);
             	last_global_seq_id = item->global_id + 1;
 
             	// send back acknowledgement to sequencer: ACK#client_id#global_seq_id
