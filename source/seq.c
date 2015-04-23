@@ -795,139 +795,147 @@ void* message_multicasting(int s)
     {         
       
       struct message *item,*tmp_item;
+
       item = TAILQ_FIRST(&message_head);
+      while(item!=NULL){
+        if(item->sent == 1)
+          {
+            item = TAILQ_NEXT(item,entries);
+          }
+         else
+          {
+            int idx = 0, flag = 0;
 
-      int idx = 0, flag = 0;
+            pthread_mutex_lock(&client_lock);
 
-      pthread_mutex_lock(&client_lock);
-
-      if(!TAILQ_EMPTY(&client_head))
-      {
-        struct client *item_client,*tmp_client;
-        //TAILQ_FOREACH(item_client,&client_head,entries)
-        for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
-        {
-          // tmp_client = TAILQ_NEXT(item_client,entries);
-          /*
-          Finding the right client structure
-          */
-              // printf("LOOKING AT %s \n",item_client->name);
-              if(item->client_id == item_client->client_id)
+            if(!TAILQ_EMPTY(&client_head))
+            {
+              struct client *item_client,*tmp_client;
+              //TAILQ_FOREACH(item_client,&client_head,entries)
+              for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
               {
-                // printf("Found Right client structure \n");
-                  
-                  
-              /*
-              CHECK IF THE MESSAGE AT THE TOP IS THE ONE TO BE SENT NEXT
-              */
-
-                int next_msg = item_client->last_msg_id+1;
-
-                // printf("CLIENT %d : MSG to be sent %d \n",item_client->client_id,next_msg);
-             // printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
-
-                if(item->msg_id == next_msg)
-                {
-
-                  // printf("SEQUENCER: MESSAGE %d FOUND TOP OF THE QUEUE\n",item->msg_id);
-                  char msg[BUFLEN] = "MSG#";
-                  char temp[BUFLEN];
-
-                  //assigning global sequence id
-                  item->seq_id = msg_seq_id++;
-                 // printf("SEQ ID: %d\n",item->seq_id);
-
-                  sprintf(temp,"%d",item->seq_id);
-                  strcat(msg,temp);
-                  strcat(msg,"#");
-                  sprintf(temp,"%d",item->client_id);
-                  strcat(msg,temp);
-                  strcat(msg,"#");
-                  sprintf(temp,"%d",item->msg_id);
-                  strcat(msg,temp);
-                  strcat(msg,"#");
-                  strcat(msg,item->msg);
-
-                  item->sent = 1;
-                  multicast(socket,msg);
-
-                  item_client->last_msg_id = item->msg_id;
-                  // printf("CLIEND ID: %d ... MESSAGE ID : %d\n",item_client->client_id,item_client->last_msg_id);
-                  flag = 1;
-                }
-
+                // tmp_client = TAILQ_NEXT(item_client,entries);
                 /*
-                TRAVERSE THROUGH THE LIST TO FIND IF THE NEXT MESSAGE TO BE SENT EXISTS
+                Finding the right client structure
                 */
-
-                else
-                { 
-                  struct message *next,*tmp_next;
-                  // TAILQ_FOREACH(next, &message_head, entries)
-                  for(next=TAILQ_FIRST(&message_head);next!=NULL;next=TAILQ_NEXT(next,entries))
-                  {
-                    // tmp_next = TAILQ_NEXT(next,entries);
-                    // printf("IN ELSE\n");
-                    if(next->msg_id == next_msg)
+                    // printf("LOOKING AT %s \n",item_client->name);
+                    if(item->client_id == item_client->client_id)
                     {
-                      // printf("SEQUENCER: MESSAGE %d FOUND LATER IN THE QUEUE\n",next->msg_id);
-                      char msg_next[BUFLEN] = "MSG#";
-                      char temp[BUFLEN];
+                      // printf("Found Right client structure \n");
+                        
+                        
+                    /*
+                    CHECK IF THE MESSAGE AT THE TOP IS THE ONE TO BE SENT NEXT
+                    */
 
-                      //assigning global sequence id
-                      next->seq_id = msg_seq_id++;
+                      int next_msg = item_client->last_msg_id+1;
 
-                      sprintf(temp,"%d",next->seq_id);
-                      strcat(msg_next,temp);
-                      strcat(msg_next,"#");
-                      sprintf(temp,"%d",next->client_id);
-                      strcat(msg_next,temp);
-                      strcat(msg_next,"#");
-                      sprintf(temp,"%d",next->msg_id);
-                      strcat(msg_next,temp);
-                      strcat(msg_next,"#");
-                      strcat(msg_next,next->msg);
-                      next->sent = 1;
-                      multicast(socket,msg_next);
-                      item_client->last_msg_id = next->msg_id;
-                      // printf("CLIEND ID: %d ... MESSAGE ID : %d\n",item_client->client_id,item_client->last_msg_id);
-                    }
-                  }
-                }
+                      // printf("CLIENT %d : MSG to be sent %d \n",item_client->client_id,next_msg);
+                   // printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
 
-                /*
-                IF NEXT MESSAGE TO BE SENT IS NOT FOUND IN QUEUE, PUSH TOP MESSAGE TO END OF QUEUE
-                */
+                      if(item->msg_id == next_msg)
+                      {
 
-                if((flag == 0) && (item->sent == 0))
-                { 
-                  // printf("Moviing message to the end of queue: %s\n", item->msg);
-                  struct message *last;
-                  last = malloc(sizeof(*last));
-                  last->seq_id = item->seq_id;
-                  last->client_id = item->client_id;
-                  last->msg_id = item->msg_id;
-                  last->counter = item->counter;
-                  last->sent = item->sent;
-                  strcpy(last->msg,item->msg);
-                  TAILQ_INSERT_TAIL(&message_head,last,entries);
-                  TAILQ_REMOVE(&message_head,item,entries);
-                  free(item);
-                }
+                        // printf("SEQUENCER: MESSAGE %d FOUND TOP OF THE QUEUE\n",item->msg_id);
+                        char msg[BUFLEN] = "MSG#";
+                        char temp[BUFLEN];
 
-              // printf("END OF IF FINDING RIGHT CLIENT STRUCTURE\n");
-              } // end of if (finding the right client structure)
-            //}
-          }   // end of for (looping through id array to find the existing clients)
-          // else
-          //   printf("CLIENT QUEUE IS EMPTY\n");
+                        //assigning global sequence id
+                        item->seq_id = msg_seq_id++;
+                       // printf("SEQ ID: %d\n",item->seq_id);
 
-      } // end of foreach (traversing through the message queue)
-          // else
-          //   printf("MESSAGE QUEUE IS EMPTY\n");
-      pthread_mutex_unlock(&client_lock);
+                        sprintf(temp,"%d",item->seq_id);
+                        strcat(msg,temp);
+                        strcat(msg,"#");
+                        sprintf(temp,"%d",item->client_id);
+                        strcat(msg,temp);
+                        strcat(msg,"#");
+                        sprintf(temp,"%d",item->msg_id);
+                        strcat(msg,temp);
+                        strcat(msg,"#");
+                        strcat(msg,item->msg);
+
+                        item->sent = 1;
+                        multicast(socket,msg);
+
+                        item_client->last_msg_id = item->msg_id;
+                        // printf("CLIEND ID: %d ... MESSAGE ID : %d\n",item_client->client_id,item_client->last_msg_id);
+                        flag = 1;
+                      }
+
+                      /*
+                      TRAVERSE THROUGH THE LIST TO FIND IF THE NEXT MESSAGE TO BE SENT EXISTS
+                      */
+
+                      else
+                      { 
+                        struct message *next,*tmp_next;
+                        // TAILQ_FOREACH(next, &message_head, entries)
+                        for(next=TAILQ_FIRST(&message_head);next!=NULL;next=TAILQ_NEXT(next,entries))
+                        {
+                          // tmp_next = TAILQ_NEXT(next,entries);
+                          // printf("IN ELSE\n");
+                          if(next->msg_id == next_msg)
+                          {
+                            // printf("SEQUENCER: MESSAGE %d FOUND LATER IN THE QUEUE\n",next->msg_id);
+                            char msg_next[BUFLEN] = "MSG#";
+                            char temp[BUFLEN];
+
+                            //assigning global sequence id
+                            next->seq_id = msg_seq_id++;
+
+                            sprintf(temp,"%d",next->seq_id);
+                            strcat(msg_next,temp);
+                            strcat(msg_next,"#");
+                            sprintf(temp,"%d",next->client_id);
+                            strcat(msg_next,temp);
+                            strcat(msg_next,"#");
+                            sprintf(temp,"%d",next->msg_id);
+                            strcat(msg_next,temp);
+                            strcat(msg_next,"#");
+                            strcat(msg_next,next->msg);
+                            next->sent = 1;
+                            multicast(socket,msg_next);
+                            item_client->last_msg_id = next->msg_id;
+                            // printf("CLIEND ID: %d ... MESSAGE ID : %d\n",item_client->client_id,item_client->last_msg_id);
+                          }
+                        }
+                      }
+
+                      /*
+                      IF NEXT MESSAGE TO BE SENT IS NOT FOUND IN QUEUE, PUSH TOP MESSAGE TO END OF QUEUE
+                      */
+
+                      if((flag == 0) && (item->sent == 0))
+                      { 
+                        // printf("Moviing message to the end of queue: %s\n", item->msg);
+                        struct message *last;
+                        last = malloc(sizeof(*last));
+                        last->seq_id = item->seq_id;
+                        last->client_id = item->client_id;
+                        last->msg_id = item->msg_id;
+                        last->counter = item->counter;
+                        last->sent = item->sent;
+                        strcpy(last->msg,item->msg);
+                        TAILQ_INSERT_TAIL(&message_head,last,entries);
+                        TAILQ_REMOVE(&message_head,item,entries);
+                        free(item);
+                      }
+
+                    // printf("END OF IF FINDING RIGHT CLIENT STRUCTURE\n");
+                    } // end of if (finding the right client structure)
+                  //}
+                }   // end of for (looping through id array to find the existing clients)
+                // else
+                //   printf("CLIENT QUEUE IS EMPTY\n");
+
+            } // end of foreach (traversing through the message queue)
+                // else
+                //   printf("MESSAGE QUEUE IS EMPTY\n");
+            pthread_mutex_unlock(&client_lock);
+        }
+      }
     }
-
  // nanosleep((struct timespec[]){{0,100000000}},NULL);
 
     pthread_mutex_unlock(&message_lock);
