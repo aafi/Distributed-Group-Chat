@@ -707,10 +707,11 @@ void* message_receiving(int s)
         int count = (atoi(hb[3])*4)+4;
 
         int idx = 4;
+        pthread_mutex_lock(&message_lock);
         for(idx;idx < count; idx+=4)
         {
           flag = 0;
-          pthread_mutex_lock(&message_lock);
+          
           printf("grab lock (in for)\n");
           if(!TAILQ_EMPTY(&message_head))
           { 
@@ -730,7 +731,7 @@ void* message_receiving(int s)
                 }
             }
           }
-          pthread_mutex_unlock(&message_lock);
+          // pthread_mutex_unlock(&message_lock);
           printf("release lock (in for)\n");
 
           if(flag == 0)
@@ -761,16 +762,17 @@ void* message_receiving(int s)
             // printf("COUNTER FOR HB MSG %d : %d\n",msg->seq_id,msg->counter);
             msg->sent = 0;
 
-            pthread_mutex_lock(&message_lock);
+            // pthread_mutex_lock(&message_lock);
             printf("grab lock (in flag)\n");
               TAILQ_INSERT_TAIL(&message_head,msg,entries);
-            pthread_mutex_unlock(&message_lock);
+            
             printf("release lock (in flag)\n");
 
          }
          // printf("OUTSIDE flag = 0 IF\n");
           
         }
+        pthread_mutex_unlock(&message_lock);
         printf("OUTSIDE FOR IN HB\n");
 
      }
