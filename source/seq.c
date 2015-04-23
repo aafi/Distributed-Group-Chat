@@ -944,7 +944,7 @@ void* message_pinging(int sock)
     //printf("ELECTION THREAD\n"); //DEEPTI DEBUGGING
     int msec = 0, trigger = 2000;
     clock_t before = clock();
-    // int flag;
+    int flag;
     do
     {
       //sleep(0.5);
@@ -974,7 +974,7 @@ void* message_pinging(int sock)
              perror("Error");
          }
         //DEEPTI DEBUGGING
-      // flag = 0;
+       flag = 0;
       //printf("Deepti Debugging: %s\n",buf); //DEEPTI DEBUGGING
 
       char * token;
@@ -983,7 +983,7 @@ void* message_pinging(int sock)
 
       if(strcmp("PING",token)==0)
        {
-        // flag = 1;
+         flag = 1;
         
        //  printf("reached if \n");
          token = strtok(NULL,"#");
@@ -1018,8 +1018,8 @@ void* message_pinging(int sock)
    }while(msec<trigger);
 
   // printf("Outside do while\n");
-   // if(flag == 1)
-   //  printf("PING RECEIVED");
+   if(flag == 1)
+     printf("PING RECEIVED");
 
    if(!TAILQ_EMPTY(&client_head))
    {
