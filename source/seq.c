@@ -934,7 +934,7 @@ void* message_pinging(int sock)
   // struct timeval tv;
   
 
-  //printf("ENTERED ELECTION THREAD\n");
+  printf("ENTERED ELECTION THREAD\n");
 
   while(1)
   {
