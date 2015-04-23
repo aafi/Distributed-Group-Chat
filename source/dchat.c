@@ -357,11 +357,11 @@ int main(int argc, char* argv[]){
 
 		    if (setsockopt(soc, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
 		    {
-		        printf("Sorry, no chat is active on %s:%s, try again later. Bye.\n", argv[2], argv[3]);
+		        perror("Setting socket timeout error");
 		    }
 
 			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
-				perror("ERROR: Receiving message failed \n");
+				printf("Sorry, no chat is active on %s:%s, try again later. Bye.\n", argv[2], argv[3]);
 			} 
 
 			// reset timeout so that socket behaves normally
