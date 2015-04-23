@@ -350,9 +350,28 @@ int main(int argc, char* argv[]){
 				fprintf(stderr, "ERROR: Sorry no chat is active on %s, try again later. \n", argv[2]);
 				exit(-1);
 			}
+
+			struct timeval tv;
+			tv.tv_sec = TIMEOUT_SEC;
+		    tv.tv_usec = TIMEOUT_USEC;
+
+		    if (setsockopt(soc, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+		    {
+		        printf("Sorry, no chat is active on %s:%s, try again later. Bye.\n", argv[2], argv[3]);
+		    }
+
 			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
 				perror("ERROR: Receiving message failed \n");
 			} 
+
+			struct timeval tv;
+			tv.tv_sec = 0;
+		    tv.tv_usec = 0;
+
+		    if (setsockopt(soc, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
+		    {
+		        perror("Setting socket timeout error");
+		    }
 
 			char* leader_details[MAXSIZE];
 			detokenize(recvBuff, leader_details, DELIMITER);
