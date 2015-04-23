@@ -415,6 +415,22 @@ void* message_receiving(int s)
          exit(-1);
       } 
 
+      if(holdback==1)
+      {
+        if(hb_counter == num_client_hb)
+        {
+          pthread_mutex_lock(&message_lock);
+          struct message *tmp;
+          for(tmp=TAILQ_FIRST(&message_head);tmp!=NULL;tmp=TAILQ_NEXT(tmp,entries))
+          {
+            if(tmp->seq_id < msg_seq_id)
+              tmp->counter = 0;
+          }
+
+          pthread_mutex_unlock(&message_lock);
+        }
+      }
+
     strcpy(buf_copy,buf);
 
      // printf("SEQUENCER RECEIVED: %s\n", buf);      
@@ -1127,6 +1143,10 @@ void* message_pinging(int sock)
               TAILQ_REMOVE(&client_head,item_client,entries);
               free(item_client);
               multicast_clist(sock);
+              if(holdback==1)
+              {
+                num_client_hb--;
+              }
 
               // printf("Number of Clients in the system: %d\n",count_clients());
 
