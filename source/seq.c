@@ -526,10 +526,10 @@ void* message_receiving(int s)
         pthread_mutex_lock(&message_lock);
 
          TAILQ_INSERT_TAIL(&message_head,item,entries);
-
+         printf("SEQUENCER ADDED MESSAGE %s to the queue \n",item->msg);
         pthread_mutex_unlock(&message_lock);
 
-         printf("SEQUENCER ADDED MESSAGE %s to the queue \n",item->msg);
+         
 
 
          // DEBUGGGGGGGINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
