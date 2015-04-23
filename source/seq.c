@@ -761,9 +761,11 @@ void* message_multicasting(int s)
 
       item = TAILQ_FIRST(&message_head);
       while(item!=NULL){
+        tmp_item = TAILQ_NEXT(item, entries);
         if(item->sent == 1)
           {
-            item = TAILQ_NEXT(item,entries);
+            // item = TAILQ_NEXT(item,entries);
+            item = tmp_item;
           }
          else
           {
@@ -897,6 +899,7 @@ void* message_multicasting(int s)
                 //   printf("MESSAGE QUEUE IS EMPTY\n");
             pthread_mutex_unlock(&client_lock);
         }
+        item = tmp_item;
       }
     }
  // nanosleep((struct timespec[]){{0,100000000}},NULL);
