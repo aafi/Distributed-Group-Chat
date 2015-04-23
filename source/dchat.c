@@ -364,7 +364,7 @@ int main(int argc, char* argv[]){
 				perror("ERROR: Receiving message failed \n");
 			} 
 
-			struct timeval tv;
+			// reset timeout so that socket behaves normally
 			tv.tv_sec = 0;
 		    tv.tv_usec = 0;
 
