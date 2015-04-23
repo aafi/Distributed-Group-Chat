@@ -65,18 +65,6 @@ struct message{
 
 TAILQ_HEAD(,message) message_head;
 
-// struct holdback{
-//   int global_id;
-//   int client_id;
-//   int msg_id;
-//   char msg[BUFLEN];
-
-//   TAILQ_ENTRY(holdback) entries;
-
-// };
-
-// TAILQ_HEAD(,holdback) holdback_head;
-
 
 /*
   
@@ -384,14 +372,7 @@ void msg_removal(int s)
 
       pthread_mutex_unlock(&client_lock);
 
-      // printf("Removing message %d\n",item->seq_id);
-      // printf("Printing ack vector before removing msg %d\n",item->seq_id);
-      // for(idx=0;idx<MAX;idx++)
-      // {
-      // printf("%d ",item->ack_vector[idx]);
-      // }
-      // printf("\n");
-
+      
       TAILQ_REMOVE(&message_head,item,entries);
       printf("Message to be removed: %s \n",item->msg);
       free(item);
@@ -522,26 +503,7 @@ void* message_receiving(int s)
          item->seq_id = -1;
          printf("AFTER MALLOC IN MESSAGE\n");
 
-         // int id[MAX] = {0};
-         // if(!TAILQ_EMPTY(&client_head))
-         // {
-         //  struct client *c;
-         //  TAILQ_FOREACH(c,&client_head,entries)
-         //  {
-         //    id[c->client_id] = 1;
-         //  }
-         // }
-
-        //  printf("Acknowledgement Vector Initialization\n");
-
-        //  int idx = 0;
-
-        //  for(idx;idx<MAX;idx++)
-        //  {
-        //   item->ack_vector[idx] = id[idx];
-        //   printf("%d ",item->ack_vector[idx]);
-        //  }
-        // printf("\n");
+         
          pthread_mutex_lock(&client_lock);
 
          item->counter = count_clients();
@@ -603,15 +565,7 @@ void* message_receiving(int s)
      else if(strcmp("ACK",token) == 0)
      {
          //printf("ACKS: %s \n",buf_copy);
-         // int i = 0;
-         // while(token!=NULL)
-         // {  
-            
-         //    token = strtok(NULL,"#");
-         //    tok[i] = token;
-         //    i++;
-         // }
-
+         
          char * ack[BUFLEN];
          detokenize(buf_copy,ack,"#");
 
@@ -749,6 +703,7 @@ void* message_receiving(int s)
           {
             // printf("Inside Flag equals 0\n");
             struct message *msg;
+            int num;
             msg = malloc(sizeof(*msg));
             // printf("after malloc\n");
             // printf("seq id %d\n",atoi(hb[idx]));
@@ -760,7 +715,12 @@ void* message_receiving(int s)
             // printf("set msg id\n");
             strcpy(msg->msg,hb[idx+3]);
             // printf("set msg %s\n",msg->msg);
-            msg->counter = atoi(hb[3]);
+
+            pthread_mutex_lock(&client_lock);
+            num = count_clients();
+            pthread_mutex_unlock(&client_lock);
+
+            msg->counter = num;
             // printf("set counter\n");
             msg->counter--;
             // printf("COUNTER FOR HB MSG %d : %d\n",msg->seq_id,msg->counter);
