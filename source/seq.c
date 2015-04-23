@@ -21,6 +21,7 @@
 // int id[MAX] = {0};
 int msg_seq_id = 0;
 int hb_counter = 0, num_client_hb = -1;
+int holdback = 0;
 
 pthread_mutex_t client_lock;
 pthread_mutex_t message_lock;
@@ -330,7 +331,7 @@ void msg_removal(int s)
       
 
     /* This means all the clients have received the message */
-    if(item->counter == 0)
+    if(item->counter <= 0)
     { 
       
       int client_id = item->client_id;
@@ -364,7 +365,7 @@ void msg_removal(int s)
             }
 
             //Remove message from hold back queue
-            // multicast(s,msg_hb);
+            multicast(s,msg_hb);
 
           }
         }
@@ -667,6 +668,7 @@ void* message_receiving(int s)
 
      else if(strcmp("HB",token)==0)
      {
+        holdback = 1;
         printf("SEQUENCER hb msg: %s\n", buf_copy);
         hb_counter++;
         char * hb[BUFLEN];
@@ -742,13 +744,13 @@ void* message_receiving(int s)
             int num;
             msg = malloc(sizeof(*msg));
             printf("after malloc\n");
-            // printf("seq id %d\n",atoi(hb[idx]));
+            printf("seq id %d\n",atoi(hb[idx]));
             msg->seq_id = atoi(hb[idx]);
-            // printf("set seq id\n");
+            printf("set client id %d\n",atoi(hb[idx+1]));
             msg->client_id = atoi(hb[idx+1]);
-            // printf("set client id\n");
+            printf("set msg id %d\n",atoi(hb[idx+2]));
             msg->msg_id = atoi(hb[idx+2]);
-            // printf("set msg id\n");
+            printf("set msg %s\n",hb[idx+3]);
             strcpy(msg->msg,hb[idx+3]);
             // printf("set msg %s\n",msg->msg);
 
@@ -776,6 +778,9 @@ void* message_receiving(int s)
         pthread_mutex_unlock(&message_lock);
         printf("OUTSIDE FOR IN HB\n");
 
+        if(hb_counter == num_client_hb)
+          holdback = 0;
+
      }
 
    }
@@ -791,6 +796,9 @@ void* message_multicasting(int s)
   int count = 0;
   while(1)
   {
+    
+    if(holdback == 0)
+    {
     // printf("MULTICASTING THREAD\n");
     msg_removal(socket); 
 
@@ -946,6 +954,7 @@ void* message_multicasting(int s)
  // nanosleep((struct timespec[]){{0,100000000}},NULL);
 
     pthread_mutex_unlock(&message_lock);
+   }
   } // end of while
 }
 
