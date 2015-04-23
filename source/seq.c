@@ -403,7 +403,7 @@ void msg_removal(int s)
 
   if(TAILQ_EMPTY(&message_head) && (hb_counter == num_client_hb) )
   {
-   // printf("inside sendall condition\n");
+   printf("inside sendall condition\n");
     char temp[BUFLEN] = "SEQ#SENDALL";
     pthread_mutex_lock(&client_lock);
     multicast(s,temp);
@@ -520,6 +520,7 @@ void* message_receiving(int s)
          item->msg_id = atoi(tok[1]);
          strcpy(item->msg,tok[2]);
          item->seq_id = -1;
+         printf("AFTER MALLOC IN MESSAGE\n");
 
          // int id[MAX] = {0};
          // if(!TAILQ_EMPTY(&client_head))
@@ -566,7 +567,7 @@ void* message_receiving(int s)
 
         pthread_mutex_unlock(&message_lock);
 
-         // printf("SEQUENCER ADDED MESSAGE %s to the queue \n",item->msg);
+         printf("SEQUENCER ADDED MESSAGE %s to the queue \n",item->msg);
 
 
          // DEBUGGGGGGGINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
@@ -699,7 +700,7 @@ void* message_receiving(int s)
         hb_counter++;
         char * hb[BUFLEN];
         detokenize(buf_copy,hb,"#");
-        int flag;
+        int flag = 0;
         
         int client_id = atoi(hb[1]);
         //int flag = 0;
