@@ -503,7 +503,7 @@ void* message_receiving(int s)
       else if (strcmp("MESSAGE",token)==0)
       {
          
-         // printf("SEQUENCER : %s\n",buf_copy);
+         printf("SEQUENCER : %s\n",buf_copy);
          int i = 0;
          while(token!=NULL)
          {  
@@ -643,7 +643,7 @@ void* message_receiving(int s)
 
      else if(strcmp("LOST",token)==0)
      {
-        // printf("LOST MESSAGE REQUEST: %s\n", buf);
+        printf("LOST MESSAGE REQUEST: %s\n", buf);
         token = strtok(NULL,"#");
         int lost_msg_id = atoi(token);
         //printf("Lost msg id : %d \n",lost_msg_id);
@@ -694,7 +694,7 @@ void* message_receiving(int s)
 
      else if(strcmp("HB",token)==0)
      {
-        // printf("SEQUENCER hb msg: %s\n", buf_copy);
+        printf("SEQUENCER hb msg: %s\n", buf_copy);
         hb_counter++;
         char * hb[BUFLEN];
         detokenize(buf_copy,hb,"#");
