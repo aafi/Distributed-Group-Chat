@@ -569,17 +569,17 @@ void* message_receiving(int s)
 
 
          // DEBUGGGGGGGINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
-         // struct client *item_client,*temp_client;
+         struct client *item_client,*temp_client;
 
-         // pthread_mutex_lock(&client_lock);
-         // for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
-         // {
-         //    // temp_client = TAILQ_NEXT(item_client,entries);
-         //    if(item_client->client_id == item->client_id)
-         //      // printf("FOR CLIENT %d : LAST MSG ID %d\n",item_client->client_id,item_client->last_msg_id);
-         // }
+         pthread_mutex_lock(&client_lock);
+         for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
+         {
+            // temp_client = TAILQ_NEXT(item_client,entries);
+            if(item_client->client_id == item->client_id)
+              printf("FOR CLIENT %d : LAST MSG ID %d\n",item_client->client_id,item_client->last_msg_id);
+         }
 
-         // pthread_mutex_unlock(&client_lock);
+         pthread_mutex_unlock(&client_lock);
 
          /*
             Send acknowledgement back to the client that message has been received and put in the queue
@@ -715,7 +715,7 @@ void* message_receiving(int s)
           //  flag = 1;
           }
 
-      // printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
+      printf("!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
 
                 
         int count = (atoi(hb[3])*4)+4;
