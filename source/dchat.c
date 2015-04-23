@@ -658,6 +658,7 @@ void* housekeeping(int soc){
 				} else if (strcmp(seq_message_type, "SENDALL") == 0){
 					election = 0;
 					struct node *item, *temp_item;
+					printf("INSIDE SENDALL\n");
 					// TAILQ_FOREACH(item, &queue_head, entries){
 					pthread_mutex_lock(&message_queue_lock);
 					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
@@ -721,7 +722,7 @@ void* messenger(int soc){
 			strcpy(item->message, user_input);
 
 			pthread_mutex_lock(&message_queue_lock);
-			printf("%d-%s\n", item->msg_id, item->message);
+			printf("INSERTING INTO QUEUE: %d-%s\n", item->msg_id, item->message);
 			TAILQ_INSERT_TAIL(&queue_head, item, entries);
 			pthread_mutex_unlock(&message_queue_lock);
 
