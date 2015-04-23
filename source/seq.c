@@ -962,8 +962,9 @@ void* message_pinging(int sock)
 
       if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client_in, &len)) < 0)
         {
+           printf("WHERE IS THE PING??????\n");
            perror("Receive Error Ping");
-           exit(-1);
+           //exit(-1);
         }
 
          tv.tv_sec = 0;
