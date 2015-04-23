@@ -24,6 +24,7 @@ int hb_counter = 0, num_client_hb = -1;
 
 pthread_mutex_t client_lock;
 pthread_mutex_t message_lock;
+pthread_mutex_t counter_lock;
 
 struct client{
    char ip[BUFLEN];
@@ -392,7 +393,7 @@ void msg_removal(int s)
       // printf("\n");
 
       TAILQ_REMOVE(&message_head,item,entries);
-      // printf("Message to be removed: %s \n",item->msg);
+      printf("Message to be removed: %s \n",item->msg);
       free(item);
       
     }
@@ -742,6 +743,7 @@ void* message_receiving(int s)
             }
           }
           pthread_mutex_unlock(&message_lock);
+
           if(flag == 0)
           {
             // printf("Inside Flag equals 0\n");
@@ -764,7 +766,7 @@ void* message_receiving(int s)
             msg->sent = 0;
 
             pthread_mutex_lock(&message_lock);
-            TAILQ_INSERT_TAIL(&message_head,msg,entries);
+              TAILQ_INSERT_TAIL(&message_head,msg,entries);
             pthread_mutex_unlock(&message_lock);
 
          }
@@ -1154,6 +1156,12 @@ int main(int argc, char *argv[]){
    }
 
    if(pthread_mutex_init(&message_lock,NULL)!=0)
+   {
+    printf("MESSAGE LOCK FAIL");
+    exit(-1);
+   }
+
+   if(pthread_mutex_init(&counter_lock,NULL)!=0)
    {
     printf("MESSAGE LOCK FAIL");
     exit(-1);
