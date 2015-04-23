@@ -737,6 +737,7 @@ void* messenger(int soc){
 			        perror("ERROR: inet_pton error occured \n");
 			        // exit(-1);
 			    }
+			    printf("CLIENT SENDING: %s\n", message);
 			    if (sendto(soc, message, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
 					perror("Could not send message to Sequencer\n");
 					// exit(-1);
