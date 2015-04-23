@@ -364,7 +364,7 @@ void msg_removal(int s)
             }
 
             //Remove message from hold back queue
-            multicast(s,msg_hb);
+            // multicast(s,msg_hb);
 
           }
         }
@@ -374,7 +374,7 @@ void msg_removal(int s)
 
       
       TAILQ_REMOVE(&message_head,item,entries);
-      // printf("Message to be removed: %s \n",item->msg);
+      printf("Message to be removed: %s \n",item->msg);
       free(item);
       
     }
@@ -667,7 +667,7 @@ void* message_receiving(int s)
 
      else if(strcmp("HB",token)==0)
      {
-        // printf("SEQUENCER hb msg: %s\n", buf_copy);
+        printf("SEQUENCER hb msg: %s\n", buf_copy);
         hb_counter++;
         char * hb[BUFLEN];
         detokenize(buf_copy,hb,"#");
@@ -711,6 +711,7 @@ void* message_receiving(int s)
         {
           flag = 0;
           pthread_mutex_lock(&message_lock);
+          printf("grab lock (in for)\n");
           if(!TAILQ_EMPTY(&message_head))
           { 
             // printf("Inside TAILQ\n");
@@ -721,13 +722,16 @@ void* message_receiving(int s)
               if(item->seq_id == atoi(hb[idx]))
                 {
                   // printf("Found message\n");
+
                   item->counter--;
+                  printf("Decremented counter for message %s : %d\n",item->msg,item->counter);
                   flag = 1;
                   // printf("COUNTER FOR HB MSG %d : %d\n",item->seq_id,item->counter);
                 }
             }
           }
           pthread_mutex_unlock(&message_lock);
+          printf("release lock (in for)\n");
 
           if(flag == 0)
           {
@@ -735,7 +739,7 @@ void* message_receiving(int s)
             struct message *msg;
             int num;
             msg = malloc(sizeof(*msg));
-            // printf("after malloc\n");
+            printf("after malloc\n");
             // printf("seq id %d\n",atoi(hb[idx]));
             msg->seq_id = atoi(hb[idx]);
             // printf("set seq id\n");
@@ -753,17 +757,21 @@ void* message_receiving(int s)
             msg->counter = num;
             // printf("set counter\n");
             msg->counter--;
+            printf("Decremented counter for message %s (in flag) : %d\n",msg->msg,msg->counter);
             // printf("COUNTER FOR HB MSG %d : %d\n",msg->seq_id,msg->counter);
             msg->sent = 0;
 
             pthread_mutex_lock(&message_lock);
+            printf("grab lock (in flag)\n");
               TAILQ_INSERT_TAIL(&message_head,msg,entries);
             pthread_mutex_unlock(&message_lock);
+            printf("release lock (in flag)\n");
 
          }
          // printf("OUTSIDE flag = 0 IF\n");
           
         }
+        printf("OUTSIDE FOR IN HB\n");
 
      }
 
@@ -1223,6 +1231,7 @@ int main(int argc, char *argv[]){
       char notice[BUFLEN] = "SEQ#STATUS#";
       int i = 3, num_clients = (atoi(tok[1])*5)+3;
       num_client_hb = atoi(tok[1]);
+      printf("num_client_hb : %d \n",num_client_hb);
       msg_seq_id = 0;
       strcat(notice,tok[2]);
 
@@ -1236,8 +1245,9 @@ int main(int argc, char *argv[]){
         // printf("PORT %d\n",c->port);
         strcpy(c->name,tok[i+3]);
         c->last_msg_id = atoi(tok[i+4]);
-        // printf("LAST MESSAGE ID %d\n",c->last_msg_id);
+        
         c->client_id = atoi(tok[i+2]);
+        printf("LAST MESSAGE ID %d for client %d\n",c->last_msg_id,c->client_id);
         if(strcmp(my_ip_addr,tok[i]) == 0)
           c->leader = 1;
         else
