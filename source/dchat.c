@@ -986,7 +986,7 @@ void* election_algorithm(int curr_id){
                         strcpy(buf, "CLIENT_ID#");
                         strcat(buf, temp);
                     	send_msg(sockfd, buf, serv_addr_ele, slen);
-                    	printf("Sent Client ID to: %d \n", client_list[i].client_id);
+                    	//printf("Sent Client ID to: %d \n", client_list[i].client_id);
                     }
                     //printf("checking: second inet_aton\n");
                 }
