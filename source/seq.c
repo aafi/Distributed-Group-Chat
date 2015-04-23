@@ -416,7 +416,7 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-     // printf("SEQUENCER RECEIVED: %s\n", buf);      
+     printf("SEQUENCER RECEIVED: %s\n", buf);      
 
       char * token;
       token = strtok(buf,"#");
@@ -485,7 +485,7 @@ void* message_receiving(int s)
       else if (strcmp("MESSAGE",token)==0)
       {
          
-         // printf("SEQUENCER : %s\n",buf_copy);
+         printf("SEQUENCER : %s\n",buf_copy);
          int i = 0;
          // while(token!=NULL)
          // {  
@@ -550,17 +550,17 @@ void* message_receiving(int s)
 
 
          // DEBUGGGGGGGINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
-         // struct client *item_client,*temp_client;
+         struct client *item_client,*temp_client;
 
-         // pthread_mutex_lock(&client_lock);
-         // for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
-         // {
-         //    // temp_client = TAILQ_NEXT(item_client,entries);
-         //    if(item_client->client_id == item->client_id)
-         //      printf("FOR CLIENT %d : LAST MSG ID %d\n",item_client->client_id,item_client->last_msg_id);
-         // }
+         pthread_mutex_lock(&client_lock);
+         for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
+         {
+            // temp_client = TAILQ_NEXT(item_client,entries);
+            if(item_client->client_id == item->client_id)
+              printf("FOR CLIENT %d : LAST MSG ID %d\n",item_client->client_id,item_client->last_msg_id);
+         }
 
-         // pthread_mutex_unlock(&client_lock);
+         pthread_mutex_unlock(&client_lock);
 
          /*
             Send acknowledgement back to the client that message has been received and put in the queue
