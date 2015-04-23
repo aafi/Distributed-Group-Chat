@@ -361,7 +361,8 @@ int main(int argc, char* argv[]){
 		    }
 
 			if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&serv_addr, &serv_addr_size) < 0){
-				printf("Sorry, no chat is active on %s:%s, try again later. Bye.\n", argv[2], argv[3]);
+				printf("Sorry, no chat is active on %s:%s, try again later. \nBye.\n", argv[2], argv[3]);
+				exit(-1);
 			} 
 
 			// reset timeout so that socket behaves normally
