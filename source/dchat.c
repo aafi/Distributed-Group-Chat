@@ -981,10 +981,11 @@ void* election_algorithm(int curr_id){
                     }
                     if (client_list[i].client_id > atoi(curr_ele_id))
                     {
-                    	sprintf(temp, "%d", client_list[i].client_id);
+                    	sprintf(temp, "%d", atoi(curr_ele_id));
                         strcpy(buf, "CLIENT_ID#");
                         strcat(buf, temp);
                     	send_msg(sockfd, buf, serv_addr_ele, slen);
+                    	printf("Sent Client ID to: %d \n", i);
                     }
                     //printf("checking: second inet_aton\n");
                 }
