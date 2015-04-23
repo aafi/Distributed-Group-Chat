@@ -188,7 +188,7 @@ void multicast_clist(int socket)
 
     // printf("MULTICASTING CLIENT LIST: %s\n",multi);
     multicast(socket,multi);
-   // printf("MULTICAST CLIENT LIST: %s\n",multi);
+   printf("MULTICAST CLIENT LIST: %s\n",multi);
 }
 
 
