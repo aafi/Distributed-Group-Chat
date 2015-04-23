@@ -434,7 +434,7 @@ void* housekeeping(int soc){
 		if(recvfrom(soc, recvBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, &other_addr_size) < 0){
 			// If I don't receive a message, loop out and check if the program should still be running
 		} else {
-			fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
+			// fprintf(stderr, "CLIENT RECEIVED: %s\n", recvBuff);
 
 			char* message[MAXSIZE], copy[MAXSIZE];
 			strcpy(copy, recvBuff);
@@ -516,7 +516,7 @@ void* housekeeping(int soc){
 			} else if(strcmp(messageType, "ELECTIONCANCEL") == 0){	// Election has been cancelled
 				election = 0;
 			} else if(strcmp(messageType, "LEADER") == 0){	// Client is the new leader
-				printf("%s\n", recvBuff);
+				// printf("%s\n", recvBuff);
 				isLeader = 1;
 				char old_leader_ip[MAXSIZE];
 				strcpy(old_leader_ip, leader.ip_addr);
@@ -687,11 +687,11 @@ void* housekeeping(int soc){
 			        if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 						perror("ERROR: Sending message failed \n");
 					}
-					printf("CLIENT SENDING HB QUEUE:%s\n", sendBuff);
+					// printf("CLIENT SENDING HB QUEUE:%s\n", sendBuff);
 				} else if (strcmp(seq_message_type, "SENDALL") == 0){
 					election = 0;
 					struct node *item, *temp_item;
-					printf("INSIDE SENDALL\n");
+					// printf("INSIDE SENDALL\n");
 					// TAILQ_FOREACH(item, &queue_head, entries){
 					pthread_mutex_lock(&message_queue_lock);
 					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
@@ -708,7 +708,7 @@ void* housekeeping(int soc){
 						strcat(sendBuff, DELIMITER);
 						strcat(sendBuff, item->message);
 
-						printf("SENDALL: %d-%s\n", item->msg_id, item->message);
+						// printf("SENDALL: %d-%s\n", item->msg_id, item->message);
 						
 						if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 							perror("ERROR: Sending message failed \n");
@@ -755,7 +755,7 @@ void* messenger(int soc){
 			strcpy(item->message, user_input);
 
 			pthread_mutex_lock(&message_queue_lock);
-			printf("INSERTING INTO QUEUE: %d-%s\n", item->msg_id, item->message);
+			// printf("INSERTING INTO QUEUE: %d-%s\n", item->msg_id, item->message);
 			TAILQ_INSERT_TAIL(&queue_head, item, entries);
 			pthread_mutex_unlock(&message_queue_lock);
 
@@ -770,7 +770,7 @@ void* messenger(int soc){
 			        perror("ERROR: inet_pton error occured \n");
 			        // exit(-1);
 			    }
-			    printf("CLIENT SENDING: %s\n", message);
+			    // printf("CLIENT SENDING: %s\n", message);
 			    if (sendto(soc, message, MAXSIZE, 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
 					perror("Could not send message to Sequencer\n");
 					// exit(-1);
