@@ -687,6 +687,7 @@ void* housekeeping(int soc){
 			        if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 						perror("ERROR: Sending message failed \n");
 					}
+					printf("CLIENT SENDING HB QUEUE:%s\n", sendBuff);
 				} else if (strcmp(seq_message_type, "SENDALL") == 0){
 					election = 0;
 					struct node *item, *temp_item;
