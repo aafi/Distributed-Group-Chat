@@ -382,7 +382,16 @@ int main(int argc, char* argv[]){
 			strcpy(leader.port, leader_details[2]);
 
 			request_to_join(soc, my_ip_addr, argv[1]);
-			printf("%s joined the chat\n", argv[1]);
+			// printf("%s joined the chat\n", argv[1]);
+			printf("Succeeded, current users:\n");
+			int i = 0;
+			for(i = 0; i < total_clients; ++i){
+				printf("%s %s:%d", client_list[i].name, client_list[i].ip, client_list[i].port);
+				if (strcmp(leader.ip_addr, client_list[i].ip) == 0){
+					printf(" (LEADER)");
+				}
+				printf("\n");
+			}
 		}
 	}
 
