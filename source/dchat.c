@@ -66,6 +66,10 @@ int isLeader = 0;	// Flag for if the current client is the leader
 int prog_exit = 0;	// Flag to cause threads to exit
 int childId = -1;
 
+pthread_mutex_t client_list_lock;
+pthread_mutex_t holdback_queue_lock;
+pthread_mutex_t message_queue_lock;
+
 /*
 method: detokenize
 @buf: char[] - string that needs to be detokenized
@@ -129,7 +133,8 @@ This method is responsible for updating the client_list array with the new infor
 void update_client_list(char* all_client_details[]){
 	int i = 0;
 	int j = 0;
-	// memset(client_list, 0, MAX);
+	pthread_mutex_lock(&client_list_lock);
+	memset(client_list, 0, MAX);
 	total_clients = atoi(all_client_details[3]);
 	int end_details = total_clients * 5 + 4;
 	for (i = 4; i < end_details; i += 5){
@@ -143,6 +148,7 @@ void update_client_list(char* all_client_details[]){
 		// clnt.last_msg_id = -1;
 		client_list[j++] = clnt;
 	}
+	pthread_mutex_unlock(&client_list_lock);
 }
 
 /*
@@ -246,6 +252,8 @@ int main(int argc, char* argv[]){
 	void* messenger(int);
 	void* election_algorithm(int);
 	void* message_display(int);
+
+
 
 	if(argc < 2){	//INVALID ARGUMENTS TO THE PROGRAM
 		fprintf(stderr, "Invalid arguments. \nFormat: dchat USERNAME [IP-ADDR PORT]\n");
@@ -436,10 +444,14 @@ void* housekeeping(int soc){
 				item->global_id = globalSeqNo;
 				item->client_id = clientId;
 				strcpy(item->message, message[4]);
+
+				pthread_mutex_lock(&holdback_queue_lock);
 				TAILQ_INSERT_TAIL(&holdback_queue_head, item, entries);
+				// pthread_mutex_unlock(&holdback_queue_lock);
 
 				// check if next message is present in queue or not, else send a request for it LOST#global_seq_id
 				int found = 0;
+				// pthread_mutex_lock(&holdback_queue_lock);
 				for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
 					// temp_item = TAILQ_NEXT(item, entries);
 
@@ -448,6 +460,7 @@ void* housekeeping(int soc){
 						break;
 					}
 				}
+				pthread_mutex_unlock(&holdback_queue_lock);
 				if(found == 0){
 					strcpy(sendBuff, "LOST#");
 					char temp[MAXSIZE];
@@ -537,6 +550,7 @@ void* housekeeping(int soc){
 					// THIS MAY ACTUALLY NOT GO HERE, MIGHT NEED TO GO IN THE MESSENGER FUNCTION! NEED TO FIGURE THIS OUT
 					int message_id = atoi(message[2]);
 					struct node *item, *temp_item;
+					pthread_mutex_lock(&message_queue_lock);
 					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
 						// temp_item = TAILQ_NEXT(item, entries);
 
@@ -544,10 +558,12 @@ void* housekeeping(int soc){
 							item->acknowledged = 1;
 						}
 					}
+					pthread_mutex_unlock(&message_queue_lock);
 				} else if (strcmp(seq_message_type, "REM") == 0){
 					// Remove message from queue because sequencer has acknowledged receipt from all clients
 					struct node *item, *temp_item;
 					int message_id = atoi(message[2]);
+					pthread_mutex_lock(&message_queue_lock);
 					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = temp_item){
 						temp_item = TAILQ_NEXT(item, entries);
 
@@ -558,10 +574,12 @@ void* housekeeping(int soc){
 							break;
 						}
 					}
+					pthread_mutex_unlock(&message_queue_lock);
 				} else if (strcmp(seq_message_type, "REMHB") == 0){
 					// Remove message form holdback queue based on broadcast from sequencer
 					struct node *item, *temp_item;
 					int seq_id = atoi(message[2]);
+					pthread_mutex_lock(&holdback_queue_lock);
 					for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = temp_item){
 						temp_item = TAILQ_NEXT(item, entries);
 
@@ -572,6 +590,7 @@ void* housekeeping(int soc){
 							break;
 						}
 					}
+					pthread_mutex_unlock(&holdback_queue_lock);
 				} else if (strcmp(seq_message_type, "STATUS") == 0){
 					printf("%s\n", message[2]);
 				} else if (strcmp(seq_message_type, "EXIT") == 0){
@@ -600,17 +619,19 @@ void* housekeeping(int soc){
 					int hb_count = 0;
 					struct node *item, *temp_item;
 					// TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+					pthread_mutex_lock(&holdback_queue_lock);
 					for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
 						// temp_item = TAILQ_NEXT(item, entries);
-
 		                ++hb_count;
 			        }
+			        pthread_mutex_unlock(&holdback_queue_lock);
 
 			        sprintf(temp, "%d", hb_count);
 			        strcat(sendBuff, temp);
 			        strcat(sendBuff, DELIMITER);
 
 			        // TAILQ_FOREACH(item, &holdback_queue_head, entries) {
+			        pthread_mutex_lock(&holdback_queue_lock);
 			        for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
 						// temp_item = TAILQ_NEXT(item, entries);
 
@@ -629,6 +650,7 @@ void* housekeeping(int soc){
 		                strcat(sendBuff, item->message);
 		                strcat(sendBuff, DELIMITER);
 			        }
+			        pthread_mutex_unlock(&holdback_queue_lock);
 
 			        if (sendto(soc, sendBuff, MAXSIZE, 0, (struct sockaddr*)&other_user_addr, sizeof(other_user_addr)) < 0){
 						perror("ERROR: Sending message failed \n");
@@ -637,6 +659,7 @@ void* housekeeping(int soc){
 					election = 0;
 					struct node *item, *temp_item;
 					// TAILQ_FOREACH(item, &queue_head, entries){
+					pthread_mutex_lock(&message_queue_lock);
 					for(item = TAILQ_FIRST(&queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
 						// temp_item = TAILQ_NEXT(item, entries);
 
@@ -657,6 +680,7 @@ void* housekeeping(int soc){
 							perror("ERROR: Sending message failed \n");
 						}
 					}
+					pthread_mutex_unlock(&message_queue_lock);
 				}
 			} // end of leader related else-if
 		}
@@ -667,8 +691,8 @@ void* messenger(int soc){
 	msg_id = 0;		// The message id of the last message sent by this client to the sequencer/leader
 	char message[MAXSIZE];
 	char user_input[MAXSIZE];
-	char eof_str[MAXSIZE];
-	sprintf(eof_str, "%d", EOF);
+	// char eof_str[MAXSIZE];
+	// sprintf(eof_str, "%d", EOF);
 	while(prog_exit == 0){
 		memset(user_input, 0, MAXSIZE);
 		// fgets(user_input, MAXSIZE, stdin);
@@ -695,7 +719,10 @@ void* messenger(int soc){
 			item->acknowledged = 0;
 			item->client_id = client_id;
 			strcpy(item->message, user_input);
+
+			pthread_mutex_lock(&message_queue_lock);
 			TAILQ_INSERT_TAIL(&queue_head, item, entries);
+			pthread_mutex_unlock(&message_queue_lock);
 
 			// INITIATE COMMUNICATION WITH THE LEADER
 			if(election == 0){
@@ -733,6 +760,7 @@ void* message_display(soc){
 	    }
 
 		struct node *item, *temp_item;
+		pthread_mutex_lock(&holdback_queue_lock);
 		for(item = TAILQ_FIRST(&holdback_queue_head); item != NULL; item = TAILQ_NEXT(item, entries)){
 			// temp_item = TAILQ_NEXT(item, entries);
 			
@@ -763,6 +791,7 @@ void* message_display(soc){
             	break;
             }
         }
+        pthread_mutex_unlock(&holdback_queue_lock);
 	}
 }
 
