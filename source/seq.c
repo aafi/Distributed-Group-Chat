@@ -437,9 +437,12 @@ void* message_receiving(int s)
          int num = count_clients();
          pthread_mutex_unlock(&client_lock);
 
+         int fail = 0;
+
          if(num == MAX)
          {
           strcpy(reply,"FAILURE");
+          fail = 1;
          }
          else
          {
@@ -471,8 +474,12 @@ void* message_receiving(int s)
          strcat(status,status_msg);
 
          pthread_mutex_lock(&client_lock);
-         if(strcmp("FAILURE",reply)!=0)
+
+         if(fail!=1)
+         {
           multicast(socket,status);
+         }
+         
          pthread_mutex_unlock(&client_lock);
 
          // printf("NUMBER OF CLIENTS IN THE SYSTEM: %d\n",count_clients());
