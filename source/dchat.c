@@ -859,7 +859,7 @@ void* election_algorithm(int curr_id){
     int sockfd, i, election = 0;
     socklen_t slen=sizeof(serv_addr_seq);
     char buf[BUFLEN], temp[BUFLEN], curr_ele_id[BUFLEN], new_leader_ip[BUFLEN];
-    char* token_result[BUFLEN];
+    char* token_result[BUFLEN], tempbuf[BUFLEN];
     sprintf(curr_ele_id, "%d", curr_id);
     // if(argc != 4)
     // {
@@ -963,8 +963,10 @@ void* election_algorithm(int curr_id){
 
                     //printf("informing: 2nd inet_aton\n");
 
-                    
-                    send_msg(sockfd, "ELECTION", serv_addr_client, slen);
+                    strcpy(tempbuf, "ELECTION");
+                    if (sendto(sockfd, tempbuf, BUFLEN, 0, (struct sockaddr*) &serv_addr_client, slen)==-1)
+                        err("sendto() inside clientid\n");
+                    //send_msg(sockfd, "ELECTION", serv_addr_client, slen);
                     
 
                 }
@@ -1033,8 +1035,10 @@ void* election_algorithm(int curr_id){
 	                                
                                 if (client_list[i].client_id == atoi(curr_ele_id))
                                 {
-                                    
-                                    send_msg(sockfd, "LEADER", serv_addr_client, slen); //SENDING NEW LEADER TO WINNING CLIENT
+                                    strcpy(tempbuf,"LEADER");
+			                        if (sendto(sockfd, tempbuf, BUFLEN, 0, (struct sockaddr*) &serv_addr_client, slen)==-1)
+			                            err("sendto() inside clientid\n");
+                                    //send_msg(sockfd, "LEADER", serv_addr_client, slen); //SENDING NEW LEADER TO WINNING CLIENT
                                 //printf("checking: second inet_aton\n");
                                 }
 
@@ -1061,7 +1065,7 @@ void* election_algorithm(int curr_id){
                     if (strcmp(token_result[0], "CLIENT_ID") == 0)
                     {
                         //send_msg(sockfd, "OK", serv_addr, slen);
-                        char tempbuf[] = "OK";
+                        strcpy(tempbuf, "OK");
                         if (sendto(sockfd, tempbuf, BUFLEN, 0, (struct sockaddr*) &serv_addr, slen)==-1)
                             err("sendto() inside clientid\n");
                     }
@@ -1078,7 +1082,11 @@ void* election_algorithm(int curr_id){
 				            perror("Error");
 				        }
                         
-                        receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
+                        if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
+		                {
+		                	err("recvfrom()");
+		                }
+                        //receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
                         //printf("Received from sequencer: %s\n", buf);
                         
                         detokenize(buf, token_result, "#");
@@ -1110,7 +1118,10 @@ void* election_algorithm(int curr_id){
                                 fprintf(stderr, "Client inet_aton() for election cancel failed\n");
                                 exit(1);
                             }
-                    	    send_msg(sockfd, "ELECTIONCANCEL", serv_addr_client, slen);
+                            strcpy(tempbuf, "ELECTIONCANCEL");
+		                    if (sendto(sockfd, tempbuf, BUFLEN, 0, (struct sockaddr*) &serv_addr_client, slen)==-1)
+		                        err("sendto() inside election cancel\n");
+                    	    //send_msg(sockfd, "ELECTIONCANCEL", serv_addr_client, slen);
                     	}
                     	    //printf("ELECTION CANCELLED\n");
                     	    break;
@@ -1147,7 +1158,10 @@ void* election_algorithm(int curr_id){
             {
 
                 //printf("here??\n");
-            	send_msg(sockfd, "OK", serv_addr, slen);
+                strcpy(tempbuf, "OK");
+                if (sendto(sockfd, tempbuf, BUFLEN, 0, (struct sockaddr*) &serv_addr, slen)==-1)
+                    err("sendto() inside clientid\n");
+            	//send_msg(sockfd, "OK", serv_addr, slen);
                 goto begin_election;
             }
             	//send_msg(sockfd, "OK", serv_addr, slen);
@@ -1173,7 +1187,11 @@ void* election_algorithm(int curr_id){
 		            perror("Error");
 		        }
                 
-                receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
+                if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
+                {
+                	err("recvfrom()");
+                }
+                //receive_msg(sockfd, buf, &serv_addr, &slen); //WAITING FOR NEW SEQUENCER TO START
                 
                 //printf("Received from sequencer (No crash detected): %s\n", buf);
 
