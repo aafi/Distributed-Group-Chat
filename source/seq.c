@@ -464,13 +464,15 @@ void* message_receiving(int s)
          multicast_clist(socket);
          pthread_mutex_unlock(&client_lock);
                   
+
          char status[BUFLEN] = "SEQ#STATUS#";
          char status_msg[BUFLEN];
          sprintf(status_msg,"NOTICE %s joined on %s:%s",tok[2],tok[0],tok[1]);
          strcat(status,status_msg);
 
          pthread_mutex_lock(&client_lock);
-         multicast(socket,status);
+         if(strcmp("FAILURE",reply)!=0)
+          multicast(socket,status);
          pthread_mutex_unlock(&client_lock);
 
          // printf("NUMBER OF CLIENTS IN THE SYSTEM: %d\n",count_clients());
