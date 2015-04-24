@@ -918,14 +918,14 @@ void* election_algorithm(int curr_id){
     {
     	// if (election == 1)
     		// printf("Out of election\n");
-    	int won = 0;
+    	int won = 0; //SET TO 1 IF THIS ELECTION ALGORITHM WINS
   //   	if (inet_aton(leader.ip_addr, &serv_addr_seq.sin_addr)==0)
 		// {
 		//     fprintf(stderr, "inet_aton() failed\n");
 		//     exit(1);
 		// }
 		//printf("IP Address of Seq: %s\n", leader.ip_addr);
-    	election = 0;
+    	election = 0; //SET TO 1 WHEN AN ELECTION HAPPENS
     	nanosleep((struct timespec[]){{0, 100000000}}, NULL);
     	//sleep(1);
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
@@ -937,7 +937,7 @@ void* election_algorithm(int curr_id){
         strcat(buf, curr_ele_id);
         send_msg(sockfd, buf, serv_addr_seq, slen); //PING SEQUENCER TO CHECK IF IT IS ACTIVE
         //printf("Pinged sequencer\n");
-        if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
+        if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0) //WAITING FOR RESPONSE FROM SEQUENCER
         {
             //TIMEOUT REACHED -> SEQUENCER IS NOT ACTIVE
             //printf("timeout\n");
@@ -946,7 +946,7 @@ void* election_algorithm(int curr_id){
             send_msg(sockfd, buf, serv_addr_seq, slen);
             if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0) //DOUBLE CHECKING SEQ CRASH
             {
-                
+                //TIMEOUT REACHED AGAIN. START ELECTION
                 begin_election:
                 election = 1;
                 //printf("Starting election\n");
@@ -969,7 +969,7 @@ void* election_algorithm(int curr_id){
 
                 }
 
-                for (i = 0; i < total_clients; i++) //SENDING ID TO ALL HIGHER ID ELECTIONS (MAKE THIS A FUNCTION??)
+                for (i = 0; i < total_clients; i++) //SENDING ID TO ALL HIGHER ID ELECTIONS
                 {
                 	//serv_addr_client.sin_port = htons(client_list[i].port);
                 	//serv_addr_ele.sin_port = htons(client_list[i].port);
@@ -995,12 +995,12 @@ void* election_algorithm(int curr_id){
                 while(1)
                 {
                 	//printf("Waiting on receieve\n");
-                    if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0)
+                    if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&serv_addr, &slen) < 0) //WAITING ON CLIENT_ID, OK, CANCEL OR I AM LEADER
                     {
-
-                        if ((received_ok == 0) && (won == 0))
+                        //TIMEOUT
+                        if ((received_ok == 0) && (won == 0)) 
                         {
-                            //printf("I AM LEADER\n"); //BROADCAST TO ALL ELECTIONS AND WINNING CLIENT
+                            //NO OTHER CLIENTS HAVE HIGHER ID OR DIDN'T RESPOND, SO DECLARES ITSELF AS LEADER
                             election = 1;
                             won = 1;
                             //printf("Found new leader\n");
@@ -1131,7 +1131,7 @@ void* election_algorithm(int curr_id){
             
         }
 
-        if (election == 0)
+        if (election == 0) //IF IT DIDN'T JUST BREAK OUT OF THE ELECTION
         {
         	//printf("message received by election: %s\n", buf);
 
