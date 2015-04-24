@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-//#include <pthread.h>
 
 #define PORT 5678
 #define PORT_PING 5679
@@ -18,7 +17,7 @@
 #define TIMEOUT_SEC 3
 #define TIMEOUT_USEC 0
 
-// int id[MAX] = {0};
+
 int msg_seq_id = 0;
 int hb_counter = 0, num_client_hb = -1;
 int holdback = 0;
@@ -39,7 +38,7 @@ struct client{
 
    TAILQ_ENTRY(client) entries;
 
-};//client_list[MAX];
+};
 
 //This is the head of the TAILQ for messages
 
@@ -81,11 +80,9 @@ void multicast(int socket,char * msg)
 
    struct client *item,*temp_item;
 
-  // pthread_mutex_lock(&client_lock);
-
    if(!TAILQ_EMPTY(&client_head))
    {
-      // TAILQ_FOREACH(item, &client_head, entries)
+      
     for(item=TAILQ_FIRST(&client_head);item!=NULL;item=TAILQ_NEXT(item,entries))
    {
          //temp_item = TAILQ_NEXT(item,entries);
@@ -99,11 +96,9 @@ void multicast(int socket,char * msg)
             perror("Broadcast Error");
             exit(-1);
          }
-        // printf("MULTICAST MESSAGES: %s\n", msg);
-         
+              
     }
   } 
- // pthread_mutex_unlock(&client_lock);
 }
 
 void multicast_ea(int socket,char * msg)
@@ -116,7 +111,6 @@ void multicast_ea(int socket,char * msg)
 
    if(!TAILQ_EMPTY(&client_head))
    {
-      // TAILQ_FOREACH(item, &client_head, entries)
    for(item=TAILQ_FIRST(&client_head);item!=NULL;item=TAILQ_NEXT(item,entries))
    {
          // temp_item = TAILQ_NEXT(item,entries);
@@ -130,8 +124,7 @@ void multicast_ea(int socket,char * msg)
             perror("Broadcast Error");
             exit(-1);
          }
-        // printf("MULTICAST MESSAGES: %s\n", msg);
-         
+          
     }
   } 
   pthread_mutex_unlock(&client_lock);
@@ -159,7 +152,7 @@ void multicast_clist(int socket)
      if(!TAILQ_EMPTY(&client_head))
      {
         struct client *item_client,*temp_item;
-        // TAILQ_FOREACH(item_client,&client_head,entries)
+        
         for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client = TAILQ_NEXT(item_client,entries))
         {
            // temp_item = TAILQ_NEXT(item_client,entries);
@@ -176,19 +169,14 @@ void multicast_clist(int socket)
            sprintf(temp,"%d",item_client->last_msg_id);
            strcat(multi,"#");
            strcat(multi,temp);
-           // strcat(multi,"#");
-           // sprintf(temp,"%d",item_client->leader);
-           // strcat(multi,temp);
-
+           
         }
 
      }
 
-    // pthread_mutex_unlock(&client_lock);
-
-    // printf("MULTICASTING CLIENT LIST: %s\n",multi);
+    
     multicast(socket,multi);
-   // printf("MULTICAST CLIENT LIST: %s\n",multi);
+   
 }
 
 
@@ -196,16 +184,14 @@ int count_clients()
 {
   int num_client = 0;
   struct client *item_client,*temp;
-  //pthread_mutex_lock(&client_lock);
   if(!TAILQ_EMPTY(&client_head))
    {
     for(item_client = TAILQ_FIRST(&client_head); item_client!=NULL;item_client = TAILQ_NEXT(item_client,entries))
     {
-      // temp = TAILQ_NEXT(item_client,entries);
       num_client++;
     }
    } 
-   //pthread_mutex_unlock(&client_lock);
+   
   return num_client;
 }
 
@@ -225,17 +211,16 @@ int requestid(char * ip, int port, char * name)
     {
       client_id = i;
       flag = 0;
-    //TAILQ_FOREACH(item,&client_head,entries)
+    
     for(item = TAILQ_FIRST(&client_head);item!=NULL;item = TAILQ_NEXT(item,entries))
      {
-        // temp_item = TAILQ_NEXT(item,entries);
+        
         if(item->client_id == client_id)
         {
           flag = 1;
           break;
         }
-        // else
-        //   break;
+        
      }
      if(flag == 0)
       break;
@@ -433,8 +418,6 @@ void* message_receiving(int s)
 
     strcpy(buf_copy,buf);
 
-     // printf("SEQUENCER RECEIVED: %s\n", buf);      
-
       char * token;
       token = strtok(buf,"#");
 
@@ -475,16 +458,12 @@ void* message_receiving(int s)
             perror("Send Error");
             exit(-1);
          }
-         // else
-         //  printf("SUCCESS : %s\n",reply);
+         
 
          pthread_mutex_lock(&client_lock);
-         // printf("grabbed lock\n");
          multicast_clist(socket);
          pthread_mutex_unlock(&client_lock);
-
-         //multicast(socket,multi);
-         
+                  
          char status[BUFLEN] = "SEQ#STATUS#";
          char status_msg[BUFLEN];
          sprintf(status_msg,"NOTICE %s joined on %s:%s",tok[2],tok[0],tok[1]);
@@ -502,40 +481,22 @@ void* message_receiving(int s)
       else if (strcmp("MESSAGE",token)==0)
       {
          
-         // printf("SEQUENCER : %s\n",buf_copy);
          int i = 0;
-         // while(token!=NULL)
-         // {  
-            
-         //    token = strtok(NULL,"#");
-         //    tok[i] = token;
-         //    i++;
-         // }
-
+         
          char *tok[BUFLEN];
          detokenize(buf_copy,tok,"#");
-
-
-         // printf("tokenization done\n");
+         
          struct message *item;
          item = malloc(sizeof(*item));
 
-         // printf("AFTER MALLOC IN MESSAGE\n");
          if(item!=NULL)
          {
-          // printf("INSIDE MALLOC IF %s %s %s\n", tok[1],tok[2],tok[3]);
          item->client_id = atoi(tok[1]);
-         // printf("Assigns client id\n");
          item->msg_id = atoi(tok[2]);
-         // printf("Assigns message id\n");
          strcpy(item->msg,tok[3]);
-         // printf("assigns message\n");
          item->seq_id = -1;
-         // printf("assigns global seq id as -1\n");
         }
-        // else
-        //   printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!MALLOC FAIL\n");
-         
+        
 
          
          pthread_mutex_lock(&client_lock);
@@ -545,7 +506,6 @@ void* message_receiving(int s)
          pthread_mutex_unlock(&client_lock);
 
          item->sent = 0;
-         // printf("Counter: %d\n",item->counter);
 
          /*
                  * Add our item to the end of tail queue. The first
@@ -560,13 +520,11 @@ void* message_receiving(int s)
         pthread_mutex_lock(&message_lock);
 
          TAILQ_INSERT_TAIL(&message_head,item,entries);
-         // printf("SEQUENCER ADDED MESSAGE %s to the queue \n",item->msg);
+
         pthread_mutex_unlock(&message_lock);
 
          
-
-
-         // DEBUGGGGGGGINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG!
+         // DEBUG
          // struct client *item_client,*temp_client;
 
          // pthread_mutex_lock(&client_lock);
@@ -598,7 +556,6 @@ void* message_receiving(int s)
 
      else if(strcmp("ACK",token) == 0)
      {
-         //printf("ACKS: %s \n",buf_copy);
          
          char * ack[BUFLEN];
          detokenize(buf_copy,ack,"#");
@@ -610,25 +567,14 @@ void* message_receiving(int s)
          {
           for(item=TAILQ_FIRST(&message_head);item!=NULL;item = TAILQ_NEXT(item,entries))
            {
-            // temp_item = TAILQ_NEXT(item,entries);
-            // printf("INSIDE ACK FOREACH %s: %d\n", item->msg, item->seq_id);
             if(atoi(ack[2]) == item->seq_id)
             {
-              // int client_id = atoi(ack[1]);
-              // printf("MARKING ACK VECTOR FOR MSG %d FROM CLIENT %d \n",item->seq_id,client_id);
-              // item->ack_vector[client_id] = 2;
-              // break;
-              // printf("Message I am looking at: %s - %d\n", item->msg, item->counter);
               item->counter--;
-              // printf("Decremented Counter for MSG %d to %d\n",item->seq_id,item->counter);  
-
 
             }
           }
       }
       pthread_mutex_unlock(&message_lock);
-      // else
-      //   printf("MESSAGE TAILQ IS EMPTY\n");
      }
 
      else if(strcmp("LOST",token)==0)
@@ -668,18 +614,12 @@ void* message_receiving(int s)
                 perror("Lost Message Sending Error");
                 exit(-1);
               }
-              // else
-              //   printf("SENT LOST MESSAGE!\n");
-
+              
             }
           }
         }
         pthread_mutex_unlock(&message_lock);
-        // else
-        //   printf("EMPTY MESSAGE QUEUE");
         
-
-
      }
 
      else if(strcmp("HB",token)==0)
@@ -719,80 +659,55 @@ void* message_receiving(int s)
           pthread_mutex_unlock(&message_lock);
         }
 
-      // printf("!!!!!!!!!!!!!! Updated global seq id to %d\n",msg_seq_id);
-
                 
         int count = (atoi(hb[3])*4)+4;
 
         int idx = 4;
-        // printf("Waiting for Message lock\n");
         pthread_mutex_lock(&message_lock);
         for(idx;idx < count; idx+=4)
         {
           flag = 0;
           
-          //printf("grab lock (in for)\n");
           if(!TAILQ_EMPTY(&message_head))
           { 
-            // printf("Inside TAILQ\n");
             struct message *item,*temp_item;
             for(item=TAILQ_FIRST(&message_head);item!=NULL;item=TAILQ_NEXT(item,entries))
             {
-              // temp_item = TAILQ_NEXT(item,entries);
               if(item->seq_id == atoi(hb[idx]))
                 {
-                  // printf("Found message\n");
 
                   item->counter--;
-                  // printf("Decremented counter for message %s : %d\n",item->msg,item->counter);
                   flag = 1;
-                  // printf("COUNTER FOR HB MSG %d : %d\n",item->seq_id,item->counter);
                 }
             }
           }
-          // pthread_mutex_unlock(&message_lock);
-          //printf("release lock (in for)\n");
-
+          
           if(flag == 0)
           {
-            // printf("Inside Flag equals 0\n");
             struct message *msg;
             int num;
             msg = malloc(sizeof(*msg));
-            // printf("after malloc\n");
-            // printf("seq id %d\n",atoi(hb[idx]));
             msg->seq_id = atoi(hb[idx]);
-            // printf("set client id %d\n",atoi(hb[idx+1]));
             msg->client_id = atoi(hb[idx+1]);
-            // printf("set msg id %d\n",atoi(hb[idx+2]));
             msg->msg_id = atoi(hb[idx+2]);
-            // printf("set msg %s\n",hb[idx+3]);
             strcpy(msg->msg,hb[idx+3]);
-            // printf("set msg %s\n",msg->msg);
 
             pthread_mutex_lock(&client_lock);
             num = count_clients();
             pthread_mutex_unlock(&client_lock);
 
             msg->counter = num;
-            // printf("set counter\n");
             msg->counter--;
-            // printf("Decremented counter for message %s (in flag) : %d\n",msg->msg,msg->counter);
-            // printf("COUNTER FOR HB MSG %d : %d\n",msg->seq_id,msg->counter);
             msg->sent = 0;
 
-            // pthread_mutex_lock(&message_lock);
-            //printf("grab lock (in flag)\n");
-              TAILQ_INSERT_TAIL(&message_head,msg,entries);
             
-            //printf("release lock (in flag)\n");
+              TAILQ_INSERT_TAIL(&message_head,msg,entries);
+          
 
          }
-         // printf("OUTSIDE flag = 0 IF\n");
           
         }
         pthread_mutex_unlock(&message_lock);
-        // printf("OUTSIDE FOR IN HB\n");
 
         if(hb_counter == num_client_hb)
           holdback = 0;
@@ -815,7 +730,6 @@ void* message_multicasting(int s)
     
     if(holdback == 0)
     {
-    // printf("MULTICASTING THREAD\n");
     msg_removal(socket); 
 
     pthread_mutex_lock(&message_lock);
@@ -841,14 +755,12 @@ void* message_multicasting(int s)
             if(!TAILQ_EMPTY(&client_head))
             {
               struct client *item_client,*tmp_client;
-              //TAILQ_FOREACH(item_client,&client_head,entries)
               for(item_client=TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
               {
                 // tmp_client = TAILQ_NEXT(item_client,entries);
                 /*
                 Finding the right client structure
                 */
-                    // printf("LOOKING AT %s \n",item_client->name);
                     if(item->client_id == item_client->client_id)
                     {
                       // printf("Found Right client structure \n");
@@ -861,7 +773,6 @@ void* message_multicasting(int s)
                       int next_msg = item_client->last_msg_id+1;
 
                       // printf("CLIENT %d : MSG to be sent %d \n",item_client->client_id,next_msg);
-                   // printf("next message to be sent: %d ............. message at the top of the queue: %d\n",next_msg,item->msg_id);
 
                       if(item->msg_id == next_msg)
                       {
@@ -872,7 +783,6 @@ void* message_multicasting(int s)
 
                         //assigning global sequence id
                         item->seq_id = msg_seq_id++;
-                       // printf("SEQ ID: %d\n",item->seq_id);
 
                         sprintf(temp,"%d",item->seq_id);
                         strcat(msg,temp);
@@ -900,11 +810,8 @@ void* message_multicasting(int s)
                       else
                       { 
                         struct message *next,*tmp_next;
-                        // TAILQ_FOREACH(next, &message_head, entries)
                         for(next=TAILQ_FIRST(&message_head);next!=NULL;next=TAILQ_NEXT(next,entries))
                         {
-                          // tmp_next = TAILQ_NEXT(next,entries);
-                          // printf("IN ELSE\n");
                           if(next->msg_id == next_msg)
                           {
                             // printf("SEQUENCER: MESSAGE %d FOUND LATER IN THE QUEUE\n",next->msg_id);
@@ -938,7 +845,6 @@ void* message_multicasting(int s)
 
                       if((flag == 0) && (item->sent == 0))
                       { 
-                        // printf("Moviing message to the end of queue: %s\n", item->msg);
                         struct message *last;
                         last = malloc(sizeof(*last));
                         last->seq_id = item->seq_id;
@@ -952,16 +858,12 @@ void* message_multicasting(int s)
                         free(item);
                       }
 
-                    // printf("END OF IF FINDING RIGHT CLIENT STRUCTURE\n");
                     } // end of if (finding the right client structure)
-                  //}
+                 
                 }   // end of for (looping through id array to find the existing clients)
-                // else
-                //   printf("CLIENT QUEUE IS EMPTY\n");
 
             } // end of foreach (traversing through the message queue)
-                // else
-                //   printf("MESSAGE QUEUE IS EMPTY\n");
+               
             pthread_mutex_unlock(&client_lock);
         }
         item = tmp_item;
@@ -1000,62 +902,32 @@ void* message_pinging(int sock)
       exit(-1);
    }
 
-  // struct timeval tv;
   
-
-  //printf("ENTERED ELECTION THREAD\n");
 
   while(1)
   {
-    // printf("ELCTION THREAD\n");
-    // printf("Inside while loop\n");
-    // tv.tv_sec = 0;
-    // tv.tv_usec = 0;
-    //printf("ELECTION THREAD\n"); //DEEPTI DEBUGGING
+    
     int msec = 0, trigger = 2000;
     clock_t before = clock();
     int flag;
     do
     {
-      //sleep(0.5);
       
-      //DEEPTI DEBUGGING
-       // struct timeval tv;
-       // tv.tv_sec = TIMEOUT_SEC;
-       // tv.tv_usec = TIMEOUT_USEC;
-
-       // if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
-       // {
-       //     perror("Error");
-       // }
-
 
       if((n = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr*)&client_in, &len)) < 0)
         {
-           //printf("WHERE IS THE PING??????\n");
            perror("Receive Error Ping");
            exit(-1);
         }
 
-       //   tv.tv_sec = 0;
-       //   tv.tv_usec = 0;
-       //   if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
-       //   {
-       //       perror("Error");
-       //   }
-         //DEEPTI DEBUGGING
-       // flag = 0;
-      //printf("Deepti Debugging: %s\n",buf); //DEEPTI DEBUGGING
+       
 
       char * token;
       token = strtok(buf,"#");
-      //printf("%s\n", token); //DEEPTI DEBUGGING
 
       if(strcmp("PING",token)==0)
        {
-         //flag = 1;
-        
-       //  printf("reached if \n");
+         
          token = strtok(NULL,"#");
          if(!TAILQ_EMPTY(&client_head))
          {
@@ -1063,8 +935,7 @@ void* message_pinging(int sock)
           // TAILQ_FOREACH(item_client,&client_head,entries)
           for(item_client = TAILQ_FIRST(&client_head);item_client!=NULL;item_client=TAILQ_NEXT(item_client,entries))
           {
-            // tmp_clnt = TAILQ_NEXT(item_client,entries);
-           // printf("Inside TAILQ_FOREACH \n");
+            
             if(item_client->client_id == atoi(token))
             {
               item_client->counter++;
@@ -1087,10 +958,7 @@ void* message_pinging(int sock)
 
    }while(msec<trigger);
 
-  // printf("Outside do while\n");
-   // if(flag == 1)
-   //   printf("PING RECEIVED");
-
+  
    if(!TAILQ_EMPTY(&client_head))
    {
     struct client *item_client,*tmp_item;
@@ -1105,39 +973,15 @@ void* message_pinging(int sock)
       {
         if(item_client->counter<5)
         {
-         // //printf("less pings from %s\n",item_client->name);
-         //  char req_status[BUFLEN] = "STATUS";
-         //  client_out.sin_family = AF_INET;
-         //  client_out.sin_port = htons(PORT_ELE);
-         //  client_out.sin_addr.s_addr = inet_addr(item_client->ip);
-
-         //  if(sendto(s,req_status,BUFLEN,0,(struct sockaddr*)&client_out,sizeof(client_out))<0)
-         //  {
-         //      exit(-1);
-         //  }
-         //  printf("REQUEST STATUS to %s : %s\n",item_client->ip,req_status);
-
-         //  tv.tv_sec = TIMEOUT_SEC;
-         //  tv.tv_usec = TIMEOUT_USEC;
-
-         //  if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) 
-         //  {
-         //      perror("Error");
-         //  }
-
-          
-         //  if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr*)&client_out, &len_out) < 0)
-         //  {
+         
               char status[BUFLEN] = "SEQ#EXIT#";
               char tmp[BUFLEN];
               sprintf(tmp,"%d",item_client->client_id);
               strcat(status,tmp);
               strcat(status,"#");
-         //      printf("CLIENT RESPONSE: %s \n",buf);
               char status_msg[BUFLEN];
               sprintf(status_msg,"NOTICE %s left the chat or crashed",item_client->name);
               strcat(status,status_msg);
-              //printf("%s\n",status);
               multicast(sock,status);
 
               TAILQ_REMOVE(&client_head,item_client,entries);
@@ -1147,34 +991,18 @@ void* message_pinging(int sock)
               {
                 num_client_hb--;
               }
-
-              // printf("Number of Clients in the system: %d\n",count_clients());
-
-          // }
-          // else
-          //   printf("Response from %s: %s\n",item_client->name,buf);
-          // item_client->counter = 0;
+            
 
         }
         else
         {
-          //printf("Client Counter for %s : %d \n",item_client->name,item_client->counter);
           item_client->counter = 0;
         }
       }
-      // else
-      // {
-      //   printf("CLIENT JUST JOINED\n");
-      // }
       
      }
    }
-   //ntf("TAILQ is empty!\n" );
-
-  //char * multi[BUFLEN] = "SEQ#CLIENT#INFO#";
-  
-  //multicast(socket,multi);
- 
+    
  }
 }
 
@@ -1254,16 +1082,13 @@ int main(int argc, char *argv[]){
 
     TAILQ_INIT(&message_head); 
     TAILQ_INIT(&client_head);
-    // TAILQ_INIT(&holdback_head);
 
 
     if (strcmp("NEWLEADER",tok[0]) == 0)
     {
-      // printf("%s\n",buf);
       char notice[BUFLEN] = "SEQ#STATUS#";
       int i = 3, num_clients = (atoi(tok[1])*5)+3;
       num_client_hb = atoi(tok[1]);
-      // printf("num_client_hb : %d \n",num_client_hb);
       msg_seq_id = 0;
       strcat(notice,tok[2]);
 
@@ -1272,21 +1097,17 @@ int main(int argc, char *argv[]){
         struct client *c;
         c = malloc(sizeof(*c));
         strcpy(c->ip,tok[i]);
-        // printf("IP: %s\n",c->ip);
         c->port = atoi(tok[i+1]);
-        // printf("PORT %d\n",c->port);
         strcpy(c->name,tok[i+3]);
         c->last_msg_id = atoi(tok[i+4]);
         
         c->client_id = atoi(tok[i+2]);
-        // printf("LAST MESSAGE ID %d for client %d\n",c->last_msg_id,c->client_id);
         if(strcmp(my_ip_addr,tok[i]) == 0)
           c->leader = 1;
         else
           c->leader = 0;
 
-        // counter for pings
-
+        
         c->counter = 0;
         struct timeval curr_time = get_current_time();
         c->time_of_join = curr_time.tv_sec + ( curr_time.tv_usec / 1000000 );
@@ -1341,7 +1162,5 @@ int main(int argc, char *argv[]){
   pthread_join(p1,NULL);
   pthread_join(p2,NULL);
   pthread_join(p3,NULL);
-
-
 
 }
